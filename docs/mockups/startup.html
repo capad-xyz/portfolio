@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>capad — startup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{ --paper:#f1f0ec; --ink:#0b0b0d; --muted:#6f6e6a; --mx:50%; --my:50%; }
+  @property --rv{ syntax:"<length>"; inherits:false; initial-value:0px; }
+  *{box-sizing:border-box;margin:0}
+  html,body{height:100%}
+  body{font-family:"Space Grotesk",system-ui,sans-serif;color:var(--ink);background:var(--paper);overflow:hidden}
+
+  .grain{position:fixed;inset:0;z-index:60;pointer-events:none;opacity:.05;mix-blend-mode:multiply;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+  .glass{position:relative;overflow:hidden;background:rgba(255,255,255,.42);border:1px solid rgba(255,255,255,.75);
+    box-shadow:0 1px 0 rgba(255,255,255,.9) inset,0 -10px 16px -12px rgba(0,0,0,.18) inset,0 16px 40px -16px rgba(20,20,30,.28);
+    backdrop-filter:blur(3px) saturate(150%) url(#refract);-webkit-backdrop-filter:blur(12px) saturate(150%)}
+
+  .nav{position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:30;display:flex;gap:22px;align-items:center;padding:12px 22px;border-radius:999px;font:500 13px "JetBrains Mono",monospace;color:#3a3a3d}
+  .nav b{color:var(--ink)} .nav .s{opacity:.4}
+  main{position:relative;z-index:10;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px}
+  .eyebrow{font:600 11px "JetBrains Mono",monospace;letter-spacing:.24em;text-transform:uppercase;padding:10px 18px;border-radius:999px;margin-bottom:26px;color:#46453f}
+  h1{font-size:clamp(86px,15vw,230px);line-height:.84;font-weight:700;letter-spacing:-.05em}
+  .tag{margin-top:20px;max-width:440px;font-size:clamp(15px,1.5vw,19px);line-height:1.55;color:var(--muted)}
+  .cta{margin-top:34px;font:600 15px "Space Grotesk";color:var(--ink);padding:15px 30px;border-radius:999px;cursor:pointer}
+  .proof{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);z-index:30;font:500 11px "JetBrains Mono";letter-spacing:.18em;color:#8c8b86}
+
+  /* every UI piece starts "undeveloped"; the wave develops it in */
+  .dev{opacity:0;filter:blur(16px);transform:translateY(26px);transition:opacity .7s ease, filter .7s ease, transform .9s cubic-bezier(.16,1,.3,1)}
+  .dev.in{opacity:1;filter:blur(0);transform:none}
+  /* capad shows a faint ghost first so the falling drop has something to refract */
+  #wordmark{opacity:0;filter:blur(22px);transform:translateY(18px) scale(1.04);transition:opacity .8s ease,filter .8s ease,transform 1s cubic-bezier(.16,1,.3,1)}
+  #wordmark.ghost{opacity:.10;filter:blur(8px);transform:none}
+  #wordmark.in{opacity:1;filter:blur(0);transform:none}
+
+  /* ---- the refracting liquid drop ---- */
+  .drop{position:fixed;left:50%;top:-90px;z-index:90;width:38px;height:54px;transform:translate(-50%,0);
+    border-radius:50% 50% 50% 50%/64% 64% 40% 40%;
+    background:radial-gradient(circle at 38% 28%, rgba(255,255,255,.95), rgba(255,255,255,.25) 42%, transparent 64%);
+    box-shadow:inset 0 -8px 16px -6px rgba(0,0,0,.25), inset 0 6px 10px -4px rgba(255,255,255,.9), 0 10px 30px -8px rgba(20,20,30,.35);
+    backdrop-filter:blur(1px) saturate(160%) url(#drop);-webkit-backdrop-filter:blur(4px)}
+  .trail{position:fixed;left:50%;top:-90px;z-index:80;width:3px;height:0;transform:translateX(-50%);
+    background:linear-gradient(180deg, transparent, rgba(120,120,130,.35));border-radius:3px;opacity:.0}
+  /* impact pool + ripples along the bottom */
+  .pool{position:fixed;left:50%;bottom:-40px;z-index:85;width:120px;height:80px;transform:translateX(-50%) scale(0);
+    border-radius:50%;background:radial-gradient(circle at 50% 30%, rgba(255,255,255,.9), rgba(180,180,190,.25) 55%, transparent 70%);
+    filter:blur(2px)}
+  .ring{position:fixed;left:50%;bottom:8px;z-index:84;width:30px;height:30px;border-radius:50%;border:2px solid rgba(80,80,90,.5);transform:translate(-50%,50%) scale(0);opacity:0}
+  /* the develop wave that sweeps up and "loads" the UI */
+  .wave{position:fixed;left:0;right:0;height:140px;z-index:70;bottom:-140px;pointer-events:none;opacity:0;
+    background:linear-gradient(180deg, transparent, rgba(255,255,255,.0) 30%, rgba(20,20,30,.05) 50%, rgba(255,255,255,.55) 75%, transparent);
+    mix-blend-mode:normal;filter:blur(6px)}
+  .badge{position:fixed;bottom:22px;right:22px;z-index:30;font:500 11px "JetBrains Mono";color:#8c8b86}
+
+  @media (prefers-reduced-motion: reduce){
+    .drop,.trail,.pool,.ring,.wave{display:none}
+    .dev,#wordmark{opacity:1!important;filter:none!important;transform:none!important}
+  }
+</style>
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute">
+    <filter id="refract" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency="0.008 0.011" numOctaves="2" seed="6" result="n"/>
+      <feGaussianBlur in="n" stdDeviation="1.3" result="nb"/>
+      <feDisplacementMap in="SourceGraphic" in2="nb" scale="15" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <filter id="drop" x="-60%" y="-60%" width="220%" height="220%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency="0.012 0.012" numOctaves="2" seed="2" result="n"/>
+      <feGaussianBlur in="n" stdDeviation="1.6" result="nb"/>
+      <feDisplacementMap in="SourceGraphic" in2="nb" scale="34" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+  </svg>
+
+  <div class="grain"></div>
+
+  <nav class="nav glass dev" id="nav"><b>capad</b><span class="s">·</span><span>work</span><span>timeline</span><span>about</span></nav>
+  <main>
+    <span class="eyebrow glass dev" id="eyebrow">developer tools · desktop apps</span>
+    <h1 id="wordmark">capad</h1>
+    <p class="tag dev" id="tag">I build fast, genuinely-free tools for people who live in a terminal and an editor.</p>
+    <button class="cta glass dev" id="cta">See the work</button>
+  </main>
+  <div class="proof dev" id="proof">searchts &nbsp;·&nbsp; grove &nbsp;·&nbsp; glyphmaps</div>
+  <div class="badge">startup · refracting drop builds the app</div>
+
+  <div class="trail" id="trail"></div>
+  <div class="drop" id="drop"></div>
+  <div class="pool" id="pool"></div>
+  <div class="ring" id="r1"></div><div class="ring" id="r2"></div><div class="ring" id="r3"></div>
+  <div class="wave" id="wave"></div>
+
+<script>
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const $ = id => document.getElementById(id);
+  const wm = $('wordmark');
+
+  if(reduce){
+    ['drop','trail','pool','r1','r2','r3','wave'].forEach(i=>$(i).remove());
+    wm.classList.add('in');
+  } else {
+    // a faint ghost of capad appears so the falling drop refracts it
+    setTimeout(()=>wm.classList.add('ghost'), 120);
+
+    // 1) the drop falls to the bottom (accelerating), stretching as it speeds up
+    const drop=$('drop'), trail=$('trail');
+    drop.animate(
+      [
+        {top:'-90px', height:'54px', offset:0},
+        {top:'45vh', height:'78px', offset:.7, easing:'cubic-bezier(.5,0,.95,.45)'},
+        {top:'calc(100vh - 30px)', height:'92px', offset:.95},
+        {top:'calc(100vh - 10px)', height:'18px', offset:1}
+      ],
+      {duration:1000, fill:'forwards', easing:'cubic-bezier(.5,0,.95,.45)'}
+    );
+    trail.animate([{height:'0px',top:'-90px',opacity:.0},{height:'40vh',top:'10vh',opacity:.5,offset:.7},{height:'0px',top:'100vh',opacity:0}],{duration:1000,fill:'forwards'});
+
+    // 2) IMPACT at the bottom (~1.0s): splash pool + ripples
+    setTimeout(()=>{
+      drop.style.opacity='0';
+      $('pool').animate([{transform:'translateX(-50%) scale(0)',opacity:1},{transform:'translateX(-50%) scale(1.4)',opacity:.9,offset:.4},{transform:'translateX(-50%) scale(2.2)',opacity:0}],{duration:900,fill:'forwards',easing:'cubic-bezier(.2,.7,.3,1)'});
+      [['r1',0],['r2',120],['r3',240]].forEach(([id,d])=>{
+        setTimeout(()=>$(id).animate([{transform:'translate(-50%,50%) scale(0)',opacity:.7},{transform:'translate(-50%,50%) scale(26)',opacity:0}],{duration:1100,fill:'forwards',easing:'cubic-bezier(.2,.7,.3,1)'}), d);
+      });
+    }, 980);
+
+    // 3) the develop WAVE sweeps up and loads the UI one by one (bottom -> top)
+    setTimeout(()=>{
+      const wave=$('wave');
+      wave.style.opacity='1';
+      wave.animate([{bottom:'-140px'},{bottom:'100vh'}],{duration:1300,fill:'forwards',easing:'cubic-bezier(.4,0,.2,1)'});
+      setTimeout(()=>wave.style.opacity='0', 1250);
+    }, 1080);
+
+    // elements develop in as the wave reaches them (bottom -> top)
+    const seq = [['proof',1120],['cta',1230],['tag',1380],['wordmark',1560],['eyebrow',1780],['nav',1980]];
+    seq.forEach(([id,t])=>setTimeout(()=>{
+      const el=$(id);
+      if(id==='wordmark'){ el.classList.remove('ghost'); el.classList.add('in'); }
+      else el.classList.add('in');
+    }, t));
+  }
+
+  // cursor specular on glass (post-load)
+  addEventListener('pointermove',e=>{
+    document.querySelectorAll('.glass').forEach(el=>{const r=el.getBoundingClientRect();el.style.setProperty('--mx',(e.clientX-r.left)+'px');el.style.setProperty('--my',(e.clientY-r.top)+'px')});
+  });
+</script>
+</body>
+</html>

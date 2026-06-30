@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>capad — Direction A · Daylight</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{ --ink:#1c1830; --muted:#6b6680; --accent:#7c5cff; --mx:50%; --my:50%; }
+  *{box-sizing:border-box;margin:0}
+  html,body{height:100%}
+  body{
+    font-family:"Space Grotesk",system-ui,sans-serif; color:var(--ink);
+    background:#f6f3ee; overflow:hidden;
+  }
+  /* drifting light washes */
+  .mesh{position:fixed;inset:-15%;z-index:0;filter:blur(10px)}
+  .mesh span{position:absolute;border-radius:50%;filter:blur(60px);opacity:.85;mix-blend-mode:normal;animation:drift 22s ease-in-out infinite}
+  .b1{width:46vw;height:46vw;left:2%;top:-6%;background:#ffd9c2}
+  .b2{width:42vw;height:42vw;right:0%;bottom:-8%;background:#e6dcff;animation-delay:-7s}
+  .b3{width:30vw;height:30vw;left:40%;top:48%;background:#ffe7f0;animation-delay:-13s}
+  @keyframes drift{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(4%,3%) scale(1.08)}66%{transform:translate(-3%,-2%) scale(.96)}}
+
+  /* glass centerpiece */
+  .cp-wrap{position:fixed;left:50%;top:54%;z-index:1;transform:translate(calc(-50% + var(--px,0px)), calc(-50% + var(--py,0px)));transition:transform .25s ease-out}
+  .orb{width:min(62vmin,560px);height:min(62vmin,560px);border-radius:50%;position:relative;animation:float 9s ease-in-out infinite;
+    background:radial-gradient(circle at 38% 30%, rgba(255,255,255,.96), rgba(255,255,255,.32) 40%, rgba(124,92,255,.10) 64%, transparent 73%);
+    box-shadow:inset -34px -34px 100px rgba(124,92,255,.20), inset 34px 34px 90px rgba(255,255,255,.85), 0 50px 110px -24px rgba(124,92,255,.32);
+    backdrop-filter:blur(2px)}
+  .orb::after{content:"";position:absolute;inset:0;border-radius:50%;pointer-events:none;
+    background:radial-gradient(220px 220px at var(--mx) var(--my), rgba(255,255,255,.7), transparent 60%);mix-blend-mode:screen}
+  @keyframes float{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-16px) rotate(6deg)}}
+
+  main{position:relative;z-index:2;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px}
+  .glass{background:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.75);
+    backdrop-filter:blur(14px) saturate(170%);-webkit-backdrop-filter:blur(14px) saturate(170%);position:relative;overflow:hidden;
+    box-shadow:0 12px 34px -10px rgba(40,30,80,.18), inset 0 1px 0 rgba(255,255,255,.95)}
+  .glass::after{content:"";position:absolute;inset:0;pointer-events:none;
+    background:radial-gradient(160px 160px at var(--mx) var(--my), rgba(255,255,255,.55), transparent 60%);mix-blend-mode:screen}
+  .nav{position:fixed;top:22px;left:50%;transform:translateX(-50%);z-index:5;display:flex;gap:22px;padding:11px 22px;border-radius:999px;
+    font:500 13px "JetBrains Mono",monospace;color:#4a4560}
+  .nav b{color:var(--ink)}
+  .eyebrow{font:600 11px "JetBrains Mono",monospace;letter-spacing:.22em;text-transform:uppercase;padding:9px 18px;border-radius:999px;margin-bottom:24px;animation:rise .9s .1s both}
+  h1{font-size:clamp(72px,12vw,168px);line-height:.9;font-weight:700;letter-spacing:-.045em;animation:reveal 1s .15s both}
+  .tag{margin-top:20px;max-width:440px;font-size:clamp(15px,1.5vw,19px);line-height:1.55;color:var(--muted);animation:rise .9s .35s both}
+  .cta{margin-top:32px;display:inline-block;font:600 15px "Space Grotesk";color:#fff;background:var(--accent);
+    padding:15px 30px;border-radius:999px;text-decoration:none;box-shadow:0 16px 34px -10px rgba(124,92,255,.55);animation:rise .9s .5s both;transition:transform .2s}
+  .cta:hover{transform:translateY(-2px) scale(1.03)}
+  .cue{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);z-index:5;font:500 11px "JetBrains Mono";letter-spacing:.3em;color:var(--muted);animation:bob 2s infinite}
+  @keyframes reveal{from{opacity:0;filter:blur(18px);transform:translateY(22px)}to{opacity:1;filter:blur(0);transform:none}}
+  @keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+  @keyframes bob{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(6px)}}
+  .badge{position:fixed;bottom:22px;right:22px;z-index:5;font:500 11px "JetBrains Mono";color:var(--muted)}
+</style>
+</head>
+<body>
+  <div class="mesh"><span class="b1"></span><span class="b2"></span><span class="b3"></span></div>
+  <div class="cp-wrap"><div class="orb"></div></div>
+  <nav class="nav glass"><b>capad</b><span>work</span><span>about</span><span>contact</span></nav>
+  <main>
+    <span class="eyebrow glass">developer tools · desktop apps</span>
+    <h1>capad</h1>
+    <p class="tag">I build fast, genuinely-free tools for people who live in a terminal and an editor.</p>
+    <a class="cta" href="#">View the work</a>
+  </main>
+  <div class="cue">SCROLL</div>
+  <div class="badge">A · Daylight</div>
+<script>
+  const cp = document.querySelector('.cp-wrap');
+  const glass = document.querySelectorAll('.glass, .orb');
+  addEventListener('pointermove', e=>{
+    glass.forEach(el=>{const r=el.getBoundingClientRect();el.style.setProperty('--mx',(e.clientX-r.left)+'px');el.style.setProperty('--my',(e.clientY-r.top)+'px')});
+    cp.style.setProperty('--px',((e.clientX/innerWidth)-.5)*34+'px');
+    cp.style.setProperty('--py',((e.clientY/innerHeight)-.5)*34+'px');
+  });
+</script>
+</body>
+</html>

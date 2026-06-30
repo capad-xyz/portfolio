@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>capad — Direction B · Prism</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{ --ink:#221a33; --muted:#6a6280; --mx:50%; --my:50%; }
+  *{box-sizing:border-box;margin:0}
+  html,body{height:100%}
+  body{font-family:"Space Grotesk",system-ui,sans-serif;color:var(--ink);background:#fff;overflow:hidden}
+  .mesh{position:fixed;inset:-20%;z-index:0;filter:blur(14px)}
+  .mesh span{position:absolute;border-radius:50%;filter:blur(70px);opacity:.9;animation:drift 16s ease-in-out infinite}
+  .b1{width:48vw;height:48vw;left:6%;top:-4%;background:#ff8fc4}
+  .b2{width:50vw;height:50vw;right:-2%;top:-2%;background:#b79bff;animation-delay:-5s}
+  .b3{width:52vw;height:52vw;left:34%;bottom:-12%;background:#74d4ff;animation-delay:-10s}
+  @keyframes drift{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(6%,4%) scale(1.12)}66%{transform:translate(-5%,-3%) scale(.94)}}
+
+  .cp-wrap{position:fixed;left:50%;top:54%;z-index:1;transform:translate(calc(-50% + var(--px,0px)), calc(-50% + var(--py,0px)));transition:transform .22s ease-out}
+  .prism{width:min(60vmin,540px);height:min(60vmin,540px);position:relative;border-radius:46% 54% 52% 48%/52% 46% 54% 48%;
+    animation:spin 18s linear infinite, float 8s ease-in-out infinite;
+    background:conic-gradient(from 200deg, rgba(255,143,196,.55), rgba(183,155,255,.55), rgba(116,212,255,.55), rgba(255,200,140,.45), rgba(255,143,196,.55));
+    filter:blur(1px);
+    box-shadow:inset 0 0 90px rgba(255,255,255,.8), 0 50px 120px -24px rgba(150,90,200,.4), 6px 0 40px rgba(255,90,160,.25), -6px 0 40px rgba(90,170,255,.25)}
+  .prism::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+    background:radial-gradient(220px 220px at var(--mx) var(--my), rgba(255,255,255,.7), transparent 60%);mix-blend-mode:screen}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes float{0%,100%{translate:0 0}50%{translate:0 -18px}}
+
+  main{position:relative;z-index:2;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px}
+  .glass{background:rgba(255,255,255,.46);border:1px solid rgba(255,255,255,.7);
+    backdrop-filter:blur(16px) saturate(180%);-webkit-backdrop-filter:blur(16px) saturate(180%);position:relative;overflow:hidden;
+    box-shadow:0 14px 38px -10px rgba(120,70,160,.22), inset 0 1px 0 rgba(255,255,255,.95)}
+  .glass::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(160px 160px at var(--mx) var(--my), rgba(255,255,255,.6), transparent 60%);mix-blend-mode:screen}
+  .nav{position:fixed;top:22px;left:50%;transform:translateX(-50%);z-index:5;display:flex;gap:22px;padding:11px 22px;border-radius:999px;font:500 13px "JetBrains Mono",monospace;color:#5a5275}
+  .nav b{color:var(--ink)}
+  .eyebrow{font:600 11px "JetBrains Mono",monospace;letter-spacing:.22em;text-transform:uppercase;padding:9px 18px;border-radius:999px;margin-bottom:24px;animation:rise .9s .1s both}
+  h1{font-size:clamp(72px,12vw,168px);line-height:.9;font-weight:700;letter-spacing:-.045em;animation:reveal 1s .15s both;
+    background:linear-gradient(95deg,#ff5fa6,#8a6dff 55%,#3aa6ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .tag{margin-top:20px;max-width:440px;font-size:clamp(15px,1.5vw,19px);line-height:1.55;color:var(--muted);animation:rise .9s .35s both}
+  .cta{margin-top:32px;display:inline-block;font:600 15px "Space Grotesk";color:#fff;background:linear-gradient(90deg,#ff6fb0,#8a6dff);
+    padding:15px 30px;border-radius:999px;text-decoration:none;box-shadow:0 16px 36px -10px rgba(160,90,210,.55);animation:rise .9s .5s both;transition:transform .2s}
+  .cta:hover{transform:translateY(-2px) scale(1.03)}
+  .cue{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);z-index:5;font:500 11px "JetBrains Mono";letter-spacing:.3em;color:var(--muted);animation:bob 2s infinite}
+  @keyframes reveal{from{opacity:0;filter:blur(18px);transform:translateY(22px)}to{opacity:1;filter:blur(0);transform:none}}
+  @keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+  @keyframes bob{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(6px)}}
+  .badge{position:fixed;bottom:22px;right:22px;z-index:5;font:500 11px "JetBrains Mono";color:var(--muted)}
+</style>
+</head>
+<body>
+  <div class="mesh"><span class="b1"></span><span class="b2"></span><span class="b3"></span></div>
+  <div class="cp-wrap"><div class="prism"></div></div>
+  <nav class="nav glass"><b>capad</b><span>work</span><span>about</span><span>contact</span></nav>
+  <main>
+    <span class="eyebrow glass">developer tools · desktop apps</span>
+    <h1>capad</h1>
+    <p class="tag">I build fast, genuinely-free tools for people who live in a terminal and an editor.</p>
+    <a class="cta" href="#">View the work</a>
+  </main>
+  <div class="cue">SCROLL</div>
+  <div class="badge">B · Prism</div>
+<script>
+  const cp=document.querySelector('.cp-wrap');
+  const glass=document.querySelectorAll('.glass, .prism');
+  addEventListener('pointermove',e=>{
+    glass.forEach(el=>{const r=el.getBoundingClientRect();el.style.setProperty('--mx',(e.clientX-r.left)+'px');el.style.setProperty('--my',(e.clientY-r.top)+'px')});
+    cp.style.setProperty('--px',((e.clientX/innerWidth)-.5)*40+'px');
+    cp.style.setProperty('--py',((e.clientY/innerHeight)-.5)*40+'px');
+  });
+</script>
+</body>
+</html>

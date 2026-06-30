@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { SmoothScroll } from "@/components/smooth-scroll";
-import { GlassFilters } from "@/components/glass-filters";
+import { SiteShell } from "@/components/site-shell";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,8 +30,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full">
-        <GlassFilters />
-        <SmoothScroll>{children}</SmoothScroll>
+        <SiteShell>{children}</SiteShell>
       </body>
     </html>
   );

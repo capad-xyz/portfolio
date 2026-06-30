@@ -1,108 +1,357 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #070710;
-  --fg: #ececf4;
-  --muted: #9a9ab0;
-  --accent: #7c5cff;   /* capad violet */
-  --accent-2: #36d1dc; /* teal */
-  --r: 22px;
+  --paper: #f1f0ec;
+  --ink: #0b0b0d;
+  --muted: #6f6e6a;
   --mx: 50%;
-  --my: 50%; /* cursor position for the specular highlight */
+  --my: 50%;
 }
+@property --rv { syntax: "<length>"; inherits: false; initial-value: 0px; }
 
 @theme inline {
-  --color-bg: var(--bg);
-  --color-fg: var(--fg);
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
   --color-muted: var(--muted);
-  --color-accent: var(--accent);
-  --color-accent-2: var(--accent-2);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
 * { box-sizing: border-box; }
-
+html { background: var(--paper); }
 body {
-  background:
-    radial-gradient(1200px 820px at 12% -12%, rgba(124, 92, 255, 0.20), transparent 55%),
-    radial-gradient(1000px 700px at 112% 6%, rgba(54, 209, 220, 0.12), transparent 50%),
-    var(--bg);
-  color: var(--fg);
+  background: var(--paper);
+  color: var(--ink);
   font-family: var(--font-sans), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
   overflow-x: hidden;
+  cursor: none;
 }
 
-/* ----------------------------------------------------------------
-   The signature glass material. Every surface is built from this.
-   Blur + saturation reads as glass; the rim sheen + cursor specular
-   are what make it feel lit and "capad", not generic glassmorphism.
------------------------------------------------------------------ */
+/* film grain — keeps flat mono alive, hides blur banding */
+.grain {
+  position: fixed; inset: 0; z-index: 60; pointer-events: none;
+  opacity: 0.05; mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ---- signature liquid glass (mono) ---- */
+/* ---- ambient mono light: soft dark clouds the glass refracts + frosts ---- */
+.ambient {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
+  /* viewport-fixed depth: a soft overhead highlight + a faint floor vignette so
+     the flat paper reads as a lit space the glass sits in (not empty white).
+     On .ambient (already fixed) to avoid background-attachment:fixed mobile jank */
+  background:
+    radial-gradient(125% 90% at 50% -12%, rgba(255, 255, 255, 0.92), transparent 56%),
+    radial-gradient(120% 115% at 50% 116%, rgba(11, 11, 13, 0.06), transparent 60%);
+}
+.ambient span {
+  position: absolute; border-radius: 50%; filter: blur(54px); opacity: 0.78;
+  background: radial-gradient(circle, rgba(11, 11, 13, 0.34), rgba(11, 11, 13, 0.11) 55%, transparent 72%);
+  will-change: transform;
+}
+.ambient .a1 { width: 46vmax; height: 46vmax; left: -8vmax; top: -12vmax; animation: drift1 22s ease-in-out infinite; }
+.ambient .a2 { width: 38vmax; height: 38vmax; right: -6vmax; top: 10vmax; animation: drift2 28s ease-in-out infinite; }
+.ambient .a3 { width: 34vmax; height: 34vmax; left: 26vmax; bottom: -14vmax; animation: drift3 26s ease-in-out infinite; }
+@keyframes drift1 { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(6vmax, 4vmax); } }
+@keyframes drift2 { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(-5vmax, 5vmax); } }
+@keyframes drift3 { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(4vmax, -5vmax); } }
+
 .glass {
-  position: relative;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  border-radius: var(--r);
-  backdrop-filter: blur(14px) saturate(180%) brightness(1.04);
-  -webkit-backdrop-filter: blur(14px) saturate(180%) brightness(1.04);
+  position: relative; overflow: hidden;
+  background: rgba(255, 255, 255, 0.42);
+  border: 1px solid rgba(255, 255, 255, 0.8);
   box-shadow:
-    0 1px 0 0 rgba(255, 255, 255, 0.18) inset,
-    0 -1px 0 0 rgba(255, 255, 255, 0.04) inset,
-    0 24px 60px -24px rgba(0, 0, 0, 0.65);
-  isolation: isolate;
-  overflow: hidden;
-  contain: paint; /* isolate paint to protect INP */
+    0 1px 0 rgba(255, 255, 255, 0.95) inset,
+    0 -10px 16px -12px rgba(0, 0, 0, 0.18) inset,
+    0 16px 40px -16px rgba(20, 20, 30, 0.28),
+    0 0 0 0.5px rgba(255, 255, 255, 0.5);
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+  backdrop-filter: blur(7px) saturate(185%) brightness(1.05) url(#refract);
+  contain: paint;
 }
-
-/* top rim sheen */
-.glass::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0) 32%);
-  mix-blend-mode: screen;
-}
-
-/* cursor-tracked specular highlight (set --mx/--my from JS) */
 .glass::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  background: radial-gradient(200px 200px at var(--mx) var(--my), rgba(255, 255, 255, 0.16), transparent 60%);
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(150px 150px at var(--mx) var(--my), rgba(255, 255, 255, 0.7), transparent 60%);
   mix-blend-mode: screen;
-  transition: opacity 0.35s ease;
 }
 
-/* Chromium-only refraction via SVG displacement; harmless elsewhere */
-@supports (backdrop-filter: url(#x)) {
-  .glass--refract {
-    backdrop-filter: blur(8px) saturate(180%) url(#capadGlass);
+/* ---- liquid glass plate behind hero content ---- */
+.plate {
+  position: absolute; border-radius: 40px; z-index: -1;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.32), rgba(255, 255, 255, 0.12));
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 -18px 40px -34px rgba(20, 20, 30, 0.4) inset,
+    0 44px 100px -54px rgba(20, 20, 30, 0.6),
+    0 0 0 0.5px rgba(255, 255, 255, 0.5);
+  -webkit-backdrop-filter: blur(7px);
+  backdrop-filter: blur(3px) saturate(135%) url(#refract);
+}
+
+/* ---- liquid-glass lens: rides the cursor over .lensable content; its edge is
+   feathered to nothing so the disc never reads as a hard circle ---- */
+.lens {
+  position: fixed; left: 0; top: 0; z-index: 40; width: 168px; height: 168px; border-radius: 50%;
+  pointer-events: none; opacity: 0;
+  transition: opacity 0.32s ease, width 0.22s ease, height 0.22s ease;
+  /* faint center lift only — no border, ring, or drop shadow means no hard rim */
+  background: radial-gradient(circle at 50% 42%, rgba(255, 255, 255, 0.1), transparent 66%);
+  -webkit-backdrop-filter: blur(1.2px) saturate(150%);
+  backdrop-filter: blur(0.5px) saturate(150%) url(#lens);
+  /* feather the whole lens (refraction + tint) out well before the edge */
+  -webkit-mask: radial-gradient(circle at center, #000 16%, rgba(0, 0, 0, 0.82) 38%, rgba(0, 0, 0, 0.4) 58%, transparent 76%);
+  mask: radial-gradient(circle at center, #000 16%, rgba(0, 0, 0, 0.82) 38%, rgba(0, 0, 0, 0.4) 58%, transparent 76%);
+  will-change: transform;
+}
+.lens.on { opacity: 1; }
+/* over a lensable element the gooey cursor steps aside for the lens */
+body.lensing .cursor.on { opacity: 0; }
+
+/* ---- liquid button ---- */
+.lqbtn {
+  position: relative; overflow: hidden; cursor: none;
+  color: var(--ink); background: rgba(255, 255, 255, 0.5);
+  will-change: transform;
+}
+.lqbtn .lbl { position: relative; z-index: 2; transition: color 0.35s ease; }
+.lqbtn .fill {
+  position: absolute; z-index: 1; width: 24px; height: 24px; border-radius: 50%;
+  background: var(--ink); transform: translate(-50%, -50%) scale(0);
+  transition: transform 0.55s cubic-bezier(0.2, 0.8, 0.2, 1); pointer-events: none;
+}
+.lqbtn:hover .fill { transform: translate(-50%, -50%) scale(16); }
+.lqbtn:hover .lbl { color: var(--paper); }
+/* full-width buttons need a far bigger flood so the ink still reaches every
+   corner from wherever the pointer entered (scale 16 leaves a wide button
+   half-filled — the drop's radius can't span its width) */
+.lqbtn-block:hover .fill { transform: translate(-50%, -50%) scale(44); }
+/* quieter secondary CTA: transparent with a hairline border, same ink flood */
+.lqbtn-outline { background: transparent; border: 1px solid rgba(11, 11, 13, 0.15); }
+/* the contact modal renders above the custom-cursor layer, so it uses the
+   native cursor — keep the submit button's pointer rather than the hidden one */
+.contact-panel .lqbtn { cursor: pointer; }
+
+/* ---- contact fields: nice to type on ----
+   ink-tinted caret + an eased focus that lifts the field on a soft, mercury-
+   coloured glow (box-shadow/transform aren't in Tailwind's `transition`
+   set, so they'd otherwise snap). Per-keystroke scale "give" is applied by
+   useLiquidTyping via the Web Animations API. Unlayered, so it wins over the
+   Tailwind utilities without a specificity fight. */
+.contact-panel .cap-field {
+  caret-color: var(--ink);
+  transition:
+    border-color 0.25s ease,
+    background-color 0.25s ease,
+    box-shadow 0.4s cubic-bezier(0.2, 0.8, 0.2, 1),
+    transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.contact-panel .cap-field:focus {
+  box-shadow:
+    0 14px 30px -20px rgba(20, 20, 30, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.65);
+}
+@media (prefers-reduced-motion: reduce) {
+  .contact-panel .cap-field { transition: border-color 0.2s ease, background-color 0.2s ease; }
+}
+/* soften the message overflow: a slim, inset pill instead of the chunky native
+   scrollbar (with its arrow buttons), so a long message scrolls calm, not hard.
+   The thumb only appears once the text overflows. */
+.contact-panel textarea.cap-field {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(11, 11, 13, 0.22) transparent;
+}
+.contact-panel textarea.cap-field::-webkit-scrollbar { width: 11px; }
+.contact-panel textarea.cap-field::-webkit-scrollbar-track { background: transparent; margin: 10px 0; }
+.contact-panel textarea.cap-field::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  /* 3px transparent border + padding-box clip floats a ~5px pill in an 11px gutter */
+  background: rgba(11, 11, 13, 0.16);
+  border: 3px solid transparent;
+  background-clip: padding-box;
+  transition: background-color 0.25s ease;
+}
+.contact-panel textarea.cap-field:hover::-webkit-scrollbar-thumb,
+.contact-panel textarea.cap-field:focus::-webkit-scrollbar-thumb {
+  background: rgba(11, 11, 13, 0.3);
+  background-clip: padding-box;
+}
+
+/* ---- gooey dark liquid cursor ---- */
+.cursor { position: fixed; left: 0; top: 0; z-index: 95; pointer-events: none; filter: url(#goo); opacity: 0; transition: opacity 0.4s; }
+.cursor.on { opacity: 1; }
+.cursor i { position: absolute; border-radius: 50%; background: var(--ink); transform: translate(-50%, -50%); will-change: transform; }
+.cursor .lead { width: 16px; height: 16px; }
+.cursor .t1 { width: 24px; height: 24px; }
+.cursor .t2 { width: 13px; height: 13px; }
+
+/* ---- dripping droplet trail: sheds off the cursor along its path, then
+   falls + fades. Own #goo-drip filter so neighbours fuse into running liquid;
+   pooled <i> nodes positioned/stretched per-frame from LiquidCursor. ---- */
+.drips { position: fixed; left: 0; top: 0; z-index: 94; pointer-events: none; filter: url(#goo-drip); opacity: 0; transition: opacity 0.45s ease; }
+.drips.on { opacity: 1; }
+.drips i {
+  position: absolute; left: 0; top: 0; width: 14px; height: 16px;
+  margin-left: -7px; margin-top: -8px;
+  border-radius: 50% 50% 50% 50% / 58% 58% 42% 42%;
+  background: var(--ink); opacity: 0;
+  transform: translate3d(-9999px, -9999px, 0); will-change: transform, opacity;
+}
+
+/* ---- caret drip: same mercury as the cursor trail, beaded at the text caret
+   as you type name/email. Lives ABOVE the contact panel (the global .drips
+   layer paints far below the panel's near-max z-index), with its own
+   #goo-drip so successive beads fuse into a running stream. Driven per-frame
+   by useLiquidTyping. ---- */
+.type-drips {
+  position: fixed; left: 0; top: 0; z-index: 2147483601; /* just above the panel */
+  pointer-events: none; filter: url(#goo-drip);
+}
+.type-drips i {
+  position: absolute; left: 0; top: 0; width: 13px; height: 15px;
+  margin-left: -6.5px; margin-top: -7.5px;
+  border-radius: 50% 50% 50% 50% / 58% 58% 42% 42%;
+  background: var(--ink); opacity: 0;
+  transform: translate3d(-9999px, -9999px, 0); will-change: transform, opacity;
+}
+
+/* ---- intro: the falling liquid drop (dark, light-refracting edge) ---- */
+.drop {
+  position: fixed; left: 50%; top: 0; z-index: 90; width: 34px; height: 50px;
+  transform: translate(-50%, -90px); will-change: transform;
+  border-radius: 50% 50% 50% 50% / 62% 62% 42% 42%;
+  background: radial-gradient(circle at 36% 26%, rgba(255, 255, 255, 0.85), rgba(60, 60, 68, 0.55) 34%, rgba(11, 11, 13, 0.82) 78%);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.4), 0 0 22px rgba(255, 255, 255, 0.3),
+    inset 0 -7px 12px rgba(0, 0, 0, 0.55), inset 0 7px 9px rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(1px) saturate(150%) url(#drop);
+}
+.pool {
+  position: fixed; left: 50%; bottom: -44px; z-index: 88; width: 130px; height: 88px;
+  transform: translateX(-50%) scale(0); will-change: transform; border-radius: 50%;
+  background: radial-gradient(circle at 50% 32%, rgba(255, 255, 255, 0.85), rgba(120, 120, 130, 0.25) 55%, transparent 72%);
+  filter: blur(2px);
+}
+.ring {
+  position: fixed; left: 50%; bottom: 6px; z-index: 87; width: 30px; height: 30px; border-radius: 50%;
+  border: 1.5px solid rgba(90, 90, 100, 0.45); box-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
+  transform: translate(-50%, 50%) scale(0); will-change: transform; opacity: 0;
+}
+.wave {
+  position: fixed; left: 0; right: 0; height: 160px; z-index: 70; bottom: -160px; pointer-events: none; opacity: 0;
+  background: linear-gradient(180deg, transparent, rgba(20, 20, 30, 0.04) 50%, rgba(255, 255, 255, 0.5) 76%, transparent);
+  filter: blur(7px); will-change: transform;
+}
+
+/* ---- develop-in (the wave "loads" each piece, bottom -> top) ----
+   Each piece carries a pure-CSS safety-net animation that reveals it even if
+   the JS reveal never runs (slow/throttled/failed hydration, backgrounded tab).
+   The JS `.in` class is the fast, choreographed path; it cancels the fallback. */
+@keyframes heroSafety { to { opacity: 1; filter: blur(0); transform: none; } }
+.dev { opacity: 0; filter: blur(16px); transform: translateY(26px); transition: opacity 0.6s ease, filter 0.6s ease, transform 0.7s cubic-bezier(0.16, 1, 0.3, 1); animation: heroSafety 0.7s ease 1.9s forwards; }
+.dev.in { opacity: 1; filter: blur(0); transform: none; animation: none; }
+.wordmark { opacity: 0; filter: blur(22px); transform: translateY(18px) scale(1.04); transition: opacity 0.7s ease, filter 0.7s ease, transform 0.8s cubic-bezier(0.16, 1, 0.3, 1); animation: heroSafety 0.8s ease 1.9s forwards; }
+.wordmark.ghost { opacity: 0.1; filter: blur(8px); transform: none; }
+.wordmark.in { opacity: 1; filter: blur(0); transform: none; animation: none; }
+
+/* ---- scroll-reveal for sections below the fold (transform/opacity only) ---- */
+.reveal-up { opacity: 0; transform: translateY(28px); transition: opacity 0.8s ease, transform 0.9s cubic-bezier(0.16, 1, 0.3, 1); }
+.reveal-up.in { opacity: 1; transform: none; }
+
+/* section heading eyebrow shared across the spine */
+.section-eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--muted); }
+
+/* ---- right-rail liquid dot navigation ---- */
+.cap-dn-rail {
+  position: fixed; top: 50%; right: 20px; transform: translateY(-50%);
+  z-index: 40; width: 160px; height: 300px; pointer-events: none;
+}
+.cap-dn-track {
+  position: absolute; top: -18px; bottom: -18px; right: 14px; width: 1px;
+  transform: translateX(50%); pointer-events: none; border-radius: 999px;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(11, 11, 13, 0.10) 18%,
+    rgba(11, 11, 13, 0.14) 50%,
+    rgba(11, 11, 13, 0.10) 82%,
+    transparent 100%
+  );
+}
+.cap-dn-blob-layer { position: absolute; inset: 0; filter: url(#goo-dn); pointer-events: none; }
+.cap-dn-touch-layer { position: absolute; inset: 0; pointer-events: auto; }
+.cap-dn-blob-dot {
+  --pull: 0px;
+  position: absolute; right: 14px; width: 8px; height: 8px; border-radius: 999px;
+  background: var(--ink);
+  transform: translate(50%, calc(-50% + var(--pull)));
+  transition:
+    width 0.55s cubic-bezier(0.34, 1.4, 0.45, 1),
+    height 0.55s cubic-bezier(0.34, 1.4, 0.45, 1),
+    transform 0.22s cubic-bezier(0.2, 0.7, 0.3, 1);
+  will-change: width, height, transform;
+}
+.cap-dn-blob-dot.is-active { height: 28px; }
+.cap-dn-blob-dot.is-hover { width: 14px; height: 14px; }
+.cap-dn-blob-dot.is-active.is-hover { width: 14px; height: 30px; }
+.cap-dn-connector {
+  position: absolute; right: 14px; width: 8px; border-radius: 999px;
+  background: var(--ink); transform: translateX(50%); opacity: 0;
+  transition:
+    opacity 0.32s ease,
+    top 0.5s cubic-bezier(0.34, 1.35, 0.45, 1),
+    height 0.5s cubic-bezier(0.34, 1.35, 0.45, 1);
+  will-change: top, height, opacity;
+}
+.cap-dn-splash {
+  position: absolute; right: 14px; width: 8px; height: 8px; border-radius: 999px;
+  background: var(--ink); transform: translate(50%, -50%);
+  animation: cap-dn-splash 0.75s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+  pointer-events: none;
+}
+@keyframes cap-dn-splash {
+  0% { width: 8px; height: 8px; opacity: 1; }
+  100% { width: 52px; height: 52px; opacity: 0; }
+}
+.cap-dn-touch {
+  position: absolute; right: 0; width: 160px; height: 42px;
+  display: flex; align-items: center; justify-content: flex-end;
+  padding: 0 22px 0 0; cursor: none; background: transparent; border: 0;
+  transform: translateY(-50%); font-family: inherit; color: inherit;
+}
+.cap-dn-touch:focus-visible { outline: none; }
+.cap-dn-touch:hover .cap-dn-label,
+.cap-dn-touch:focus-visible .cap-dn-label {
+  opacity: 1; transform: translate(0, 0) scale(1);
+}
+.cap-dn-label {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 11px; letter-spacing: 0.08em; text-transform: lowercase;
+  color: var(--ink); padding: 5px 12px; border-radius: 999px;
+  opacity: 0; transform: translate(10px, 0) scale(0.9);
+  transition:
+    opacity 0.35s cubic-bezier(0.2, 0.7, 0.2, 1),
+    transform 0.45s cubic-bezier(0.34, 1.4, 0.45, 1);
+  pointer-events: none; white-space: nowrap; transform-origin: right center;
+}
+@media (max-width: 767px) { .cap-dn-rail { display: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .cap-dn-blob-dot, .cap-dn-connector, .cap-dn-label, .cap-dn-splash {
+    transition: none; animation: none;
   }
 }
 
-/* ---- intentional graceful degradation (a11y + perf) ---- */
-@media (prefers-reduced-transparency: reduce) {
-  .glass {
-    background: rgba(16, 16, 28, 0.92);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-  }
-  .glass--refract { backdrop-filter: none; }
-}
+/* ---- /studio takeover: SiteShell skips the chrome; this resets the body ---- */
+body.studio-mode { cursor: auto; overflow-x: auto; }
+body.studio-mode .grain, body.studio-mode .ambient, body.studio-mode .cursor, body.studio-mode .drips, body.studio-mode .lens { display: none !important; }
+
+::selection { background: rgba(11, 11, 13, 0.12); }
 
 @media (prefers-reduced-motion: reduce) {
-  .glass::after { display: none; }
-  *, *::before, *::after {
-    animation-duration: 0.001ms !important;
-    transition-duration: 0.001ms !important;
-    scroll-behavior: auto !important;
-  }
+  body { cursor: auto; }
+  .drop, .pool, .ring, .wave, .cursor, .drips { display: none !important; }
+  .dev, .wordmark, .reveal-up { opacity: 1 !important; filter: none !important; transform: none !important; }
+  *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
 }
-
-::selection { background: color-mix(in oklch, var(--accent) 40%, transparent); }
