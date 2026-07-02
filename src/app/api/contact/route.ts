@@ -61,6 +61,34 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "That email doesn't look right." }, { status: 400 });
   }
 
+  // Turnstile: the browser widget hands the form a one-time token; only
+  // Cloudflare's siteverify endpoint (called with our SECRET key) can vouch
+  // for it. Tokens are single-use and short-lived, so a bot can't farm one
+  // and replay it. Feature-flagged on the secret so the form still works in
+  // environments where Turnstile isn't configured (e.g. local dev).
+  const turnstileSecret = process.env.TURNSTILE_SECRET_KEY;
+  if (turnstileSecret) {
+    const token = clean(body.turnstileToken, 2048);
+    if (!token) {
+      return Response.json({ error: "Verification incomplete. Try again." }, { status: 403 });
+    }
+    try {
+      const vr = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ secret: turnstileSecret, response: token, remoteip: ip }),
+      });
+      const outcome = (await vr.json()) as { success?: boolean; "error-codes"?: string[] };
+      if (!outcome.success) {
+        console.error("Turnstile rejected", outcome["error-codes"]);
+        return Response.json({ error: "Verification failed. Try again." }, { status: 403 });
+      }
+    } catch (err) {
+      console.error("Turnstile unreachable", err instanceof Error ? err.message : err);
+      return Response.json({ error: "Verification unavailable. Try again." }, { status: 502 });
+    }
+  }
+
   const key = process.env.RESEND_API_KEY;
   if (!key) {
     console.error("RESEND_API_KEY missing");

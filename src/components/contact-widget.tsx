@@ -8,11 +8,91 @@ import { useLiquidTyping } from "./use-liquid-typing";
 
 type Status = "idle" | "sending" | "ok" | "error";
 
+// --- Cloudflare Turnstile (bot check) ---------------------------------------
+// The sitekey is public by design (it's visible in every page source); the
+// matching SECRET key lives only on the worker, which is what actually
+// validates tokens. Inlined at build time - when unset, the widget simply
+// doesn't render and the API skips verification (local dev, previews).
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+
+declare global {
+  interface Window {
+    turnstile?: {
+      render: (
+        el: HTMLElement,
+        opts: {
+          sitekey: string;
+          theme?: "light" | "dark" | "auto";
+          size?: "normal" | "flexible" | "compact";
+          callback?: (token: string) => void;
+          "expired-callback"?: () => void;
+          "error-callback"?: () => void;
+        },
+      ) => string;
+      reset: (widgetId?: string) => void;
+      remove: (widgetId: string) => void;
+    };
+  }
+}
+
+let turnstileLoader: Promise<void> | null = null;
+function loadTurnstile(): Promise<void> {
+  if (window.turnstile) return Promise.resolve();
+  if (!turnstileLoader) {
+    turnstileLoader = new Promise<void>((resolve, reject) => {
+      const s = document.createElement("script");
+      s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+      s.async = true;
+      s.onload = () => resolve();
+      s.onerror = () => {
+        turnstileLoader = null; // allow a retry on the next panel open
+        reject(new Error("turnstile script failed to load"));
+      };
+      document.head.appendChild(s);
+    });
+  }
+  return turnstileLoader;
+}
+
 function ContactPanel({ onSent }: { onSent: () => void }) {
   const firstFieldRef = useRef<HTMLInputElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState<string | null>(null);
+  const turnstileHostRef = useRef<HTMLDivElement>(null);
+  const turnstileIdRef = useRef<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+
+  // Mount the Turnstile widget when the panel opens. Managed mode: usually a
+  // silent check, only escalating to a visible interaction for suspicious
+  // traffic - the honest version of an "invisible captcha".
+  useEffect(() => {
+    if (!TURNSTILE_SITE_KEY) return;
+    let cancelled = false;
+    loadTurnstile()
+      .then(() => {
+        const host = turnstileHostRef.current;
+        if (cancelled || !host || !window.turnstile || turnstileIdRef.current) return;
+        turnstileIdRef.current = window.turnstile.render(host, {
+          sitekey: TURNSTILE_SITE_KEY,
+          theme: "light",
+          size: "flexible",
+          callback: (token) => setTurnstileToken(token),
+          "expired-callback": () => setTurnstileToken(null),
+          "error-callback": () => setTurnstileToken(null),
+        });
+      })
+      .catch(() => {
+        // script blocked/unreachable - the server will explain if it matters
+      });
+    return () => {
+      cancelled = true;
+      if (turnstileIdRef.current && window.turnstile) {
+        window.turnstile.remove(turnstileIdRef.current);
+        turnstileIdRef.current = null;
+      }
+    };
+  }, []);
 
   // caret-drip on name/email + a per-keystroke "give" on every field
   useLiquidTyping(formRef);
@@ -30,6 +110,7 @@ function ContactPanel({ onSent }: { onSent: () => void }) {
       email: fd.get("email"),
       message: fd.get("message"),
       website: fd.get("website"),
+      turnstileToken,
     };
     setStatus("sending");
     setError(null);
@@ -43,6 +124,13 @@ function ContactPanel({ onSent }: { onSent: () => void }) {
       if (!res.ok) {
         setStatus("error");
         setError(data.error ?? "Something went wrong.");
+        // Turnstile tokens are single-use: after any server round-trip that
+        // consumed (or rejected) one, ask the widget for a fresh token so the
+        // retry doesn't fail with an "already used" verification error.
+        if (turnstileIdRef.current && window.turnstile) {
+          setTurnstileToken(null);
+          window.turnstile.reset(turnstileIdRef.current);
+        }
         return;
       }
       setStatus("ok");
@@ -117,6 +205,8 @@ function ContactPanel({ onSent }: { onSent: () => void }) {
         aria-hidden
         className="absolute -left-[9999px] h-0 w-0 opacity-0"
       />
+
+      {TURNSTILE_SITE_KEY && <div ref={turnstileHostRef} className="min-h-[65px]" />}
 
       {error && (
         <p role="alert" className="text-[12px] text-red-700">
