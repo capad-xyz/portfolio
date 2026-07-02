@@ -48,11 +48,20 @@ export const metadata: Metadata = {
     title: TITLE,
     description: DESCRIPTION,
     locale: "en_US",
+    images: [
+      {
+        url: "/opengraph-image.png",
+        width: 1200,
+        height: 630,
+        alt: "capad — developer tools & desktop apps by Aadarsh Upadhyay",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: TITLE,
     description: DESCRIPTION,
+    images: ["/opengraph-image.png"],
   },
   robots: {
     index: true,
