@@ -161,10 +161,16 @@ function makeFaceIcon() {
     '<g class="g-envelope" stroke="#f1f0ec" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round">' +
     '<path d="M4 6.5h16v11H4z"/><path d="m4 7.5 8 5.5 8-5.5"/>' +
     "</g>" +
-    // occasional: winking smiley (big, bold features)
+    // occasional: blissful smiley — closed squint-arc eyes, soft blush, a wide
+    // warm smile (the round-eyed look now belongs to the hover grin alone)
     '<g class="g-smiley">' +
-    '<g class="eyes" fill="#f1f0ec"><circle class="eye eye-l" cx="8.4" cy="9.2" r="2.3"/><circle class="eye eye-r" cx="15.6" cy="9.2" r="2.3"/></g>' +
-    '<path d="M6.6 13.2 Q12 19 17.4 13.2" stroke="#f1f0ec" stroke-width="2.3" stroke-linecap="round"/>' +
+    '<g class="eyes" stroke="#f1f0ec" stroke-width="2.2" stroke-linecap="round" fill="none">' +
+    '<path class="eye eye-l" d="M6.2 9.7 Q8.2 6.9 10.2 9.7"/>' +
+    '<path class="eye eye-r" d="M13.8 9.7 Q15.8 6.9 17.8 9.7"/>' +
+    "</g>" +
+    '<circle cx="4.9" cy="12.6" r="1.2" fill="#f1f0ec" opacity="0.45"/>' +
+    '<circle cx="19.1" cy="12.6" r="1.2" fill="#f1f0ec" opacity="0.45"/>' +
+    '<path d="M7 13.6 Q12 18.8 17 13.6" stroke="#f1f0ec" stroke-width="2.4" stroke-linecap="round" fill="none"/>' +
     "</g>" +
     // hover / press: open-mouthed grin
     '<g class="g-grin">' +
@@ -179,6 +185,90 @@ function makeFaceIcon() {
     "</g>" +
     "</svg>";
   return wrap;
+}
+
+/**
+ * The rest of the flock: real channels only, stacked behind the message face.
+ * Each keeps the mercury glare (the shared bubbleShadow gloss) but carries its
+ * own light — the gradient's origin and depth shift per bubble, so the stack
+ * reads as siblings, not clones. Add a channel = add one entry here.
+ */
+type SocialBubble = {
+  id: string;
+  label: string;
+  href: string;
+  /** Same mercury family, individually lit. */
+  surface: string;
+  /** Paper-coloured glyph, 24×24 viewBox. */
+  svg: string;
+};
+
+const SOCIAL_BUBBLES: SocialBubble[] = [
+  {
+    id: "github",
+    label: "GitHub — capad-xyz",
+    href: "https://github.com/capad-xyz",
+    surface:
+      "radial-gradient(circle at 30% 22%, #8b8b95 0%, #26262c 52%, #08080a 100%)",
+    svg:
+      '<svg viewBox="0 0 16 16" width="21" height="21" fill="#f1f0ec" aria-hidden="true">' +
+      '<path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>' +
+      "</svg>",
+  },
+  {
+    id: "mailto",
+    label: "Email connect@capad.fyi",
+    href: "mailto:connect@capad.fyi",
+    surface:
+      "radial-gradient(circle at 42% 32%, #6d6d77 0%, #17171c 48%, #030304 100%)",
+    svg:
+      '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#f1f0ec" stroke-width="1.85" stroke-linecap="round" aria-hidden="true">' +
+      '<circle cx="12" cy="12" r="3.4"/>' +
+      '<path d="M15.4 12v1.3a2.1 2.1 0 0 0 4.2 0V12a7.6 7.6 0 1 0-3 6.05"/>' +
+      "</svg>",
+  },
+];
+
+function makeSocialIcon(svg: string) {
+  const wrap = document.createElement("div");
+  wrap.style.cssText =
+    "display:flex; align-items:center; justify-content:center; width:24px; height:24px; color:#f1f0ec;";
+  wrap.innerHTML = svg;
+  return wrap;
+}
+
+/**
+ * A social bubble is a launcher, not a panel: give its surface an individual
+ * light and open the link on a clean tap (a drag that wanders past the guard
+ * distance stays a drag). Returns a teardown.
+ */
+function wireSocialBubble(icon: HTMLElement, s: SocialBubble, manager: BubbleManager) {
+  const surface = icon.parentElement;
+  if (surface) surface.style.background = s.surface;
+  const btn = icon.closest<HTMLElement>('[role="button"]') ?? surface;
+  if (!btn) return () => {};
+  let downX = 0;
+  let downY = 0;
+  const onDown = (e: PointerEvent) => {
+    downX = e.clientX;
+    downY = e.clientY;
+  };
+  const onClick = (e: MouseEvent) => {
+    if (Math.hypot(e.clientX - downX, e.clientY - downY) >= 8) return; // it was a drag
+    if (s.href.startsWith("mailto:")) location.href = s.href;
+    else window.open(s.href, "_blank", "noopener");
+    // the library treats the same click as "activate this bubble" and spreads
+    // the flock — these bubbles have no panel, so tuck it back into the dock
+    window.setTimeout(() => {
+      if (manager.state() === "open") manager.toggle();
+    }, 60);
+  };
+  btn.addEventListener("pointerdown", onDown);
+  btn.addEventListener("click", onClick);
+  return () => {
+    btn.removeEventListener("pointerdown", onDown);
+    btn.removeEventListener("click", onClick);
+  };
 }
 
 type FaceController = {
@@ -394,13 +484,12 @@ export function ContactWidget() {
         dismissIcon: "#f1f0ec",
       },
       side: "right",
-      // dock at the bottom-edge rest (viewportHeight - bubbleHeight - 12px):
-      // vertical >= 1 clamps to maxRestTop, the spot the bubble springs to
-      // when flung off the bottom of the page.
-      vertical: 1,
+      // the flock docks at the middle of the right edge — the social stack
+      // fans out from behind the message face
+      vertical: 0.5,
       panelWidth: 500,
       panelMaxHeight: "86%",
-      maxBubbles: 1,
+      maxBubbles: 1 + SOCIAL_BUBBLES.length,
     });
 
     let panelRoot: Root | null = null;
@@ -441,6 +530,14 @@ export function ContactWidget() {
 
     managerRef.current = manager;
 
+    // the social stack docks behind the face (added after = stacked behind)
+    const socialStops: (() => void)[] = [];
+    for (const s of SOCIAL_BUBBLES) {
+      const icon = makeSocialIcon(s.svg);
+      manager.add({ id: s.id, label: s.label, icon });
+      socialStops.push(wireSocialBubble(icon, s, manager));
+    }
+
     // the icon is mounted now, so the bubble button exists for hover/press wiring
     const stopHover = watchHoverPress(face, ctrl);
     const stopProximity = watchDismissProximity(face, ctrl);
@@ -456,6 +553,7 @@ export function ContactWidget() {
 
     return () => {
       removeEventListener("capad:open-contact", onOpenRequest);
+      socialStops.forEach((stop) => stop());
       stopHover();
       stopSmile();
       stopProximity();
