@@ -483,9 +483,9 @@ export function ContactWidget() {
         dismissBorder: "#0b0b0d",
         dismissIcon: "#f1f0ec",
       },
-      side: "right",
-      // the flock docks at the middle of the right edge — the social stack
-      // fans out from behind the message face
+      // the flock docks at the middle of the LEFT edge (the right belongs to
+      // the dot-nav rail) — the social stack fans out from behind the face
+      side: "left",
       vertical: 0.5,
       panelWidth: 500,
       panelMaxHeight: "86%",
@@ -497,6 +497,16 @@ export function ContactWidget() {
     const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
     const face = makeFaceIcon();
     const ctrl = makeFaceController(face, reduce);
+
+    // Socials enter FIRST, deepest one leading (the array is ordered
+    // face-outward, so it's walked in reverse): each lands, the next stacks on
+    // top of it, and the message face arrives last — the front of the dock.
+    const socialStops: (() => void)[] = [];
+    for (const s of [...SOCIAL_BUBBLES].reverse()) {
+      const icon = makeSocialIcon(s.svg);
+      manager.add({ id: s.id, label: s.label, icon });
+      socialStops.push(wireSocialBubble(icon, s, manager));
+    }
 
     manager.add({
       id: "contact",
@@ -529,14 +539,6 @@ export function ContactWidget() {
     });
 
     managerRef.current = manager;
-
-    // the social stack docks behind the face (added after = stacked behind)
-    const socialStops: (() => void)[] = [];
-    for (const s of SOCIAL_BUBBLES) {
-      const icon = makeSocialIcon(s.svg);
-      manager.add({ id: s.id, label: s.label, icon });
-      socialStops.push(wireSocialBubble(icon, s, manager));
-    }
 
     // the icon is mounted now, so the bubble button exists for hover/press wiring
     const stopHover = watchHoverPress(face, ctrl);
