@@ -103,9 +103,14 @@ export function Hero() {
 
   return (
     <section ref={root} className="relative flex min-h-screen flex-col items-center justify-center px-6 text-center">
-      {/* sized to hold the whole column (eyebrow → CTA) so nothing spills past
-          the glass edge and the composition reads centered on the plate */}
-      <div ref={plate} className="plate dev absolute h-[min(76vh,640px)] w-[min(86vw,900px)]" />
+      {/* the plate hugs the content column itself (negative insets), so the
+          eyebrow → CTA stack is always centered on the glass with an even
+          margin — no viewport-height guessing, no spill on short screens */}
+      <div className="relative flex flex-col items-center">
+        <div
+          ref={plate}
+          className="plate dev absolute -inset-x-[clamp(28px,7vw,84px)] -inset-y-[clamp(26px,5vh,52px)]"
+        />
 
       <span
         ref={eyebrow}
@@ -160,6 +165,7 @@ export function Hero() {
             <span className="lbl">See the work</span>
           </a>
         </div>
+      </div>
       </div>
 
       {/* Authority strip. Names are framed as shipped, open-source output (true)
