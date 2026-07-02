@@ -197,7 +197,7 @@ export const DEMO_PROJECTS: ProjectDetail[] = [
     status: "ongoing",
     oneLiner:
       "An open-source, self-hostable universal chat client: all your messaging networks in one native inbox, with instant sync and nothing locked behind a paywall. Built on Matrix and Tauri.",
-    nowLine: "landing the Phase 1 client: live inbox, avatars, optimistic send",
+    nowLine: "fast cold start + the multi-account inbox UI",
     metrics: [
       { value: "live", label: "sync" },
       { value: "0", label: "paywalls" },
