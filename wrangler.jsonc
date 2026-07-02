@@ -1,0 +1,17 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "capad-portfolio",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-06-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  // Custom domain: uncomment once the worker exists and capad.fyi's zone is on
+  // this Cloudflare account.
+  // "routes": [{ "pattern": "capad.fyi", "custom_domain": true }],
+  "observability": {
+    "enabled": true
+  }
+}

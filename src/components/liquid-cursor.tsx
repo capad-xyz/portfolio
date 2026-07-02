@@ -23,6 +23,10 @@ const POOL = 16; // max simultaneous droplets (kept low so the goo filter stays 
 const STEP = 30; // px of pointer travel between shed droplets
 const GRAV = 0.3; // downward acceleration (px / frame²)
 const DRAG = 0.985; // horizontal damping per frame
+const HOT_MS = 130; // over an interactive element, shed a drip this often even at rest
+// anything that would normally flip the native cursor to grab / text / pointer
+const INTERACTIVE =
+  'a,button,[role="button"],input,textarea,select,label,summary,[data-grab],.lqbtn';
 
 export function LiquidCursor() {
   const root = useRef<HTMLDivElement>(null);
@@ -91,6 +95,19 @@ export function LiquidCursor() {
     };
     addEventListener("pointermove", onMove, { passive: true });
 
+    // over anything interactive the blob swells (.hot) and keeps dripping, so
+    // grab / text / pointer states all read as the same liquid cursor
+    let hot = false;
+    const onOver = (e: PointerEvent) => {
+      const el = e.target as Element | null;
+      const h = !!(el && el.closest && el.closest(INTERACTIVE));
+      if (h !== hot) {
+        hot = h;
+        root.current?.classList.toggle("hot", h);
+      }
+    };
+    addEventListener("pointerover", onOver, { passive: true });
+
     // reveal once the intro finishes building the page
     const reveal = () => {
       revealed = true;
@@ -101,11 +118,13 @@ export function LiquidCursor() {
     addEventListener("capad:loaded", reveal);
 
     // path-walker + velocity state
+    let hotScale = 0; // 0 = rest, 1 = fully swollen over an interactive target
     let prevMx = mx;
     let prevMy = my;
     let walkX = mx;
     let walkY = my;
     let primed = false;
+    let hotAcc = 0;
     let prev = 0;
     let raf = 0;
 
@@ -129,17 +148,23 @@ export function LiquidCursor() {
       p1.y += (my - p1.y) * k1;
       p2.x += (p1.x - p2.x) * k2;
       p2.y += (p1.y - p2.y) * k2;
+      // transform-only positioning: left/top writes invalidate layout every
+      // frame (and force a reflow when the glass scan reads rects below);
+      // composited transforms keep the whole loop off the layout path. The
+      // interactive "hot" swell is lerped here too — a CSS transition on a
+      // per-frame transform would drag the whole cursor behind the pointer.
+      const hotK = 1 - Math.pow(1 - 0.18, f);
+      hotScale += ((hot ? 1 : 0) - hotScale) * hotK;
+      const sLead = 1 + 0.6 * hotScale;
+      const sT1 = 1 + 0.32 * hotScale;
       if (lead.current) {
-        lead.current.style.left = `${mx}px`;
-        lead.current.style.top = `${my}px`;
+        lead.current.style.transform = `translate3d(${mx}px,${my}px,0) translate(-50%,-50%) scale(${sLead.toFixed(3)})`;
       }
       if (t1.current) {
-        t1.current.style.left = `${p1.x}px`;
-        t1.current.style.top = `${p1.y}px`;
+        t1.current.style.transform = `translate3d(${p1.x}px,${p1.y}px,0) translate(-50%,-50%) scale(${sT1.toFixed(3)})`;
       }
       if (t2.current) {
-        t2.current.style.left = `${p2.x}px`;
-        t2.current.style.top = `${p2.y}px`;
+        t2.current.style.transform = `translate3d(${p2.x}px,${p2.y}px,0) translate(-50%,-50%)`;
       }
 
       // ---- shed droplets evenly along the path the pointer just travelled ----
@@ -174,6 +199,18 @@ export function LiquidCursor() {
           dy = my - walkY;
           dist = Math.hypot(dx, dy);
         }
+      }
+
+      // ---- while hovering something interactive, keep beading a drip so the
+      // cursor visibly drips even when the pointer is still ----
+      if (revealed && hot) {
+        hotAcc += dt;
+        if (hotAcc >= HOT_MS) {
+          hotAcc = 0;
+          spawn(mx + rand(-3, 3), my + rand(4, 8), rand(-0.3, 0.3), rand(0.5, 1.1));
+        }
+      } else {
+        hotAcc = 0;
       }
 
       // ---- advance droplets ----
@@ -220,6 +257,7 @@ export function LiquidCursor() {
 
     return () => {
       removeEventListener("pointermove", onMove);
+      removeEventListener("pointerover", onOver);
       removeEventListener("capad:loaded", reveal);
       clearTimeout(revealTimer);
       cancelAnimationFrame(raf);

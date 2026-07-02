@@ -1,0 +1,41 @@
+# Push to main → build with OpenNext → deploy the worker to Cloudflare.
+# Needs two repo secrets (Settings → Secrets and variables → Actions):
+#   CLOUDFLARE_API_TOKEN  — API token with the "Edit Cloudflare Workers" template
+#   CLOUDFLARE_ACCOUNT_ID — dash.cloudflare.com → right sidebar of any zone
+# Optional: RESEND_API_KEY + SANITY_REVALIDATE_SECRET are runtime secrets — set
+# them on the worker itself (npx wrangler secret put NAME), not here.
+name: Deploy to Cloudflare
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build & deploy worker
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy
+          preCommands: npx opennextjs-cloudflare build

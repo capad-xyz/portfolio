@@ -41,6 +41,14 @@ export const project = defineType({
       validation: (Rule) => Rule.required().max(260),
     }),
     defineField({
+      name: "nowLine",
+      title: "Now line",
+      description:
+        "One short line of what's happening on the project right now (e.g. 'hardening bridge ops toward the multi-account inbox'). Shown with a pulse on ongoing cards; leave empty to hide.",
+      type: "string",
+      validation: (Rule) => Rule.max(120),
+    }),
+    defineField({
       name: "metrics",
       title: "Metrics",
       description:

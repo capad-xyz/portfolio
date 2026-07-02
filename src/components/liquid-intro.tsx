@@ -1,33 +1,53 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { gsap } from "gsap";
 
 /**
- * The signature startup: a dark, light-refracting liquid drop falls to the
- * bottom of the screen, splashes, and the impact sends a "develop wave" up the
- * page that the hero reveals in sync with (the hero runs its own matching
- * timings). The drop then hands off to the gooey cursor (`capad:loaded`).
- * All movement is transform/opacity via the Web Animations API.
+ * The signature startup: a dark, light-refracting liquid drop wells up, falls,
+ * splashes into a crown of droplets, and the impact sends a "develop wave" up
+ * the page that the hero reveals in sync with (the hero runs its own matching
+ * timings — keep the 0.56s impact / 1.15s loaded / 1.35s teardown contract).
+ * Choreographed on one GSAP timeline: anticipation swell → gravity fall with
+ * squash-and-stretch → pool + rings + crown → wave.
  *
- * Reduced-motion skips the whole thing and signals loaded immediately. The full
- * animation plays once per session; repeat views (e.g. returning from a
- * /work/[slug] page) skip straight to loaded so the signature moment isn't
- * replayed on every back-navigation.
+ * Replay rule: the intro plays on the first visit of a session AND again on any
+ * deliberate refresh (navigation type "reload" — a hard refresh included), but
+ * never on SPA back-navigation from /work/[slug], so the signature moment can
+ * be summoned on demand without haunting every route change.
+ * Reduced-motion skips everything and signals loaded immediately.
  */
+
+// splash crown: deterministic arcs (dx, peak height, size) — no RNG, SSR-safe
+const CROWN = [
+  { dx: -64, up: 84, s: 0.9 },
+  { dx: -34, up: 112, s: 1.1 },
+  { dx: -12, up: 92, s: 0.75 },
+  { dx: 14, up: 118, s: 1 },
+  { dx: 40, up: 96, s: 0.8 },
+  { dx: 66, up: 78, s: 1.05 },
+];
+
 export function LiquidIntro() {
   const [gone, setGone] = useState(false);
   const drop = useRef<HTMLDivElement>(null);
   const pool = useRef<HTMLDivElement>(null);
   const rings = useRef<HTMLDivElement[]>([]);
+  const crown = useRef<HTMLSpanElement[]>([]);
   const wave = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let seen = false;
+    let isReload = false;
     try {
       seen = sessionStorage.getItem("capad:introSeen") === "1";
+      const nav = performance.getEntriesByType("navigation")[0] as
+        | PerformanceNavigationTiming
+        | undefined;
+      isReload = nav?.type === "reload";
     } catch {}
 
-    if (matchMedia("(prefers-reduced-motion: reduce)").matches || seen) {
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches || (seen && !isReload)) {
       dispatchEvent(new Event("capad:loaded"));
       // defer a tick — setting state synchronously in an effect body triggers a
       // cascading render (react-hooks/set-state-in-effect)
@@ -35,74 +55,92 @@ export function LiquidIntro() {
       return () => window.clearTimeout(t);
     }
 
-    const timers: number[] = [];
-    const ease = "cubic-bezier(.45,0,.85,.5)";
+    const vh = window.innerHeight;
+    const tl = gsap.timeline();
 
-    // 1) the drop falls to the bottom — transform + scale only
-    drop.current?.animate(
-      [
-        { transform: "translate(-50%,-90px) scaleX(1) scaleY(1)" },
-        { transform: "translate(-50%,46vh) scaleX(.9) scaleY(1.25)", offset: 0.66 },
-        { transform: "translate(-50%,calc(100vh - 34px)) scaleX(.92) scaleY(1.5)", offset: 0.93 },
-        { transform: "translate(-50%,calc(100vh - 12px)) scaleX(1.7) scaleY(.3)", opacity: 0, offset: 1 },
-      ],
-      { duration: 560, fill: "forwards", easing: ease },
-    );
+    // 1) anticipation: the drop wells up at the top edge, heavy with itself…
+    tl.set(drop.current, { xPercent: -50, y: -90, scaleX: 1, scaleY: 1, opacity: 1 })
+      .to(drop.current, {
+        y: -64,
+        scaleY: 1.14,
+        scaleX: 0.92,
+        duration: 0.14,
+        ease: "power1.out",
+      })
+      // 2) …then gravity takes it: stretch grows with speed
+      .to(drop.current, {
+        y: vh - 34,
+        scaleY: 1.5,
+        scaleX: 0.9,
+        duration: 0.36,
+        ease: "power2.in",
+      })
+      // 3) impact: flatten into the floor and vanish into the pool
+      .to(drop.current, {
+        y: vh - 12,
+        scaleY: 0.28,
+        scaleX: 1.75,
+        opacity: 0,
+        duration: 0.07,
+        ease: "power1.out",
+      });
 
-    // 2) impact splash: pool + ripples
-    timers.push(
-      window.setTimeout(() => {
-        pool.current?.animate(
-          [
-            { transform: "translateX(-50%) scale(0)", opacity: 1 },
-            { transform: "translateX(-50%) scale(1.5)", opacity: 0.85, offset: 0.4 },
-            { transform: "translateX(-50%) scale(2.3)", opacity: 0 },
-          ],
-          { duration: 1000, fill: "forwards", easing: "cubic-bezier(.2,.7,.3,1)" },
-        );
-        rings.current.forEach((r, i) =>
-          timers.push(
-            window.setTimeout(() => {
-              r?.animate(
-                [
-                  { transform: "translate(-50%,50%) scale(0)", opacity: 0.65 },
-                  { transform: "translate(-50%,50%) scale(28)", opacity: 0 },
-                ],
-                { duration: 1000, fill: "forwards", easing: "cubic-bezier(.2,.7,.3,1)" },
-              );
-            }, i * 110),
-          ),
-        );
-      }, 520),
-    );
+    // 4) splash: pool spreads, rings ripple out, a crown of droplets arcs up
+    const IMPACT = 0.56;
+    tl.fromTo(
+      pool.current,
+      { xPercent: -50, scale: 0, opacity: 1 },
+      { scale: 1.5, opacity: 0.85, duration: 0.38, ease: "power2.out" },
+      IMPACT,
+    ).to(pool.current, { scale: 2.3, opacity: 0, duration: 0.55, ease: "power1.out" }, IMPACT + 0.38);
 
-    // 3) develop wave sweeps up the screen (the hero reveals in sync)
-    timers.push(
-      window.setTimeout(() => {
-        const w = wave.current;
-        if (!w) return;
-        w.style.opacity = "1";
-        w.animate([{ transform: "translateY(0)" }, { transform: "translateY(-100vh)" }], {
-          duration: 900,
-          fill: "forwards",
-          easing: "cubic-bezier(.4,0,.2,1)",
-        });
-        timers.push(window.setTimeout(() => (w.style.opacity = "0"), 850));
-      }, 600),
-    );
+    rings.current.forEach((r, i) => {
+      tl.fromTo(
+        r,
+        { xPercent: -50, yPercent: 50, scale: 0, opacity: 0.65 },
+        { scale: 28, opacity: 0, duration: 1, ease: "power2.out" },
+        IMPACT + i * 0.11,
+      );
+    });
 
-    // 4) hand off to the cursor, then remove the overlay + remember we played it
-    timers.push(window.setTimeout(() => dispatchEvent(new Event("capad:loaded")), 1150));
-    timers.push(
-      window.setTimeout(() => {
+    crown.current.forEach((c, i) => {
+      const { dx, up, s } = CROWN[i];
+      tl.fromTo(
+        c,
+        { x: 0, y: 0, scale: s * 0.6, opacity: 0.9 },
+        { x: dx * 0.7, y: -up, scale: s, duration: 0.24, ease: "power2.out" },
+        IMPACT + 0.02,
+      ).to(
+        c,
+        { x: dx, y: 26, scale: s * 0.4, opacity: 0, duration: 0.34, ease: "power2.in" },
+        IMPACT + 0.26,
+      );
+    });
+
+    // 5) the develop wave sweeps up the screen (the hero reveals in sync)
+    tl.fromTo(
+      wave.current,
+      { y: 0, opacity: 1 },
+      { y: -vh, duration: 0.9, ease: "power2.inOut" },
+      0.6,
+    ).set(wave.current, { opacity: 0 }, 1.45);
+
+    // 6) hand off to the cursor, then remove the overlay + remember we played it
+    tl.call(() => dispatchEvent(new Event("capad:loaded")), [], 1.15);
+    tl.call(
+      () => {
         try {
           sessionStorage.setItem("capad:introSeen", "1");
         } catch {}
         setGone(true);
-      }, 1350),
+      },
+      [],
+      1.35,
     );
 
-    return () => timers.forEach(clearTimeout);
+    return () => {
+      tl.kill();
+    };
   }, []);
 
   if (gone) return null;
@@ -120,7 +158,16 @@ export function LiquidIntro() {
           className="ring"
         />
       ))}
-      <div ref={wave} className="wave" style={{ bottom: 0, transform: "translateY(160px)" }} />
+      {CROWN.map((_, i) => (
+        <span
+          key={i}
+          ref={(el) => {
+            if (el) crown.current[i] = el;
+          }}
+          className="splashlet"
+        />
+      ))}
+      <div ref={wave} className="wave" style={{ bottom: 0 }} />
     </div>
   );
 }

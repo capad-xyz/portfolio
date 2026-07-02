@@ -1,6 +1,8 @@
 import { NextRequest } from "next/server";
 
-export const runtime = "edge";
+// No `runtime = "edge"` export: on Cloudflare (via @opennextjs/cloudflare) the
+// whole app already runs in workerd, and the adapter rejects edge-runtime
+// route declarations. Locally this simply runs in Node.
 
 const FROM = "Portfolio <contact@capad.fyi>";
 const TO = "connect@capad.fyi";
@@ -72,20 +74,29 @@ export async function POST(req: NextRequest) {
     `IP:   ${ip}\n` +
     `\n--- message ---\n${message}\n`;
 
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${key}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from: FROM,
-      to: TO,
-      subject,
-      text,
-      reply_to: email,
-    }),
-  });
+  // A network-level failure (DNS, TLS, sandbox) makes fetch throw rather than
+  // return !ok — without this catch the route 500s with an HTML error page and
+  // the form's res.json() chokes on it.
+  let res: Response;
+  try {
+    res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${key}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: FROM,
+        to: TO,
+        subject,
+        text,
+        reply_to: email,
+      }),
+    });
+  } catch (err) {
+    console.error("Resend unreachable", err instanceof Error ? err.message : err);
+    return Response.json({ error: "Couldn't send. Try email directly." }, { status: 502 });
+  }
 
   if (!res.ok) {
     const detail = await res.text().catch(() => "");

@@ -29,6 +29,31 @@ body {
   cursor: none;
 }
 
+/* ---- keyboard access: the custom cursor hides the pointer, so focus has to
+   carry the wayfinding for keyboard users. A soft ink ring on :focus-visible
+   only — mouse clicks stay clean. ---- */
+:focus-visible {
+  outline: 2px solid rgba(11, 11, 13, 0.55);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+.lqbtn:focus-visible,
+.glass:focus-visible {
+  outline-offset: 4px;
+  border-radius: 999px;
+}
+
+/* hidden until focused, then a small glass chip at the top-left */
+.skip-link {
+  position: fixed; left: 16px; top: 16px; z-index: 2147483602;
+  transform: translateY(-200%);
+  padding: 10px 18px; border-radius: 999px;
+  background: var(--ink); color: var(--paper);
+  font-size: 13px; font-weight: 600; text-decoration: none;
+  transition: transform 0.25s ease;
+}
+.skip-link:focus-visible { transform: none; outline-offset: 2px; }
+
 /* film grain — keeps flat mono alive, hides blur banding */
 .grain {
   position: fixed; inset: 0; z-index: 60; pointer-events: none;
@@ -61,21 +86,66 @@ body {
 
 .glass {
   position: relative; overflow: hidden;
-  background: rgba(255, 255, 255, 0.42);
-  border: 1px solid rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.44);
+  border: 1px solid rgba(255, 255, 255, 0.85);
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.95) inset,
-    0 -10px 16px -12px rgba(0, 0, 0, 0.18) inset,
-    0 16px 40px -16px rgba(20, 20, 30, 0.28),
+    0 12px 20px -16px rgba(255, 255, 255, 0.9) inset,
+    0 -12px 20px -14px rgba(0, 0, 0, 0.22) inset,
+    0 16px 40px -16px rgba(20, 20, 30, 0.3),
+    0 2px 6px -2px rgba(20, 20, 30, 0.12),
     0 0 0 0.5px rgba(255, 255, 255, 0.5);
   -webkit-backdrop-filter: blur(12px) saturate(160%);
-  backdrop-filter: blur(7px) saturate(185%) brightness(1.05) url(#refract);
+  backdrop-filter: blur(8px) saturate(190%) brightness(1.05) url(#refract);
   contain: paint;
+  transition:
+    background-color 0.55s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    border-color 0.55s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    box-shadow 0.75s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
+/* the material answers the cursor: the pane brightens, the bevel deepens */
+@media (hover: hover) {
+  .glass:hover {
+    background: rgba(255, 255, 255, 0.52);
+    border-color: rgba(255, 255, 255, 0.95);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 1) inset,
+      0 14px 24px -16px rgba(255, 255, 255, 1) inset,
+      0 -14px 24px -14px rgba(0, 0, 0, 0.26) inset,
+      0 22px 52px -18px rgba(20, 20, 30, 0.36),
+      0 2px 6px -2px rgba(20, 20, 30, 0.14),
+      0 0 0 0.5px rgba(255, 255, 255, 0.6);
+  }
+}
+/* beveled rim: a 1px light gradient ring that reads as a real glass edge —
+   bright where the overhead light catches (top-left), falling to shadow */
+.glass::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  border-radius: inherit; padding: 1px;
+  background: linear-gradient(
+    155deg,
+    rgba(255, 255, 255, 0.95),
+    rgba(255, 255, 255, 0.25) 32%,
+    rgba(11, 11, 13, 0.06) 62%,
+    rgba(255, 255, 255, 0.55)
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+}
+/* cursor-lit specular: a soft core over a wide bloom, brightening on hover */
 .glass::after {
   content: ""; position: absolute; inset: 0; pointer-events: none;
-  background: radial-gradient(150px 150px at var(--mx) var(--my), rgba(255, 255, 255, 0.7), transparent 60%);
+  background:
+    radial-gradient(90px 90px at var(--mx) var(--my), rgba(255, 255, 255, 0.55), transparent 62%),
+    radial-gradient(220px 220px at var(--mx) var(--my), rgba(255, 255, 255, 0.4), transparent 64%);
   mix-blend-mode: screen;
+  opacity: 0.75;
+  transition: opacity 0.35s ease;
+}
+@media (hover: hover) {
+  .glass:hover::after { opacity: 1; }
 }
 
 /* ---- liquid glass plate behind hero content ---- */
@@ -111,13 +181,63 @@ body {
 /* over a lensable element the gooey cursor steps aside for the lens */
 body.lensing .cursor.on { opacity: 0; }
 
+/* the hero's magnetic CTA needs transform in its transition list — the .glass
+   material transition (unlayered) beats Tailwind's transition-transform, so
+   the full list lives here instead */
+.lqbtn-magnetic {
+  transition:
+    background-color 0.35s ease,
+    border-color 0.35s ease,
+    box-shadow 0.5s cubic-bezier(0.2, 0.8, 0.2, 1),
+    transform 0.3s ease-out;
+}
+
+/* ---- chips: the small system pill (stack, principles, tags) ----
+   A lighter cut of the glass: hairline rim, top-lit, mono lowercase. Hovering
+   lifts it and inks the text in; pressing gives an immediate sink so rapid
+   clicking always reads. */
+.chip {
+  display: inline-flex; align-items: center;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.34));
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 -4px 8px -6px rgba(0, 0, 0, 0.14) inset,
+    0 6px 16px -8px rgba(20, 20, 30, 0.22),
+    0 0 0 0.5px rgba(255, 255, 255, 0.4);
+  color: #3c3b36;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  transition:
+    transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+    background-color 0.3s ease,
+    color 0.3s ease;
+}
+/* hover answers with light, not movement — the text inks in and the pane
+   brightens in place (no slide) */
+@media (hover: hover) {
+  .chip:hover {
+    color: var(--ink);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.46));
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 1) inset,
+      0 -4px 8px -6px rgba(0, 0, 0, 0.16) inset,
+      0 8px 18px -8px rgba(20, 20, 30, 0.26),
+      0 0 0 0.5px rgba(255, 255, 255, 0.5);
+  }
+}
+.chip:active { transform: scale(0.96); transition-duration: 0.08s; }
+
 /* ---- liquid button ---- */
 .lqbtn {
   position: relative; overflow: hidden; cursor: none;
   color: var(--ink); background: rgba(255, 255, 255, 0.5);
   will-change: transform;
 }
-.lqbtn .lbl { position: relative; z-index: 2; transition: color 0.35s ease; }
+/* label inks over + gives a quick press-sink so every click reads instantly */
+.lqbtn .lbl { position: relative; z-index: 2; display: inline-block; transition: color 0.35s ease, transform 0.12s ease; }
+.lqbtn:active .lbl { transform: scale(0.95); }
 .lqbtn .fill {
   position: absolute; z-index: 1; width: 24px; height: 24px; border-radius: 50%;
   background: var(--ink); transform: translate(-50%, -50%) scale(0);
@@ -188,6 +308,29 @@ body.lensing .cursor.on { opacity: 0; }
 .cursor .t1 { width: 24px; height: 24px; }
 .cursor .t2 { width: 13px; height: 13px; }
 
+/* ---- one cursor to rule them all ----
+   The liquid cursor replaces every native state (grab, text, pointer, select)
+   wherever it actually paints. Deliberately NOT !important: the contact bubble
+   and its panel sit ABOVE the cursor layer (z ≈ 2^31) and set their own inline
+   cursors, so leaving importance off lets them keep real, visible cursors while
+   everything else falls through to the drippy one. Gated to a fine pointer with
+   motion allowed — touch, reduced-motion and Sanity Studio keep native cursors. */
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  body:not(.studio-mode) * { cursor: none; }
+  /* the contact panel paints above the cursor layer — restore native cursors */
+  body:not(.studio-mode) .contact-panel,
+  body:not(.studio-mode) .contact-panel * { cursor: auto; }
+  body:not(.studio-mode) .contact-panel a,
+  body:not(.studio-mode) .contact-panel button,
+  body:not(.studio-mode) .contact-panel [role="button"],
+  body:not(.studio-mode) .contact-panel .lqbtn { cursor: pointer; }
+  body:not(.studio-mode) .contact-panel input,
+  body:not(.studio-mode) .contact-panel textarea { cursor: text; }
+}
+/* the mercury blob swells over interactive things — the swell itself is lerped
+   inside LiquidCursor's rAF loop (a CSS transform transition would lag the
+   whole per-frame-positioned cursor behind the pointer) */
+
 /* ---- dripping droplet trail: sheds off the cursor along its path, then
    falls + fades. Own #goo-drip filter so neighbours fuse into running liquid;
    pooled <i> nodes positioned/stretched per-frame from LiquidCursor. ---- */
@@ -218,6 +361,71 @@ body.lensing .cursor.on { opacity: 0; }
   transform: translate3d(-9999px, -9999px, 0); will-change: transform, opacity;
 }
 
+/* ---- contact-bubble face: normally an envelope, it morphs into a winking
+   smiley now and then, and into a scared/teary face while it's dragged near the
+   dismiss ("remove") target. The three groups crossfade; `.happy` / `.scared`
+   are toggled from ContactWidget (an occasional timer + a proximity loop). ---- */
+/* the whole bubble (the mercury surface) spins a full turn on each swap — JS
+   bumps the surface's `rotate` property; see ContactWidget */
+.cap-face { line-height: 0; }
+.cap-face svg { overflow: visible; }
+.cap-face g[class^="g-"] { transition: opacity 0.3s ease; }
+.cap-face .g-envelope { opacity: 1; }
+.cap-face .g-smiley,
+.cap-face .g-grin,
+.cap-face .g-scared { opacity: 0; }
+/* the smiley/grin are drawn much bigger + bolder than the envelope so they read as a face */
+.cap-face .g-smiley,
+.cap-face .g-grin { transform: scale(1.26); transform-box: fill-box; transform-origin: center; }
+.cap-face .eye-r { transform-box: fill-box; transform-origin: center; }
+
+/* hover / press: an open-mouthed grin — a plain crossfade, deliberately no spin */
+.cap-face.grin .g-envelope,
+.cap-face.grin .g-smiley { opacity: 0; }
+.cap-face.grin .g-grin { opacity: 1; }
+
+/* occasional smiley (crossfade + one wink; the surface spins 360° via JS) */
+.cap-face.happy .g-envelope { opacity: 0; }
+.cap-face.happy .g-smiley { opacity: 1; }
+@media (prefers-reduced-motion: no-preference) {
+  .cap-face.happy .eye-r { animation: cap-wink 1.5s ease-in-out 0.55s 1; }
+}
+@keyframes cap-wink {
+  0%, 100% { transform: scaleY(1); }
+  45% { transform: scaleY(0.1); }
+  62% { transform: scaleY(1); }
+}
+
+/* scared/sad — the scared face swaps in fully as soon as the bubble is anywhere
+   near the remove target (so it always reads clearly), then its intensity grows
+   with --fear (0→1): eyes widen, frown deepens, teardrop swells, tremble builds */
+.cap-face.scared .g-envelope,
+.cap-face.scared .g-smiley,
+.cap-face.scared .g-grin { opacity: 0; }
+.cap-face .g-scared { transform-box: fill-box; transform-origin: center; }
+.cap-face.scared .g-scared {
+  opacity: 1;
+  transform: scale(calc(1.06 + var(--fear, 0) * 0.34));
+}
+.cap-face .s-eyes { transform-box: fill-box; transform-origin: center; }
+.cap-face.scared .s-eyes { transform: scale(calc(1 + var(--fear, 0) * 0.65)); }
+.cap-face .s-frown { transform-box: fill-box; transform-origin: center; }
+.cap-face.scared .s-frown { transform: scaleY(calc(1 + var(--fear, 0) * 1.25)); }
+.cap-face .tear { opacity: 0; }
+.cap-face.scared .tear { opacity: calc(0.5 + var(--fear, 0) * 0.5); }
+@media (prefers-reduced-motion: no-preference) {
+  .cap-face.scared svg { animation: cap-shiver 0.22s ease-in-out infinite; }
+  .cap-face.scared .tear { animation: cap-tear 0.9s ease-in-out infinite; }
+}
+@keyframes cap-shiver {
+  0%, 100% { transform: translateX(calc(-0.5px - var(--fear, 0) * 2.4px)); }
+  50% { transform: translateX(calc(0.5px + var(--fear, 0) * 2.4px)); }
+}
+@keyframes cap-tear {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(calc(2px + var(--fear, 0) * 3px)); }
+}
+
 /* ---- intro: the falling liquid drop (dark, light-refracting edge) ---- */
 .drop {
   position: fixed; left: 50%; top: 0; z-index: 90; width: 34px; height: 50px;
@@ -239,6 +447,16 @@ body.lensing .cursor.on { opacity: 0; }
   border: 1.5px solid rgba(90, 90, 100, 0.45); box-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
   transform: translate(-50%, 50%) scale(0); will-change: transform; opacity: 0;
 }
+/* splash-crown droplets: small dark beads flung up from the impact point */
+.splashlet {
+  position: fixed; left: 50%; bottom: 10px; z-index: 89;
+  width: 10px; height: 13px; margin-left: -5px;
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  background: radial-gradient(circle at 36% 26%, rgba(255, 255, 255, 0.8), rgba(60, 60, 68, 0.5) 36%, rgba(11, 11, 13, 0.85) 78%);
+  box-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.35), inset 0 -2px 3px rgba(0, 0, 0, 0.5);
+  opacity: 0; will-change: transform; pointer-events: none;
+}
+
 .wave {
   position: fixed; left: 0; right: 0; height: 160px; z-index: 70; bottom: -160px; pointer-events: none; opacity: 0;
   background: linear-gradient(180deg, transparent, rgba(20, 20, 30, 0.04) 50%, rgba(255, 255, 255, 0.5) 76%, transparent);
@@ -256,12 +474,55 @@ body.lensing .cursor.on { opacity: 0; }
 .wordmark.ghost { opacity: 0.1; filter: blur(8px); transform: none; }
 .wordmark.in { opacity: 1; filter: blur(0); transform: none; animation: none; }
 
-/* ---- scroll-reveal for sections below the fold (transform/opacity only) ---- */
+/* ---- brand signature under the name: a small logotype flanked by hairlines ---- */
+.wm-sig-rule { height: 1px; width: 34px; background: rgba(11, 11, 13, 0.2); }
+
+/* ---- scroll-reveal for sections below the fold (transform/opacity only) ----
+   Elements arriving in the same IntersectionObserver batch are staggered by
+   the Reveal island via an inline transition-delay (cleared once landed, so
+   hover transitions never inherit it). */
 .reveal-up { opacity: 0; transform: translateY(28px); transition: opacity 0.8s ease, transform 0.9s cubic-bezier(0.16, 1, 0.3, 1); }
 .reveal-up.in { opacity: 1; transform: none; }
 
+/* ---- card hover: no movement — the plate stays put and answers with a
+   deeper floating shadow + the .glass brighten/specular response ---- */
+@media (hover: hover) {
+  .card-lift { transition: opacity 0.8s ease, transform 0.9s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.75s cubic-bezier(0.25, 0.46, 0.45, 0.94), background-color 0.55s cubic-bezier(0.25, 0.46, 0.45, 0.94), border-color 0.55s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+  .card-lift.in:hover {
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.95) inset,
+      0 -10px 16px -12px rgba(0, 0, 0, 0.18) inset,
+      0 28px 56px -22px rgba(20, 20, 30, 0.34),
+      0 0 0 0.5px rgba(255, 255, 255, 0.5);
+  }
+}
+
+/* ---- the fixed hero proof strip steps aside once you've left the hero, so it
+   never sits on top of the testimonial deck or the sign-off. Centering lives on
+   the `translate` property (Tailwind), so `transform` here only nudges down;
+   filter stays in the transition list for the .dev develop-in. ---- */
+.proof-strip { transition: opacity 0.45s ease, filter 0.6s ease, transform 0.45s ease; }
+.proof-strip.gone { opacity: 0 !important; transform: translateY(12px); pointer-events: none; }
+
+/* ---- case-study chapters: each h2 gets an auto-incrementing mono index, so
+   the Sanity body needs zero markup to read as numbered sections ---- */
+.case-body { counter-reset: cs-chapter; }
+.case-body h2 { counter-increment: cs-chapter; }
+.case-body h2::before {
+  content: counter(cs-chapter, decimal-leading-zero);
+  display: block; margin-bottom: 6px;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 11px; font-weight: 400; letter-spacing: 0.3em;
+  color: var(--muted);
+}
+
 /* section heading eyebrow shared across the spine */
 .section-eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--muted); }
+
+/* personal sign-off: handwritten name over the capad brand mark */
+.sig-name { font-family: var(--font-signature), "Segoe Script", cursive; font-size: clamp(38px, 5.5vw, 60px); line-height: 1; color: var(--ink); }
+.sig-mark { display: flex; align-items: center; justify-content: center; gap: 14px; font-family: var(--font-mono); font-size: 13px; letter-spacing: -0.01em; text-transform: lowercase; color: var(--muted); }
+.sig-mark::before, .sig-mark::after { content: ""; width: 34px; height: 1px; background: currentColor; opacity: 0.4; }
 
 /* ---- right-rail liquid dot navigation ---- */
 .cap-dn-rail {
@@ -351,7 +612,7 @@ body.studio-mode .grain, body.studio-mode .ambient, body.studio-mode .cursor, bo
 
 @media (prefers-reduced-motion: reduce) {
   body { cursor: auto; }
-  .drop, .pool, .ring, .wave, .cursor, .drips { display: none !important; }
+  .drop, .pool, .ring, .wave, .splashlet, .cursor, .drips { display: none !important; }
   .dev, .wordmark, .reveal-up { opacity: 1 !important; filter: none !important; transform: none !important; }
   *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
 }

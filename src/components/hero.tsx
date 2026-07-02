@@ -9,9 +9,11 @@ import { useEffect, useRef } from "react";
  * the reveal transition. Reduced-motion shows everything instantly.
  */
 export function Hero() {
+  const root = useRef<HTMLElement>(null);
   const plate = useRef<HTMLDivElement>(null);
   const eyebrow = useRef<HTMLSpanElement>(null);
   const wordmark = useRef<HTMLHeadingElement>(null);
+  const sig = useRef<HTMLDivElement>(null);
   const tag = useRef<HTMLParagraphElement>(null);
   const ctaWrap = useRef<HTMLDivElement>(null);
   const proof = useRef<HTMLDivElement>(null);
@@ -25,20 +27,21 @@ export function Hero() {
     let rect: DOMRect | null = null;
 
     if (reduce) {
-      [plate, eyebrow, tag, ctaWrap, proof].forEach((r) => r.current?.classList.add("in"));
+      [plate, eyebrow, sig, tag, ctaWrap, proof].forEach((r) => r.current?.classList.add("in"));
       wordmark.current?.classList.add("in");
     } else {
       timers.push(window.setTimeout(() => wordmark.current?.classList.add("ghost"), 100));
-      // Value-prop first: the tagline (what we do) reveals right after the plate,
-      // before the wordmark, so a scanner reads the offer early; the wordmark
-      // lands later as the flourish. Timing stays synced to the full intro wave.
+      // Top-down cascade matching the read order of a name-led hero: role
+      // (eyebrow) -> the name (headline) -> capad signature -> story -> CTA,
+      // with the fixed proof strip last. Timing stays synced to the intro wave.
       const seq: [React.RefObject<HTMLElement | null>, number, boolean][] = [
         [plate, 560, false],
-        [tag, 640, false],
-        [proof, 730, false],
-        [ctaWrap, 840, false],
-        [wordmark, 980, true],
-        [eyebrow, 1120, false],
+        [eyebrow, 660, false],
+        [wordmark, 800, true],
+        [sig, 940, false],
+        [tag, 1040, false],
+        [ctaWrap, 1160, false],
+        [proof, 1240, false],
       ];
       seq.forEach(([r, t, isWord]) =>
         timers.push(
@@ -71,8 +74,18 @@ export function Hero() {
       addEventListener("resize", onResize, { passive: true });
     }
 
+    // The proof strip is viewport-fixed so it anchors the first impression, but
+    // past the hero it would sit on top of the deck and the sign-off — fade it
+    // out as soon as the hero leaves the viewport, back in on return.
+    const heroIo = new IntersectionObserver(
+      ([en]) => proof.current?.classList.toggle("gone", !en.isIntersecting),
+      { threshold: 0.15 },
+    );
+    if (root.current) heroIo.observe(root.current);
+
     return () => {
       timers.forEach(clearTimeout);
+      heroIo.disconnect();
       removeEventListener("pointermove", onMove);
       removeEventListener("resize", onResize);
     };
@@ -89,8 +102,10 @@ export function Hero() {
   };
 
   return (
-    <section className="relative flex min-h-screen flex-col items-center justify-center px-6 text-center">
-      <div ref={plate} className="plate dev absolute h-[min(56vh,440px)] w-[min(78vw,820px)]" />
+    <section ref={root} className="relative flex min-h-screen flex-col items-center justify-center px-6 text-center">
+      {/* sized to hold the whole column (eyebrow → CTA) so nothing spills past
+          the glass edge and the composition reads centered on the plate */}
+      <div ref={plate} className="plate dev absolute h-[min(76vh,640px)] w-[min(86vw,900px)]" />
 
       <span
         ref={eyebrow}
@@ -99,6 +114,8 @@ export function Hero() {
         developer tools · desktop apps
       </span>
 
+      {/* Brand-led: the capad wordmark is the monument; the name signs it just
+          beneath. Keeps the searchable brand loud while still naming the maker. */}
       <h1
         ref={wordmark}
         className="wordmark lensable text-[clamp(86px,15vw,220px)] font-bold leading-[0.84] tracking-[-0.05em]"
@@ -106,24 +123,43 @@ export function Hero() {
         capad
       </h1>
 
+      <div ref={sig} className="dev mt-6 flex items-center gap-3">
+        <span aria-hidden className="wm-sig-rule" />
+        <span className="font-mono text-[13px] tracking-[0.14em] text-[var(--muted)]">
+          Aadarsh Upadhyay
+        </span>
+        <span aria-hidden className="wm-sig-rule" />
+      </div>
+
       <p
         ref={tag}
         className="dev mt-5 max-w-[440px] text-[clamp(15px,1.5vw,19px)] leading-[1.55] text-[var(--muted)]"
       >
-        I build fast, genuinely-free tools for people who live in a terminal and an editor.
+        I build the tools that shouldn&apos;t need to exist. The ones that do frustrated me into
+        building better ones: fast, free, and yours to keep.
       </p>
 
-      <div ref={ctaWrap} className="dev mt-9">
-        <a
-          href="#work"
-          ref={cta}
-          className="glass lqbtn inline-block rounded-full px-8 py-[15px] text-[15px] font-semibold transition-transform duration-300 ease-out"
-          onPointerEnter={placeFill}
-          onPointerLeave={placeFill}
-        >
-          <span ref={fill} className="fill" />
-          <span className="lbl">See the work</span>
-        </a>
+      {/* Availability sits between the promise and the action: the reader has
+          just decided they like the work; "he's reachable" is the nudge that
+          converts. Primary CTA stays the work (proof first), contact is the
+          quiet second door. */}
+      <div ref={ctaWrap} className="dev mt-8 flex flex-col items-center gap-5">
+        <span className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white/40 px-3.5 py-1.5 font-mono text-[10px] uppercase tracking-[0.22em] text-[var(--ink)]/80">
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--ink)]" />
+          open to offers
+        </span>
+        <div className="flex flex-wrap items-center justify-center gap-4">
+          <a
+            href="#work"
+            ref={cta}
+            className="glass lqbtn lqbtn-magnetic inline-block rounded-full px-8 py-[15px] text-[15px] font-semibold"
+            onPointerEnter={placeFill}
+            onPointerLeave={placeFill}
+          >
+            <span ref={fill} className="fill" />
+            <span className="lbl">See the work</span>
+          </a>
+        </div>
       </div>
 
       {/* Authority strip. Names are framed as shipped, open-source output (true)
@@ -131,10 +167,10 @@ export function Hero() {
           here when you have them — never placeholder figures. */}
       <div
         ref={proof}
-        className="dev fixed bottom-6 left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 whitespace-nowrap font-mono text-[11px] tracking-[0.18em] text-[#8c8b86]"
+        className="dev proof-strip fixed bottom-6 left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 whitespace-nowrap font-mono text-[11px] tracking-[0.18em] text-[#8c8b86]"
       >
         <span className="text-[var(--ink)]/55">shipping in the open:</span>
-        <span>searchts &nbsp;·&nbsp; grove &nbsp;·&nbsp; glyphmaps</span>
+        <span>searchts &nbsp;·&nbsp; glyphmaps &nbsp;·&nbsp; grove &nbsp;·&nbsp; beep-beep-oss</span>
       </div>
     </section>
   );

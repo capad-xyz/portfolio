@@ -3,11 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import { useLenis } from "lenis/react";
 
-type Item = { id: "home" | "work" | "experience" | "stack" | "testimonials" | "contact"; label: string };
+type Item = { id: "home" | "work" | "about" | "experience" | "stack" | "testimonials" | "contact"; label: string };
 
 const ITEMS: Item[] = [
   { id: "home", label: "home" },
   { id: "work", label: "work" },
+  { id: "about", label: "about" },
   { id: "experience", label: "experience" },
   { id: "stack", label: "stack" },
   { id: "testimonials", label: "words" },

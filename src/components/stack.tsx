@@ -16,11 +16,16 @@ export async function Stack() {
       className="relative z-10 mx-auto max-w-5xl px-6 py-24 md:py-32"
     >
       <Reveal>
-        <header className="reveal-up mb-16 flex flex-col items-center gap-3 text-center md:mb-20">
+        <header className="reveal-up mb-16 flex flex-col items-center gap-4 text-center md:mb-20">
           <p className="section-eyebrow">the stack</p>
           <h2 className="text-[clamp(28px,4vw,46px)] font-bold leading-[1] tracking-[-0.02em]">
             What I reach for.
           </h2>
+          <p className="max-w-lg text-[15px] leading-[1.6] text-[var(--muted)]">
+            The deepest current groove is AI systems: multi-provider LLM platforms,
+            agentic assistants whose write-actions are safety-gated and audited, and
+            the Claude ecosystem end to end — API, MCP servers, Code skills.
+          </p>
         </header>
 
         <div className="flex flex-col gap-10">
@@ -36,7 +41,7 @@ export async function Stack() {
                 {g.items?.map((t) => (
                   <span
                     key={t}
-                    className="glass lensable rounded-full px-4 py-2 text-sm font-medium transition-transform duration-300 ease-out hover:-translate-y-0.5"
+                    className="chip lensable px-4 py-2 text-[13px] lowercase tracking-[0.04em]"
                   >
                     {t}
                   </span>

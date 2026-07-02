@@ -19,13 +19,25 @@ export function Reveal({ children }: { children: ReactNode }) {
       return;
     }
     const io = new IntersectionObserver(
-      (entries) =>
+      (entries) => {
+        // Elements crossing in the same batch cascade in document order; a
+        // solo element (slow scroll) reveals immediately. The inline delay is
+        // cleared once the transition lands so hover effects never inherit it.
+        let batch = 0;
         entries.forEach((en) => {
-          if (en.isIntersecting) {
-            en.target.classList.add("in");
-            io.unobserve(en.target);
+          if (!en.isIntersecting) return;
+          const el = en.target as HTMLElement;
+          const delay = Math.min(batch++ * 90, 450);
+          if (delay) {
+            el.style.transitionDelay = `${delay}ms`;
+            window.setTimeout(() => {
+              el.style.transitionDelay = "";
+            }, delay + 950);
           }
-        }),
+          el.classList.add("in");
+          io.unobserve(el);
+        });
+      },
       { threshold: 0.18, rootMargin: "0px 0px -10% 0px" },
     );
     els.forEach((e) => io.observe(e));

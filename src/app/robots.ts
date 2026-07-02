@@ -5,5 +5,6 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       { userAgent: "*", allow: "/", disallow: ["/studio", "/studio/"] },
     ],
+    sitemap: "https://capad.fyi/sitemap.xml",
   };
 }

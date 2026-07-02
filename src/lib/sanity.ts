@@ -1,14 +1,23 @@
 import { createClient, type ClientPerspective } from "next-sanity";
-import imageUrlBuilder from "@sanity/image-url";
+import { createImageUrlBuilder } from "@sanity/image-url";
 import type { PortableTextBlock } from "@portabletext/types";
-import { DEMO_PROJECTS, DEMO_TESTIMONIALS } from "./demo-content";
+import {
+  DEMO_PROJECTS,
+  DEMO_TESTIMONIALS,
+  DEMO_WORK_EXPERIENCE,
+  DEMO_STACK_GROUPS,
+} from "./demo-content";
 
-// Demo content shows only when a query returns nothing — real CMS data always
-// wins. On in dev / any non-production build, or force-on in prod with
-// NEXT_PUBLIC_DEMO_CONTENT=1 for a staging preview. See ./demo-content.
+// While demo mode is on, demo content OVERRIDES the CMS so every section is
+// guaranteed to render (preview mode). On in dev / any non-production build,
+// off in production. Force on with NEXT_PUBLIC_DEMO_CONTENT=1 (e.g. a staging
+// preview), or off with =0 to preview real CMS content in dev. See ./demo-content.
 const DEMO_ENABLED =
-  process.env.NEXT_PUBLIC_DEMO_CONTENT === "1" ||
-  process.env.NODE_ENV !== "production";
+  process.env.NEXT_PUBLIC_DEMO_CONTENT === "1"
+    ? true
+    : process.env.NEXT_PUBLIC_DEMO_CONTENT === "0"
+      ? false
+      : process.env.NODE_ENV !== "production";
 
 export const sanity = createClient({
   projectId: "v6eklfsd",
@@ -18,7 +27,7 @@ export const sanity = createClient({
   perspective: "published" as ClientPerspective,
 });
 
-const builder = imageUrlBuilder(sanity);
+const builder = createImageUrlBuilder(sanity);
 export const urlFor = (source: Parameters<typeof builder.image>[0]) =>
   builder.image(source);
 
@@ -41,6 +50,8 @@ export type Project = {
   slug: string;
   status: ProjectStatus;
   oneLiner: string;
+  /** One line of live status shown on ongoing cards ("now: …"). */
+  nowLine?: string;
   metrics?: ProjectMetric[];
   tags?: string[];
   year?: string;
@@ -48,6 +59,8 @@ export type Project = {
   links?: ProjectLink[];
   /** True when a case-study body exists, so the card can show a "read the story" link. */
   hasStory?: boolean;
+  /** Estimated case-study reading time (minutes) — only set by getAllProjects. */
+  readMinutes?: number;
 };
 
 export type ProjectDetail = Project & {
@@ -87,6 +100,7 @@ const PROJECT_CARD_FIELDS = `
   "slug": slug.current,
   status,
   oneLiner,
+  nowLine,
   metrics[]{value, label},
   tags,
   year,
@@ -106,9 +120,66 @@ const FEATURED_PROJECTS_QUERY = `
 // `order` from GROQ is preserved within each status band.
 const STATUS_RANK: Record<ProjectStatus, number> = { done: 0, ongoing: 1, archived: 2 };
 
+// Resilient fetch: a transient Sanity/CDN failure returns the fallback (and logs)
+// instead of throwing, so one flaky query can't 500 the whole page or fail a build.
+async function safeFetch<T>(
+  query: string,
+  params: Record<string, unknown>,
+  fallback: T,
+  label: string,
+): Promise<T> {
+  try {
+    return await sanity.fetch<T>(query, params);
+  } catch (err) {
+    console.error(`[sanity] ${label} fetch failed:`, err instanceof Error ? err.message : err);
+    return fallback;
+  }
+}
+
 export async function getFeaturedProjects(): Promise<Project[]> {
-  const projects = await sanity.fetch<Project[]>(FEATURED_PROJECTS_QUERY);
-  const list = projects.length || !DEMO_ENABLED ? projects : DEMO_PROJECTS;
+  const list: Project[] = DEMO_ENABLED
+    ? DEMO_PROJECTS
+    : await safeFetch<Project[]>(FEATURED_PROJECTS_QUERY, {}, [], "featured projects");
+  return [...list].sort((a, b) => STATUS_RANK[a.status] - STATUS_RANK[b.status]);
+}
+
+// Every project, featured or not — the /projects article index. Same card
+// projection plus a word count so the index can show honest reading times.
+const ALL_PROJECTS_QUERY = `
+  *[_type == "project"] | order(order asc, _createdAt desc){
+    ${PROJECT_CARD_FIELDS},
+    "readWords": length(string::split(pt::text(body), " "))
+  }
+`;
+
+const READ_WPM = 200;
+
+/** Demo-path equivalent of the GROQ word count: joins the block spans. */
+function demoReadMinutes(p: ProjectDetail): number | undefined {
+  if (!p.body?.length) return undefined;
+  const words = p.body
+    .flatMap((b) => ("children" in b && Array.isArray(b.children) ? b.children : []))
+    .map((c) => (typeof c.text === "string" ? c.text : ""))
+    .join(" ")
+    .split(/\s+/)
+    .filter(Boolean).length;
+  return Math.max(1, Math.ceil(words / READ_WPM));
+}
+
+export async function getAllProjects(): Promise<Project[]> {
+  const list: Project[] = DEMO_ENABLED
+    ? DEMO_PROJECTS.map((p) => ({ ...p, readMinutes: demoReadMinutes(p) }))
+    : (
+        await safeFetch<(Project & { readWords?: number })[]>(
+          ALL_PROJECTS_QUERY,
+          {},
+          [],
+          "all projects",
+        )
+      ).map(({ readWords, ...p }) => ({
+        ...p,
+        readMinutes: readWords ? Math.max(1, Math.ceil(readWords / READ_WPM)) : undefined,
+      }));
   return [...list].sort((a, b) => STATUS_RANK[a.status] - STATUS_RANK[b.status]);
 }
 
@@ -120,10 +191,11 @@ const PROJECT_BY_SLUG_QUERY = `
 `;
 
 export async function getProjectBySlug(slug: string): Promise<ProjectDetail | null> {
-  const project = await sanity.fetch<ProjectDetail | null>(PROJECT_BY_SLUG_QUERY, { slug });
-  if (project) return project;
-  if (!DEMO_ENABLED) return null;
-  return DEMO_PROJECTS.find((p) => p.slug === slug) ?? null;
+  if (DEMO_ENABLED) {
+    const demo = DEMO_PROJECTS.find((p) => p.slug === slug);
+    if (demo) return demo;
+  }
+  return safeFetch<ProjectDetail | null>(PROJECT_BY_SLUG_QUERY, { slug }, null, `project "${slug}"`);
 }
 
 const PROJECT_SLUGS_QUERY = `
@@ -131,9 +203,8 @@ const PROJECT_SLUGS_QUERY = `
 `;
 
 export async function getProjectSlugs(): Promise<string[]> {
-  const slugs = await sanity.fetch<string[]>(PROJECT_SLUGS_QUERY);
-  if (slugs.length || !DEMO_ENABLED) return slugs;
-  return DEMO_PROJECTS.map((p) => p.slug);
+  if (DEMO_ENABLED) return DEMO_PROJECTS.map((p) => p.slug);
+  return safeFetch<string[]>(PROJECT_SLUGS_QUERY, {}, [], "project slugs");
 }
 
 const WORK_EXPERIENCE_QUERY = `
@@ -149,7 +220,8 @@ const WORK_EXPERIENCE_QUERY = `
 `;
 
 export async function getWorkExperience(): Promise<WorkExperience[]> {
-  return sanity.fetch<WorkExperience[]>(WORK_EXPERIENCE_QUERY);
+  if (DEMO_ENABLED) return DEMO_WORK_EXPERIENCE;
+  return safeFetch<WorkExperience[]>(WORK_EXPERIENCE_QUERY, {}, [], "work experience");
 }
 
 const TESTIMONIALS_QUERY = `
@@ -168,11 +240,10 @@ const ANY_TESTIMONIALS_QUERY = `
 `;
 
 export async function getTestimonials(): Promise<Testimonial[]> {
-  const featured = await sanity.fetch<Testimonial[]>(TESTIMONIALS_QUERY);
+  if (DEMO_ENABLED) return DEMO_TESTIMONIALS;
+  const featured = await safeFetch<Testimonial[]>(TESTIMONIALS_QUERY, {}, [], "testimonials");
   if (featured.length) return featured;
-  const any = await sanity.fetch<Testimonial[]>(ANY_TESTIMONIALS_QUERY);
-  if (any.length || !DEMO_ENABLED) return any;
-  return DEMO_TESTIMONIALS;
+  return safeFetch<Testimonial[]>(ANY_TESTIMONIALS_QUERY, {}, [], "testimonials (fallback)");
 }
 
 const STACK_GROUPS_QUERY = `
@@ -180,5 +251,6 @@ const STACK_GROUPS_QUERY = `
 `;
 
 export async function getStackGroups(): Promise<StackGroup[]> {
-  return sanity.fetch<StackGroup[]>(STACK_GROUPS_QUERY);
+  if (DEMO_ENABLED) return DEMO_STACK_GROUPS;
+  return safeFetch<StackGroup[]>(STACK_GROUPS_QUERY, {}, [], "stack groups");
 }
