@@ -63,9 +63,12 @@ function ContactPanel({ onSent }: { onSent: () => void }) {
   const turnstileIdRef = useRef<string | null>(null);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
-  // Mount the Turnstile widget when the panel opens. Managed mode: usually a
-  // silent check, only escalating to a visible interaction for suspicious
-  // traffic - the honest version of an "invisible captcha".
+  // Mount the Turnstile widget when the panel opens. The widget is created in
+  // INVISIBLE mode (set on the widget in the Cloudflare dash), so nothing ever
+  // renders - no checkbox, no badge. The behavioural check runs silently and
+  // hands us a token via the callback. A visitor who fails the silent check
+  // (rare: hardened privacy setups) gets the form's error state, which already
+  // offers the direct-email fallback.
   useEffect(() => {
     if (!TURNSTILE_SITE_KEY) return;
     let cancelled = false;
@@ -76,9 +79,13 @@ function ContactPanel({ onSent }: { onSent: () => void }) {
         turnstileIdRef.current = window.turnstile.render(host, {
           sitekey: TURNSTILE_SITE_KEY,
           theme: "light",
-          size: "flexible",
           callback: (token) => setTurnstileToken(token),
-          "expired-callback": () => setTurnstileToken(null),
+          // tokens live ~5 min; if the visitor composes slowly, silently mint
+          // a fresh one instead of letting the submit fail
+          "expired-callback": () => {
+            setTurnstileToken(null);
+            if (turnstileIdRef.current) window.turnstile?.reset(turnstileIdRef.current);
+          },
           "error-callback": () => setTurnstileToken(null),
         });
       })
@@ -206,7 +213,8 @@ function ContactPanel({ onSent }: { onSent: () => void }) {
         className="absolute -left-[9999px] h-0 w-0 opacity-0"
       />
 
-      {TURNSTILE_SITE_KEY && <div ref={turnstileHostRef} className="min-h-[65px]" />}
+      {/* invisible-mode Turnstile renders nothing; the host just needs to exist */}
+      {TURNSTILE_SITE_KEY && <div ref={turnstileHostRef} aria-hidden />}
 
       {error && (
         <p role="alert" className="text-[12px] text-red-700">
@@ -231,6 +239,10 @@ function ContactPanel({ onSent }: { onSent: () => void }) {
           connect@capad.fyi
         </a>{" "}
         directly
+        {TURNSTILE_SITE_KEY && (
+          // invisible widgets must disclose themselves somewhere on the page
+          <span className="opacity-70"> · spam-checked by Cloudflare Turnstile</span>
+        )}
       </p>
     </form>
   );
