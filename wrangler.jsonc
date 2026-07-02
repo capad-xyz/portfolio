@@ -8,9 +8,10 @@
     "directory": ".open-next/assets",
     "binding": "ASSETS"
   },
-  // Custom domain: uncomment once the worker exists and capad.fyi's zone is on
-  // this Cloudflare account.
-  // "routes": [{ "pattern": "capad.fyi", "custom_domain": true }],
+  "routes": [
+    { "pattern": "capad.fyi", "custom_domain": true },
+    { "pattern": "www.capad.fyi", "custom_domain": true }
+  ],
   "observability": {
     "enabled": true
   }
