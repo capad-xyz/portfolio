@@ -1,1 +1,0 @@
-This folder contains the built output assets for the worker "capad-portfolio" generated at 2026-07-02T22:44:09.611Z.
