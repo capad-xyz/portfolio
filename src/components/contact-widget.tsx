@@ -593,10 +593,12 @@ export function ContactWidget() {
         dismissBorder: "#0b0b0d",
         dismissIcon: "#f1f0ec",
       },
-      // the flock docks at the bottom-right corner — the classic messenger
-      // spot; the social stack rises from behind the face above it
+      // the flock docks hard in the bottom-right corner — vertical: 1 lands
+      // past the clampable range, so clampCenter settles it against the bottom
+      // margin (the resting spot a flung stack glides back to). The social
+      // stack rises from behind the face above it.
       side: "right",
-      vertical: 0.85,
+      vertical: 1,
       panelWidth: 500,
       panelMaxHeight: "86%",
       maxBubbles: 1 + SOCIAL_BUBBLES.length,
