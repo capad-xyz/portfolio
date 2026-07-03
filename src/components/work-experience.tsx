@@ -17,7 +17,7 @@ export async function WorkExperience() {
       className="relative z-10 mx-auto max-w-5xl px-6 py-24 md:py-32"
     >
       <Reveal>
-        <header className="reveal-up mb-16 flex flex-col items-center gap-3 text-center md:mb-20">
+        <header className="reveal-title mb-16 flex flex-col items-center gap-3 text-center md:mb-20">
           <p className="section-eyebrow">experience</p>
           <h2 className="text-[clamp(32px,5vw,56px)] font-bold leading-[0.95] tracking-[-0.03em]">
             A short timeline.

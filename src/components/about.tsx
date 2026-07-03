@@ -18,7 +18,7 @@ export function About() {
   return (
     <section id="about" className="relative z-10 mx-auto max-w-3xl px-6 py-24 md:py-32">
       <Reveal>
-        <header className="reveal-up mb-12 flex flex-col items-center gap-3 text-center">
+        <header className="reveal-title mb-12 flex flex-col items-center gap-3 text-center">
           <p className="section-eyebrow">who i am</p>
           <h2 className="text-[clamp(28px,4.6vw,52px)] font-bold leading-[1] tracking-[-0.025em]">
             Small, glowing, useful things

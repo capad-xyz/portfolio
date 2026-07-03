@@ -22,7 +22,7 @@ export async function FeaturedWork() {
   return (
     <section id="work" className="relative z-10 mx-auto max-w-6xl px-6 py-28 md:py-36">
       <Reveal>
-        <header className="reveal-up mb-14 flex flex-col items-center gap-4 text-center">
+        <header className="reveal-title mb-14 flex flex-col items-center gap-4 text-center">
           <p className="section-eyebrow">selected work</p>
           {/* whole sentences as template strings: this JSX compiler drops the
               space between an expression and adjacent text */}

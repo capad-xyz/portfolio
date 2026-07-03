@@ -16,7 +16,7 @@ export async function Stack() {
       className="relative z-10 mx-auto max-w-5xl px-6 py-24 md:py-32"
     >
       <Reveal>
-        <header className="reveal-up mb-16 flex flex-col items-center gap-4 text-center md:mb-20">
+        <header className="reveal-title mb-16 flex flex-col items-center gap-4 text-center md:mb-20">
           <p className="section-eyebrow">the stack</p>
           <h2 className="text-[clamp(28px,4vw,46px)] font-bold leading-[1] tracking-[-0.02em]">
             What I reach for.

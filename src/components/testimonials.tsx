@@ -18,7 +18,7 @@ export async function Testimonials() {
       className="relative z-10 mx-auto max-w-2xl px-6 py-24 md:py-32"
     >
       <Reveal>
-        <header className="reveal-up mb-14 flex flex-col items-center gap-3 text-center">
+        <header className="reveal-title mb-14 flex flex-col items-center gap-3 text-center">
           <p className="section-eyebrow">kind words</p>
           <h2 className="text-[clamp(28px,4vw,46px)] font-bold leading-[1] tracking-[-0.02em]">
             What people say.

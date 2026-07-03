@@ -103,7 +103,7 @@ export default async function ProjectPage({
           )}
         </div>
 
-        <h1 className="reveal-up mt-4 text-[clamp(40px,7vw,76px)] font-bold leading-[0.92] tracking-[-0.03em]">
+        <h1 className="reveal-title mt-4 text-[clamp(40px,7vw,76px)] font-bold leading-[0.92] tracking-[-0.03em]">
           {project.title}
         </h1>
 

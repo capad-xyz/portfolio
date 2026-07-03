@@ -12,7 +12,7 @@ export function Reveal({ children }: { children: ReactNode }) {
   const root = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const els = root.current?.querySelectorAll<HTMLElement>(".reveal-up");
+    const els = root.current?.querySelectorAll<HTMLElement>(".reveal-up, .reveal-title");
     if (!els || !els.length) return;
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
       els.forEach((e) => e.classList.add("in"));

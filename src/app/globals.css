@@ -483,8 +483,16 @@ body.lensing .cursor.on { opacity: 0; }
    IntersectionObserver batch are staggered by the Reveal island via an inline
    transition-delay (cleared once landed, so hover transitions never inherit
    it). */
-.reveal-up { opacity: 0; transform: translateY(28px); transition: opacity 0.8s ease, transform 0.9s cubic-bezier(0.16, 1, 0.3, 1); }
+.reveal-up { opacity: 0; transform: translateY(28px) scale(0.985); transform-origin: 50% 100%; transition: opacity 0.8s ease, transform 0.9s cubic-bezier(0.16, 1, 0.3, 1); }
 .reveal-up.in { opacity: 1; transform: none; }
+/* section headers get the hero's develop-in (blur is safe on a small paint
+   area — it was only whole-section/card blur that janked): each section opens
+   with the same "condensing out of the glass" note the hero set */
+.reveal-title { opacity: 0; filter: blur(14px); transform: translateY(22px); transition: opacity 0.7s ease, filter 0.7s ease, transform 0.85s cubic-bezier(0.16, 1, 0.3, 1); }
+.reveal-title.in { opacity: 1; filter: blur(0); transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  .reveal-up, .reveal-title { opacity: 1; transform: none; filter: none; transition: none; }
+}
 
 /* ---- card hover: no movement — the plate stays put and answers with a
    deeper floating shadow + the .glass brighten/specular response ---- */

@@ -47,7 +47,7 @@ export default async function ProjectsPage() {
           <span aria-hidden>&larr;</span> home
         </Link>
 
-        <header className="reveal-up mt-8 mb-4 flex flex-col gap-4">
+        <header className="reveal-title mt-8 mb-4 flex flex-col gap-4">
           <h1 className="text-[clamp(40px,7vw,76px)] font-bold leading-[0.92] tracking-[-0.03em]">
             The build stories.
           </h1>

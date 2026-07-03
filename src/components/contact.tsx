@@ -19,9 +19,9 @@ export function Contact() {
       className="relative z-10 flex min-h-[80vh] flex-col items-center justify-center px-6 py-28 text-center"
     >
       <Reveal>
-        <p className="reveal-up section-eyebrow mb-8">say hello</p>
+        <p className="reveal-title section-eyebrow mb-8">say hello</p>
 
-        <h2 className="reveal-up max-w-2xl text-[clamp(34px,6vw,72px)] font-bold leading-[0.95] tracking-[-0.03em]">
+        <h2 className="reveal-title max-w-2xl text-[clamp(34px,6vw,72px)] font-bold leading-[0.95] tracking-[-0.03em]">
           Building something? Let&apos;s talk.
         </h2>
 
@@ -66,8 +66,8 @@ export function Contact() {
         >
           <a className="transition hover:text-[var(--ink)]" href="#work">work</a>
           <a className="transition hover:text-[var(--ink)]" href="/projects">all projects</a>
-          <a className="transition hover:text-[var(--ink)]" href="#about">about</a>
           <a className="transition hover:text-[var(--ink)]" href="#experience">experience</a>
+          <a className="transition hover:text-[var(--ink)]" href="#about">about</a>
           <a className="transition hover:text-[var(--ink)]" href="#stack">stack</a>
           <a className="transition hover:text-[var(--ink)]" href="#testimonials">words</a>
           <a className="transition hover:text-[var(--ink)]" href="#main">
