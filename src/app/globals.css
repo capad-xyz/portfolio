@@ -164,20 +164,29 @@ body {
 
 /* ---- liquid-glass lens: rides the cursor over .lensable content; its edge is
    feathered to nothing so the disc never reads as a hard circle ---- */
+/* the wrapper only rides the cursor (JS transform); the glass itself lives on
+   ::before so its swell-in scale never composes with the positioning transform */
 .lens {
-  position: fixed; left: 0; top: 0; z-index: 40; width: 168px; height: 168px; border-radius: 50%;
-  pointer-events: none; opacity: 0;
-  transition: opacity 0.32s ease, width 0.22s ease, height 0.22s ease;
-  /* faint center lift only — no border, ring, or drop shadow means no hard rim */
-  background: radial-gradient(circle at 50% 42%, rgba(255, 255, 255, 0.1), transparent 66%);
-  -webkit-backdrop-filter: blur(1.2px) saturate(150%);
-  backdrop-filter: blur(0.5px) saturate(150%) url(#lens);
-  /* feather the whole lens (refraction + tint) out well before the edge */
-  -webkit-mask: radial-gradient(circle at center, #000 16%, rgba(0, 0, 0, 0.82) 38%, rgba(0, 0, 0, 0.4) 58%, transparent 76%);
-  mask: radial-gradient(circle at center, #000 16%, rgba(0, 0, 0, 0.82) 38%, rgba(0, 0, 0, 0.4) 58%, transparent 76%);
-  will-change: transform;
+  position: fixed; left: 0; top: 0; z-index: 40; width: 230px; height: 230px;
+  pointer-events: none; will-change: transform;
 }
-.lens.on { opacity: 1; }
+.lens::before {
+  content: ""; position: absolute; inset: 0; border-radius: 50%;
+  opacity: 0; scale: 0.6;
+  /* the disc swells up from a droplet as it fades in — reads as liquid landing */
+  transition: opacity 0.34s ease, scale 0.5s cubic-bezier(0.3, 1.35, 0.4, 1);
+  /* clear-glass body: a soft top-light core + a faint caustic under-shadow arc,
+     still no border or ring so the edge stays liquid, not drawn */
+  background:
+    radial-gradient(circle at 50% 34%, rgba(255, 255, 255, 0.22), transparent 58%),
+    radial-gradient(circle at 50% 92%, rgba(11, 11, 13, 0.05), transparent 55%);
+  -webkit-backdrop-filter: blur(1.4px) saturate(170%) brightness(1.04);
+  backdrop-filter: blur(0.6px) saturate(170%) brightness(1.04) url(#lens);
+  /* wider solid core so the refraction actually shows, still feathered to nothing */
+  -webkit-mask: radial-gradient(circle at center, #000 30%, rgba(0, 0, 0, 0.85) 48%, rgba(0, 0, 0, 0.4) 64%, transparent 80%);
+  mask: radial-gradient(circle at center, #000 30%, rgba(0, 0, 0, 0.85) 48%, rgba(0, 0, 0, 0.4) 64%, transparent 80%);
+}
+.lens.on::before { opacity: 1; scale: 1; }
 /* over a lensable element the gooey cursor steps aside for the lens */
 body.lensing .cursor.on { opacity: 0; }
 

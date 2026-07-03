@@ -29,7 +29,7 @@ export function LiquidLens() {
     const INTERACTIVE = "a, button, input, textarea, select, label, [data-no-lens]";
     // unit ring sampled around the cursor so the lens fades out *near* a control,
     // not only when directly over it
-    const RING = 34;
+    const RING = 46; // scaled with the bigger 230px disc
     const OFFSETS = [
       [1, 0], [-1, 0], [0, 1], [0, -1],
       [0.7, 0.7], [-0.7, 0.7], [0.7, -0.7], [-0.7, -0.7],

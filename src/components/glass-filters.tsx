@@ -102,7 +102,7 @@ export function GlassFilters() {
       >
         <feTurbulence
           type="fractalNoise"
-          baseFrequency="0.0035 0.0045"
+          baseFrequency="0.0028 0.0036"
           numOctaves={2}
           seed={4}
           result="n"
@@ -111,7 +111,7 @@ export function GlassFilters() {
         <feDisplacementMap
           in="SourceGraphic"
           in2="nb"
-          scale={62}
+          scale={92}
           xChannelSelector="R"
           yChannelSelector="G"
         />

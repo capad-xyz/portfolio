@@ -279,10 +279,12 @@ function makeFaceIcon() {
     '<circle cx="19.1" cy="12.6" r="1.2" fill="#f1f0ec" opacity="0.45"/>' +
     '<path d="M7 13.6 Q12 18.8 17 13.6" stroke="#f1f0ec" stroke-width="2.4" stroke-linecap="round" fill="none"/>' +
     "</g>" +
-    // hover / press: open-mouthed grin
+    // hover / press: a bright, eager grin drawn in the same stroke language as
+    // the envelope and the blissful smiley (the old filled open-mouth read as a
+    // different species) — round lit eyes + one wide smile arc
     '<g class="g-grin">' +
-    '<g fill="#f1f0ec"><circle cx="8.4" cy="8.8" r="2.1"/><circle cx="15.6" cy="8.8" r="2.1"/></g>' +
-    '<path d="M6.8 12.9 Q12 13.5 17.2 12.9 Q16 19.2 12 19.2 Q8 19.2 6.8 12.9 Z" fill="#f1f0ec"/>' +
+    '<g fill="#f1f0ec"><circle cx="8.4" cy="9" r="1.9"/><circle cx="15.6" cy="9" r="1.9"/></g>' +
+    '<path d="M6.8 13.4 Q12 19 17.2 13.4" stroke="#f1f0ec" stroke-width="2.4" stroke-linecap="round" fill="none"/>' +
     "</g>" +
     // near the remove target: scared/sad with a teardrop (parts scale with --fear)
     '<g class="g-scared">' +
