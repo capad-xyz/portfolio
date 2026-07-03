@@ -116,7 +116,7 @@ function ArticleRow({ p, index }: { p: Project; index: number }) {
             {p.title}
           </h2>
 
-          <p className="mt-2.5 max-w-2xl text-[15px] leading-[1.55] text-[var(--ink)]/80 md:text-base">
+          <p className="mt-2.5 max-w-2xl text-[15px] leading-[1.55] text-[var(--ink)]/80 [text-wrap:pretty] md:text-base">
             {p.oneLiner}
           </p>
 

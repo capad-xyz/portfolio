@@ -107,7 +107,7 @@ export default async function ProjectPage({
           {project.title}
         </h1>
 
-        <p className="reveal-up mt-5 max-w-2xl text-[clamp(17px,2vw,21px)] leading-[1.5] text-[var(--ink)]/85">
+        <p className="reveal-up mt-5 max-w-2xl text-[clamp(17px,2vw,21px)] leading-[1.5] text-[var(--ink)]/85 [text-wrap:pretty]">
           {project.oneLiner}
         </p>
 

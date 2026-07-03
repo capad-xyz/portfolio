@@ -26,7 +26,8 @@ export function ProjectCard({ p, index }: { p: Project; index: number }) {
         <StatusPill status={p.status} />
       </div>
 
-      <p className="mt-2.5 text-[15px] leading-[1.5] text-[var(--ink)]/85 md:text-base">
+      {/* text-wrap:pretty: CMS copy can wrap anywhere — never strand one word */}
+      <p className="mt-2.5 text-[15px] leading-[1.5] text-[var(--ink)]/85 [text-wrap:pretty] md:text-base">
         {p.oneLiner}
       </p>
 
