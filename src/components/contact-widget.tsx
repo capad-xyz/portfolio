@@ -325,15 +325,16 @@ const SOCIAL_BUBBLES: SocialBubble[] = [
       "</svg>",
   },
   {
-    id: "mailto",
-    label: "Email connect@capad.fyi",
-    href: "mailto:connect@capad.fyi",
+    // the message face already covers email (panel + mailto fallback), so the
+    // second social slot belongs to X rather than a duplicate email door
+    id: "x",
+    label: "X — @aadarsh_io",
+    href: "https://x.com/aadarsh_io",
     surface:
       "radial-gradient(circle at 42% 32%, #6d6d77 0%, #17171c 48%, #030304 100%)",
     svg:
-      '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#f1f0ec" stroke-width="1.85" stroke-linecap="round" aria-hidden="true">' +
-      '<circle cx="12" cy="12" r="3.4"/>' +
-      '<path d="M15.4 12v1.3a2.1 2.1 0 0 0 4.2 0V12a7.6 7.6 0 1 0-3 6.05"/>' +
+      '<svg viewBox="0 0 24 24" width="19" height="19" fill="#f1f0ec" aria-hidden="true">' +
+      '<path d="M18.9 1.15h3.68l-8.04 9.19L24 22.85h-7.41l-5.8-7.58-6.64 7.58H.47l8.6-9.83L0 1.15h7.59l5.24 6.93 6.07-6.93Zm-1.29 19.5h2.04L6.49 3.24H4.3l13.31 17.41Z"/>' +
       "</svg>",
   },
 ];
