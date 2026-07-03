@@ -243,12 +243,11 @@ body.lensing .cursor.on { opacity: 0; }
   background: var(--ink); transform: translate(-50%, -50%) scale(0);
   transition: transform 0.55s cubic-bezier(0.2, 0.8, 0.2, 1); pointer-events: none;
 }
-.lqbtn:hover .fill { transform: translate(-50%, -50%) scale(16); }
+/* --fill-scale is computed per pointer-entry (placeFill) from the distance to
+   the button's farthest corner, so the flood always reaches every corner at
+   the same speed — one curve, no per-size magic numbers */
+.lqbtn:hover .fill { transform: translate(-50%, -50%) scale(var(--fill-scale, 16)); }
 .lqbtn:hover .lbl { color: var(--paper); }
-/* full-width buttons need a far bigger flood so the ink still reaches every
-   corner from wherever the pointer entered (scale 16 leaves a wide button
-   half-filled — the drop's radius can't span its width) */
-.lqbtn-block:hover .fill { transform: translate(-50%, -50%) scale(44); }
 /* quieter secondary CTA: transparent with a hairline border, same ink flood */
 .lqbtn-outline { background: transparent; border: 1px solid rgba(11, 11, 13, 0.15); }
 /* the contact modal renders above the custom-cursor layer, so it uses the
@@ -518,6 +517,22 @@ body.lensing .cursor.on { opacity: 0; }
   font-size: 11px; font-weight: 400; letter-spacing: 0.3em;
   color: var(--muted);
 }
+
+/* ---- route-loading skeletons: liquid placeholders shown by loading.tsx while
+   a case study / the index streams in. Ink-tinted bars with a slow glass sheen
+   sweeping through — reads as the page "developing", not a spinner. ---- */
+.skel {
+  position: relative; overflow: hidden; border-radius: 999px;
+  background: rgba(11, 11, 13, 0.07);
+}
+.skel::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, 0.75) 50%, transparent 80%);
+  transform: translateX(-100%);
+  animation: skel-sheen 1.4s ease-in-out infinite;
+}
+@keyframes skel-sheen { to { transform: translateX(100%); } }
+@media (prefers-reduced-motion: reduce) { .skel::after { animation: none; } }
 
 /* section heading eyebrow shared across the spine */
 .section-eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--muted); }

@@ -90,14 +90,18 @@ export function Hero() {
     };
   }, []);
 
-  // flood the liquid fill from where the pointer enters / leaves
+  // flood the liquid fill from where the pointer enters / leaves; the drop is
+  // scaled to reach the farthest corner from that exact point (see --fill-scale)
   const placeFill = (e: React.PointerEvent) => {
     const el = cta.current;
     const f = fill.current;
     if (!el || !f) return;
     const r = el.getBoundingClientRect();
-    f.style.left = `${e.clientX - r.left}px`;
-    f.style.top = `${e.clientY - r.top}px`;
+    const x = e.clientX - r.left;
+    const y = e.clientY - r.top;
+    f.style.left = `${x}px`;
+    f.style.top = `${y}px`;
+    el.style.setProperty("--fill-scale", `${Math.ceil((Math.hypot(Math.max(x, r.width - x), Math.max(y, r.height - y)) / 12) * 1.1)}`);
   };
 
   return (
