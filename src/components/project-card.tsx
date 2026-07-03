@@ -37,7 +37,8 @@ export function ProjectCard({ p, index }: { p: Project; index: number }) {
             aria-hidden
             className="h-1.5 w-1.5 shrink-0 translate-y-px animate-pulse rounded-full bg-[var(--ink)]"
           />
-          <span>
+          {/* one line, always: a long CMS nowLine truncates instead of wrapping */}
+          <span className="min-w-0 truncate">
             <span className="text-[var(--ink)]/70">now:</span> {p.nowLine}
           </span>
         </p>

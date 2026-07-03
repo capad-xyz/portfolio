@@ -100,7 +100,7 @@ export const DEMO_PROJECTS: ProjectDetail[] = [
     status: "ongoing",
     oneLiner:
       "A genuinely-free Git review companion that sits beside your AI coding editor: the commit graph, diffs, and every in-flight worktree, refreshing live as your agent changes the repo under you.",
-    nowLine: "commit-dot hover cards, instant tab restore, watcher perf (v0.1.3)",
+    nowLine: "hover cards, tab restore, watcher perf (v0.1.3)",
     metrics: [
       { value: "alpha", label: "stage" },
       { value: "worktree", label: "first" },
@@ -196,7 +196,7 @@ export const DEMO_PROJECTS: ProjectDetail[] = [
     slug: "beep-beep-oss",
     status: "ongoing",
     oneLiner:
-      "An open-source, self-hostable universal chat client: all your messaging networks in one native inbox, with instant sync and nothing locked behind a paywall. Built on Matrix and Tauri.",
+      "An open-source, self-hostable universal chat client: all your messaging networks in one native inbox, with instant sync and nothing locked behind a paywall. Built on Matrix and Tauri, so the whole stack stays fast, native, and yours to run.",
     nowLine: "fast cold start + the multi-account inbox UI",
     metrics: [
       { value: "live", label: "sync" },
