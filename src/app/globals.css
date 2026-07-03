@@ -477,17 +477,20 @@ body.lensing .cursor.on { opacity: 0; }
 /* ---- brand signature under the name: a small logotype flanked by hairlines ---- */
 .wm-sig-rule { height: 1px; width: 34px; background: rgba(11, 11, 13, 0.2); }
 
-/* ---- scroll-reveal for sections below the fold (transform/opacity only) ----
-   Elements arriving in the same IntersectionObserver batch are staggered by
-   the Reveal island via an inline transition-delay (cleared once landed, so
-   hover transitions never inherit it). */
-.reveal-up { opacity: 0; transform: translateY(28px); transition: opacity 0.8s ease, transform 0.9s cubic-bezier(0.16, 1, 0.3, 1); }
-.reveal-up.in { opacity: 1; transform: none; }
+/* ---- scroll-reveal for sections below the fold ----
+   Same develop-in language as the hero: blurred + risen, sharpening as it
+   lands. Elements arriving in the same IntersectionObserver batch are
+   staggered by the Reveal island via an inline transition-delay. Once landed,
+   the island clears the delay AND overrides filter to `none` — a persistent
+   filter (even blur(0)) forms a backdrop root that would mute the glass
+   cards' own backdrop-filter. */
+.reveal-up { opacity: 0; filter: blur(16px); transform: translateY(28px); transition: opacity 0.8s ease, filter 0.8s ease, transform 0.9s cubic-bezier(0.16, 1, 0.3, 1); }
+.reveal-up.in { opacity: 1; filter: blur(0); transform: none; }
 
 /* ---- card hover: no movement — the plate stays put and answers with a
    deeper floating shadow + the .glass brighten/specular response ---- */
 @media (hover: hover) {
-  .card-lift { transition: opacity 0.8s ease, transform 0.9s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.75s cubic-bezier(0.25, 0.46, 0.45, 0.94), background-color 0.55s cubic-bezier(0.25, 0.46, 0.45, 0.94), border-color 0.55s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+  .card-lift { transition: opacity 0.8s ease, filter 0.8s ease, transform 0.9s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.75s cubic-bezier(0.25, 0.46, 0.45, 0.94), background-color 0.55s cubic-bezier(0.25, 0.46, 0.45, 0.94), border-color 0.55s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
   .card-lift.in:hover {
     box-shadow:
       0 1px 0 rgba(255, 255, 255, 0.95) inset,
