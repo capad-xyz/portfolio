@@ -8,6 +8,11 @@ import { useLiquidTyping } from "./use-liquid-typing";
 
 type Status = "idle" | "sending" | "ok" | "error";
 
+// The message face is the flock's permanent front bubble: it's added last (so
+// the library seeds it as the front/active one) and every collapse re-leads
+// with it, so the docked stack always re-forms in the same order.
+const FRONT_ID = "contact";
+
 // --- Cloudflare Turnstile (bot check) ---------------------------------------
 // The sitekey is public by design (it's visible in every page source); the
 // matching SECRET key lives only on the worker, which is what actually
@@ -368,9 +373,16 @@ function wireSocialBubble(icon: HTMLElement, s: SocialBubble, manager: BubbleMan
     if (!openOnDown) return;
     if (s.href.startsWith("mailto:")) location.href = s.href;
     else window.open(s.href, "_blank", "noopener");
-    // launched — tuck the stack back into the dock
+    // Launched — tuck the stack home. Tapping this social just made IT the
+    // active bubble, and the library makes the active bubble topmost on
+    // collapse, so the docked order would change with whichever channel you
+    // last clicked. Hand the lead back to the message face first, in the SAME
+    // tick as the collapse so its panel shows-then-hides within one frame and
+    // never actually paints — the stack always re-forms with the face on top.
     window.setTimeout(() => {
-      if (manager.state() === "open") manager.toggle();
+      if (manager.state() !== "open") return;
+      if (manager.active() !== FRONT_ID) manager.activate(FRONT_ID);
+      manager.toggle();
     }, 60);
   };
   btn.addEventListener("pointerdown", onDown);
@@ -622,7 +634,7 @@ export function ContactWidget() {
     }
 
     manager.add({
-      id: "contact",
+      id: FRONT_ID,
       label: "Send a message",
       icon: face,
       content: (host) => {
@@ -662,7 +674,7 @@ export function ContactWidget() {
     // custom event. Deferred a tick so the manager's own tap-away handling for
     // the same click has finished before the group expands.
     const onOpenRequest = () => {
-      window.setTimeout(() => managerRef.current?.activate("contact"), 0);
+      window.setTimeout(() => managerRef.current?.activate(FRONT_ID), 0);
     };
     addEventListener("capad:open-contact", onOpenRequest);
 

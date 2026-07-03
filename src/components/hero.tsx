@@ -107,9 +107,12 @@ export function Hero() {
           eyebrow → CTA stack is always centered on the glass with an even
           margin — no viewport-height guessing, no spill on short screens */}
       <div className="relative flex flex-col items-center">
+        {/* Horizontal edges stay pushed out past the column; the top/bottom edges
+            are pulled inward to the vertical centers of the eyebrow pill and the
+            CTA button, so both straddle the glass edge instead of sitting inside it. */}
         <div
           ref={plate}
-          className="plate dev absolute -inset-x-[clamp(28px,7vw,84px)] -inset-y-[clamp(26px,5vh,52px)]"
+          className="plate dev absolute -left-[clamp(28px,7vw,84px)] -right-[clamp(28px,7vw,84px)] top-[18px] bottom-[26px]"
         />
 
       <span
