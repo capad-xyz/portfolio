@@ -16,10 +16,15 @@ export default function Home() {
     <main id="main" className="relative z-10">
       <LiquidIntro />
       <LiquidLens />
+      {/* Persuasion order: proof stays contiguous (work → experience) because
+          visitors hunt evidence before biography; About converts credibility
+          into affinity once it's earned; Stack is the technical appendix; and
+          Testimonials sit last before Contact so the peak-end note walking
+          into the ask is third-party praise, not a tool list. */}
       <Hero />
       <FeaturedWork />
-      <About />
       <WorkExperience />
+      <About />
       <Stack />
       <Testimonials />
       <Contact />

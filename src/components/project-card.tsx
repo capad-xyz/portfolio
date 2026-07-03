@@ -4,37 +4,34 @@ import { LiquidButton } from "./liquid-button";
 
 /**
  * One project as a glass plate — shared by the homepage featured grid and the
- * /projects index so both always look the same. Card shows the hook (title,
- * one-liner, metrics, tags); the case study holds the full story. Ongoing
- * projects can carry a pulsing "now" line straight from the CMS.
+ * /projects index so both always look the same.
+ *
+ * Content order follows how people actually scan a portfolio card (F-pattern /
+ * NN-g eye-tracking): the pitch is one tight cluster up top — title, then the
+ * status pill answering "can I use this today?", then the one-liner, then the
+ * metrics as immediate evidence for the claim (proximity = perceived relation).
+ * Everything that's only read after commitment — links, tags, the index/year/
+ * license colophon — lives at the foot, so the card carries less vertical bulk
+ * without losing anything.
  */
 export function ProjectCard({ p, index }: { p: Project; index: number }) {
-  const hasFooter = (p.links && p.links.length > 0) || p.hasStory;
   return (
-    <article className="reveal-up card-lift glass lensable relative flex flex-col rounded-[24px] p-7 md:p-9">
+    <article className="reveal-up card-lift glass lensable relative flex flex-col rounded-[24px] p-6 md:p-8">
       <div className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.22em] text-[var(--muted)]">
-          <span className="text-[var(--ink)]">{String(index).padStart(2, "0")}</span>
-          <span className="opacity-30">/</span>
-          {p.year && <span>{p.year}</span>}
-          {p.year && p.license && <span className="opacity-30">/</span>}
-          {p.license && <span>{p.license}</span>}
-        </div>
+        <h3 className="text-[clamp(26px,3vw,34px)] font-bold leading-[1.02] tracking-[-0.02em]">
+          <Link href={`/work/${p.slug}`} className="transition-opacity hover:opacity-70">
+            {p.title}
+          </Link>
+        </h3>
         <StatusPill status={p.status} />
       </div>
 
-      <h3 className="mt-5 text-[clamp(28px,3.4vw,40px)] font-bold leading-[1] tracking-[-0.02em]">
-        <Link href={`/work/${p.slug}`} className="transition-opacity hover:opacity-70">
-          {p.title}
-        </Link>
-      </h3>
-
-      <p className="mt-4 text-[15px] leading-[1.55] text-[var(--ink)]/85 md:text-base">
+      <p className="mt-2.5 text-[15px] leading-[1.5] text-[var(--ink)]/85 md:text-base">
         {p.oneLiner}
       </p>
 
       {p.nowLine && p.status === "ongoing" && (
-        <p className="mt-4 flex items-baseline gap-2 font-mono text-[11px] leading-[1.6] tracking-[0.04em] text-[var(--muted)]">
+        <p className="mt-3 flex items-baseline gap-2 font-mono text-[11px] leading-[1.6] tracking-[0.04em] text-[var(--muted)]">
           <span
             aria-hidden
             className="h-1.5 w-1.5 shrink-0 translate-y-px animate-pulse rounded-full bg-[var(--ink)]"
@@ -46,10 +43,10 @@ export function ProjectCard({ p, index }: { p: Project; index: number }) {
       )}
 
       {p.metrics && p.metrics.length > 0 && (
-        <dl className="mt-5 flex flex-wrap gap-x-7 gap-y-3">
+        <dl className="mt-4 flex flex-wrap gap-x-7 gap-y-2.5">
           {p.metrics.map((m) => (
             <div key={`${m.value}-${m.label}`}>
-              <dt className="text-[22px] font-bold leading-none tracking-[-0.02em] md:text-[26px]">
+              <dt className="text-[20px] font-bold leading-none tracking-[-0.02em] md:text-[24px]">
                 {m.value}
               </dt>
               <dd className="mt-1 font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--muted)]">
@@ -61,17 +58,18 @@ export function ProjectCard({ p, index }: { p: Project; index: number }) {
       )}
 
       {p.tags && p.tags.length > 0 && (
-        <div className="mt-5 flex flex-wrap gap-2">
+        <div className="mt-4 flex flex-wrap gap-1.5">
           {p.tags.map((t) => (
-            <span key={t} className="chip px-3 py-1 text-[11px] lowercase">
+            <span key={t} className="chip px-2.5 py-0.5 text-[11px] lowercase">
               {t}
             </span>
           ))}
         </div>
       )}
 
-      {hasFooter && (
-        <div className="mt-auto flex flex-wrap items-center gap-x-5 gap-y-3 pt-7">
+      {/* footer always renders: the colophon lives here even without links */}
+      {(
+        <div className="mt-auto flex flex-wrap items-center gap-x-5 gap-y-3 pt-5">
           {p.links?.map((l) => (
             <LiquidButton
               key={l.href}
@@ -94,6 +92,22 @@ export function ProjectCard({ p, index }: { p: Project; index: number }) {
               </span>
             </Link>
           )}
+          {/* the colophon: read last, so it sits last */}
+          <span className="ml-auto flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--muted)]">
+            <span className="text-[var(--ink)]/70">{String(index).padStart(2, "0")}</span>
+            {p.year && (
+              <>
+                <span className="opacity-30">/</span>
+                <span>{p.year}</span>
+              </>
+            )}
+            {p.license && (
+              <>
+                <span className="opacity-30">/</span>
+                <span>{p.license}</span>
+              </>
+            )}
+          </span>
         </div>
       )}
     </article>

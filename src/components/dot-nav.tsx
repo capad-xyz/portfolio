@@ -8,8 +8,8 @@ type Item = { id: "home" | "work" | "about" | "experience" | "stack" | "testimon
 const ITEMS: Item[] = [
   { id: "home", label: "home" },
   { id: "work", label: "work" },
-  { id: "about", label: "about" },
   { id: "experience", label: "experience" },
+  { id: "about", label: "about" },
   { id: "stack", label: "stack" },
   { id: "testimonials", label: "words" },
   { id: "contact", label: "contact" },
