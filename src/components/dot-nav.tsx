@@ -40,7 +40,9 @@ export function DotNav() {
   const lockRef = useRef(false);
   const lockTimerRef = useRef<number | null>(null);
   const lenisRef = useRef(lenis);
-  lenisRef.current = lenis;
+  useEffect(() => {
+    lenisRef.current = lenis;
+  }, [lenis]);
 
   const positionConnector = () => {
     const c = connectorRef.current;
@@ -116,7 +118,9 @@ export function DotNav() {
     else el.scrollIntoView({ behavior: "smooth" });
   };
   const scrollToIndexRef = useRef(scrollToIndex);
-  scrollToIndexRef.current = scrollToIndex;
+  useEffect(() => {
+    scrollToIndexRef.current = scrollToIndex;
+  });
 
   // On load with a hash, sync the rail immediately and glide to the section.
   useEffect(() => {
@@ -124,7 +128,8 @@ export function DotNav() {
     const hash = window.location.hash.slice(1);
     const idx = ITEMS.findIndex((it) => it.id === hash);
     if (idx <= 0) return;
-    setActive(idx);
+    // scrollToIndex sets the active state itself; the 80ms defer also keeps
+    // this effect free of synchronous setState (cascading-render lint).
     const timer = window.setTimeout(() => scrollToIndexRef.current(idx), 80);
     return () => window.clearTimeout(timer);
   }, []);

@@ -15,6 +15,7 @@ const eslintConfig = defineConfig([
     // Cloudflare/OpenNext build output:
     ".open-next/**",
     ".wrangler/**",
+    ".wrangler-dryrun/**",
   ]),
 ]);
 
