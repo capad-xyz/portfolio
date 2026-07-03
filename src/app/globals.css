@@ -257,6 +257,19 @@ body.lensing .cursor.on { opacity: 0; }
    the same speed — one curve, no per-size magic numbers */
 .lqbtn:hover .fill { transform: translate(-50%, -50%) scale(var(--fill-scale, 16)); }
 .lqbtn:hover .lbl { color: var(--paper); }
+/* the /projects row arrow disc shares the exact liquid-button flood, but its
+   hover comes from the whole row (see StoryArrow), so `.is-on` stands in for
+   :hover — same drop size, same curve, same label ink-over */
+.story-arrow { color: var(--ink); }
+.story-arrow .fill {
+  position: absolute; z-index: 1; width: 24px; height: 24px; border-radius: 50%;
+  background: var(--ink); transform: translate(-50%, -50%) scale(0);
+  transition: transform 0.55s cubic-bezier(0.2, 0.8, 0.2, 1); pointer-events: none;
+}
+.story-arrow.is-on .fill { transform: translate(-50%, -50%) scale(var(--fill-scale, 5)); }
+.story-arrow svg { transition: color 0.35s ease; }
+.story-arrow.is-on svg { color: var(--paper); }
+
 /* quieter secondary CTA: transparent with a hairline border, same ink flood */
 .lqbtn-outline { background: transparent; border: 1px solid rgba(11, 11, 13, 0.15); }
 /* the contact modal renders above the custom-cursor layer, so it uses the

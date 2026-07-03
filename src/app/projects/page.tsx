@@ -5,6 +5,7 @@ import { StatusPill } from "@/components/project-card";
 import { Reveal } from "@/components/reveal";
 import { LiquidButton } from "@/components/liquid-button";
 import { OpenContactButton } from "@/components/open-contact-button";
+import { StoryArrow } from "@/components/story-arrow";
 
 // ISR: regenerate at most every 5 min so CMS edits appear without a redeploy.
 export const revalidate = 300;
@@ -151,24 +152,7 @@ function ArticleRow({ p, index }: { p: Project; index: number }) {
               <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--ink)]/60 transition group-hover:text-[var(--ink)]">
                 read the story
               </span>
-              <span
-                aria-hidden
-                className="relative grid h-11 w-11 place-items-center overflow-hidden rounded-full border border-black/10 bg-white/40"
-              >
-                <span className="absolute inset-0 scale-0 rounded-full bg-[var(--ink)] transition-transform duration-[550ms] ease-[cubic-bezier(0.2,0.8,0.2,1)] group-hover:scale-100" />
-                <svg
-                  viewBox="0 0 16 16"
-                  className="relative z-[1] h-4 w-4 text-[var(--ink)] transition-colors duration-300 group-hover:text-[var(--paper)]"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.6"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M2.5 8h11" />
-                  <path d="M8.5 3.5 13.5 8l-5 4.5" />
-                </svg>
-              </span>
+              <StoryArrow />
             </>
           ) : (
             <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--muted)]">
