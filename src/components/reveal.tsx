@@ -21,21 +21,19 @@ export function Reveal({ children }: { children: ReactNode }) {
     const io = new IntersectionObserver(
       (entries) => {
         // Elements crossing in the same batch cascade in document order; a
-        // solo element (slow scroll) reveals immediately. Once landed, the
-        // inline delay is cleared (so hover effects never inherit it) and
-        // filter is pinned to `none` — the entrance blur, even at blur(0),
-        // would otherwise keep a backdrop root alive and mute the glass
-        // cards' backdrop-filter.
+        // solo element (slow scroll) reveals immediately. The inline delay is
+        // cleared once the transition lands so hover effects never inherit it.
         let batch = 0;
         entries.forEach((en) => {
           if (!en.isIntersecting) return;
           const el = en.target as HTMLElement;
           const delay = Math.min(batch++ * 90, 450);
-          if (delay) el.style.transitionDelay = `${delay}ms`;
-          window.setTimeout(() => {
-            el.style.transitionDelay = "";
-            el.style.filter = "none";
-          }, delay + 950);
+          if (delay) {
+            el.style.transitionDelay = `${delay}ms`;
+            window.setTimeout(() => {
+              el.style.transitionDelay = "";
+            }, delay + 950);
+          }
           el.classList.add("in");
           io.unobserve(el);
         });
