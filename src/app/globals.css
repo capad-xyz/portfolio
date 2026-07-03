@@ -579,30 +579,53 @@ body.lensing .cursor.on { opacity: 0; }
   0% { width: 8px; height: 8px; opacity: 1; }
   100% { width: 52px; height: 52px; opacity: 0; }
 }
+/* ink label pill: lives in the goo layer so it fuses with its dot into one
+   chip (pill + circle nub). Its own text is transparent and only sizes the
+   pill; the visible text is the .cap-dn-label overlay, aligned by sharing the
+   same font, padding, and right offset. */
+.cap-dn-pill {
+  --pull: 0px;
+  position: absolute; right: 26px;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 11px; letter-spacing: 0.08em; text-transform: lowercase;
+  line-height: 1.4; color: transparent; white-space: nowrap;
+  padding: 6px 12px; border-radius: 999px; background: var(--ink);
+  opacity: 0;
+  transform: translate(8px, calc(-50% + var(--pull))) scaleX(0.55);
+  transform-origin: right center;
+  transition:
+    opacity 0.3s cubic-bezier(0.2, 0.7, 0.2, 1),
+    transform 0.45s cubic-bezier(0.34, 1.4, 0.45, 1);
+  will-change: transform, opacity;
+}
+.cap-dn-pill.is-hover {
+  opacity: 1;
+  transform: translate(0, calc(-50% + var(--pull))) scaleX(1);
+}
 .cap-dn-touch {
   position: absolute; right: 0; width: 160px; height: 42px;
   display: flex; align-items: center; justify-content: flex-end;
-  padding: 0 22px 0 0; cursor: none; background: transparent; border: 0;
+  padding: 0 26px 0 0; cursor: none; background: transparent; border: 0;
   transform: translateY(-50%); font-family: inherit; color: inherit;
 }
 .cap-dn-touch:focus-visible { outline: none; }
 .cap-dn-touch:hover .cap-dn-label,
 .cap-dn-touch:focus-visible .cap-dn-label {
-  opacity: 1; transform: translate(0, 0) scale(1);
+  opacity: 1; transform: translate(0, var(--pull, 0px)) scale(1);
 }
 .cap-dn-label {
   font-family: var(--font-mono), ui-monospace, monospace;
   font-size: 11px; letter-spacing: 0.08em; text-transform: lowercase;
-  color: var(--ink); padding: 5px 12px; border-radius: 999px;
+  line-height: 1.4; color: var(--paper); padding: 6px 12px;
   opacity: 0; transform: translate(10px, 0) scale(0.9);
   transition:
-    opacity 0.35s cubic-bezier(0.2, 0.7, 0.2, 1),
+    opacity 0.3s cubic-bezier(0.2, 0.7, 0.2, 1) 0.06s,
     transform 0.45s cubic-bezier(0.34, 1.4, 0.45, 1);
   pointer-events: none; white-space: nowrap; transform-origin: right center;
 }
 @media (max-width: 767px) { .cap-dn-rail { display: none; } }
 @media (prefers-reduced-motion: reduce) {
-  .cap-dn-blob-dot, .cap-dn-connector, .cap-dn-label, .cap-dn-splash {
+  .cap-dn-blob-dot, .cap-dn-connector, .cap-dn-label, .cap-dn-pill, .cap-dn-splash {
     transition: none; animation: none;
   }
 }

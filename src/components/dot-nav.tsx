@@ -16,11 +16,12 @@ const ITEMS: Item[] = [
 ];
 
 /**
- * Right-rail liquid-glass navigation. Six dots over a goo filter so the active
- * pill, a vertical connector, and the hovered dot fuse into one mercury blob.
- * Pointer Y inside a hit area magnetically pulls the hovered dot toward the
- * cursor; clicking ripples a splash through the rail. Scroll-spy uses
- * IntersectionObserver; navigation hands off to Lenis when present.
+ * Right-rail liquid-glass navigation. Dots over a goo filter; hovering fuses an
+ * ink label pill into the dot (one mercury chip), a connector bridges hover and
+ * active dots, and clicking ripples a splash. Scroll-spy is positional — the
+ * active section is recomputed from live geometry on every scroll frame — and
+ * locks while a programmatic scroll is in flight so intermediate sections
+ * don't flicker through the rail.
  */
 export function DotNav() {
   const lenis = useLenis();
@@ -28,12 +29,18 @@ export function DotNav() {
   const blobLayerRef = useRef<HTMLDivElement>(null);
   const connectorRef = useRef<HTMLSpanElement>(null);
   const blobRefs = useRef<(HTMLSpanElement | null)[]>([]);
+  const pillRefs = useRef<(HTMLSpanElement | null)[]>([]);
+  const touchRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const [active, setActive] = useState(0);
   const activeRef = useRef(0);
   const hoverRef = useRef(-1);
   const pullRef = useRef(0);
   const rafRef = useRef<number | null>(null);
   const didMountRef = useRef(false);
+  const lockRef = useRef(false);
+  const lockTimerRef = useRef<number | null>(null);
+  const lenisRef = useRef(lenis);
+  lenisRef.current = lenis;
 
   const positionConnector = () => {
     const c = connectorRef.current;
@@ -75,71 +82,100 @@ export function DotNav() {
     }
   }, [active]);
 
+  // Lock the spy while a programmatic scroll is in flight; released by the
+  // scroll's completion callback, with a timer as a safety net.
+  const lockSpy = (ms: number) => {
+    lockRef.current = true;
+    if (lockTimerRef.current !== null) window.clearTimeout(lockTimerRef.current);
+    lockTimerRef.current = window.setTimeout(() => {
+      lockRef.current = false;
+      lockTimerRef.current = null;
+    }, ms);
+  };
+  const releaseSpy = () => {
+    if (lockTimerRef.current !== null) window.clearTimeout(lockTimerRef.current);
+    lockTimerRef.current = null;
+    lockRef.current = false;
+  };
+
+  const scrollToIndex = (idx: number) => {
+    setActive(idx);
+    lockSpy(1600);
+    const l = lenisRef.current;
+    if (idx === 0) {
+      if (l) l.scrollTo(0, { onComplete: releaseSpy });
+      else window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+    const el = document.getElementById(ITEMS[idx].id);
+    if (!el) {
+      releaseSpy();
+      return;
+    }
+    if (l) l.scrollTo(el, { onComplete: releaseSpy });
+    else el.scrollIntoView({ behavior: "smooth" });
+  };
+  const scrollToIndexRef = useRef(scrollToIndex);
+  scrollToIndexRef.current = scrollToIndex;
+
+  // On load with a hash, sync the rail immediately and glide to the section.
   useEffect(() => {
     if (typeof window === "undefined") return;
     const hash = window.location.hash.slice(1);
-    if (!hash) return;
     const idx = ITEMS.findIndex((it) => it.id === hash);
     if (idx <= 0) return;
-    const el = document.getElementById(hash);
-    if (!el) return;
-    const timer = window.setTimeout(() => {
-      setActive(idx);
-      if (lenis) lenis.scrollTo(el, { immediate: false });
-      else el.scrollIntoView({ behavior: "smooth" });
-    }, 80);
+    setActive(idx);
+    const timer = window.setTimeout(() => scrollToIndexRef.current(idx), 80);
     return () => window.clearTimeout(timer);
-  }, [lenis]);
+  }, []);
 
+  // Positional scroll-spy: the active section is the last one whose top has
+  // crossed the probe line (42% down the viewport). Deterministic on reload,
+  // resize, and slow scrolls — no observer thresholds to miss.
   useEffect(() => {
-    const sections = ITEMS.slice(1)
-      .map((it) => document.getElementById(it.id))
-      .filter((el): el is HTMLElement => !!el);
-
-    const io = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((e) => e.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-        if (!visible) return;
-        const idx = ITEMS.findIndex((it) => it.id === visible.target.id);
-        if (idx > 0) setActive(idx);
-      },
-      { threshold: [0.2, 0.5, 0.8], rootMargin: "-30% 0px -30% 0px" },
-    );
-    sections.forEach((s) => io.observe(s));
-
-    const onScroll = () => {
-      if (window.scrollY < 240) setActive(0);
+    let raf: number | null = null;
+    const compute = () => {
+      raf = null;
+      if (lockRef.current) return;
+      const probe = window.innerHeight * 0.42;
+      let idx = 0;
+      for (let i = 1; i < ITEMS.length; i++) {
+        const el = document.getElementById(ITEMS[i].id);
+        if (el && el.getBoundingClientRect().top <= probe) idx = i;
+      }
+      // Bottom of page: force the last section (short tails can never cross the probe).
+      if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2) {
+        idx = ITEMS.length - 1;
+      }
+      setActive(idx);
     };
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
+    const schedule = () => {
+      if (raf === null) raf = requestAnimationFrame(compute);
+    };
+    compute();
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
 
     const onPopState = () => {
       const hash = window.location.hash.slice(1);
-      if (!hash) {
-        if (lenis) lenis.scrollTo(0);
-        else window.scrollTo({ top: 0, behavior: "smooth" });
-        return;
-      }
-      const el = document.getElementById(hash);
-      if (!el) return;
-      if (lenis) lenis.scrollTo(el);
-      else el.scrollIntoView({ behavior: "smooth" });
+      const idx = ITEMS.findIndex((it) => it.id === hash);
+      scrollToIndexRef.current(idx > 0 ? idx : 0);
     };
     window.addEventListener("popstate", onPopState);
 
     return () => {
-      io.disconnect();
-      window.removeEventListener("scroll", onScroll);
+      if (raf !== null) cancelAnimationFrame(raf);
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
       window.removeEventListener("popstate", onPopState);
     };
-  }, [lenis]);
+  }, []);
 
   const handleEnter = (i: number) => {
     hoverRef.current = i;
     pullRef.current = 0;
     blobRefs.current[i]?.classList.add("is-hover");
+    pillRefs.current[i]?.classList.add("is-hover");
     positionConnector();
   };
 
@@ -151,6 +187,12 @@ export function DotNav() {
       dot.classList.remove("is-hover");
       dot.style.setProperty("--pull", "0px");
     }
+    const pill = pillRefs.current[i];
+    if (pill) {
+      pill.classList.remove("is-hover");
+      pill.style.setProperty("--pull", "0px");
+    }
+    touchRefs.current[i]?.style.setProperty("--pull", "0px");
     positionConnector();
   };
 
@@ -163,6 +205,8 @@ export function DotNav() {
       const raw = (clientY - center) * 0.55;
       pullRef.current = Math.max(-11, Math.min(11, raw));
       blobRefs.current[i]?.style.setProperty("--pull", `${pullRef.current}px`);
+      pillRefs.current[i]?.style.setProperty("--pull", `${pullRef.current}px`);
+      touchRefs.current[i]?.style.setProperty("--pull", `${pullRef.current}px`);
       positionConnector();
       rafRef.current = null;
     });
@@ -187,16 +231,7 @@ export function DotNav() {
       window.history.pushState(null, "", pathTarget);
     }
 
-    if (id === "home") {
-      if (lenis) lenis.scrollTo(0);
-      else window.scrollTo({ top: 0, behavior: "smooth" });
-      setActive(0);
-      return;
-    }
-    const el = document.getElementById(id);
-    if (!el) return;
-    if (lenis) lenis.scrollTo(el);
-    else el.scrollIntoView({ behavior: "smooth" });
+    scrollToIndex(i);
   };
 
   return (
@@ -218,12 +253,28 @@ export function DotNav() {
             style={{ top: `${(i / (ITEMS.length - 1)) * 100}%` }}
           />
         ))}
+        {ITEMS.map((it, i) => (
+          <span
+            key={`pill-${it.id}`}
+            ref={(el) => {
+              pillRefs.current[i] = el;
+            }}
+            className="cap-dn-pill"
+            style={{ top: `${(i / (ITEMS.length - 1)) * 100}%` }}
+            aria-hidden
+          >
+            {it.label}
+          </span>
+        ))}
       </div>
       <div className="cap-dn-touch-layer">
         {ITEMS.map((it, i) => (
           <button
             key={it.id}
             type="button"
+            ref={(el) => {
+              touchRefs.current[i] = el;
+            }}
             className="cap-dn-touch"
             style={{ top: `${(i / (ITEMS.length - 1)) * 100}%` }}
             aria-label={it.label}
@@ -234,7 +285,7 @@ export function DotNav() {
             onBlur={() => handleLeave(i)}
             onClick={() => handleClick(i)}
           >
-            <span className="cap-dn-label glass">{it.label}</span>
+            <span className="cap-dn-label">{it.label}</span>
           </button>
         ))}
       </div>
