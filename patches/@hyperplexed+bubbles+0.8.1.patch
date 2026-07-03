@@ -1,0 +1,26 @@
+diff --git a/node_modules/@hyperplexed/bubbles/dist/behaviors/group/layout.js b/node_modules/@hyperplexed/bubbles/dist/behaviors/group/layout.js
+index 53d5af8..8927e66 100644
+--- a/node_modules/@hyperplexed/bubbles/dist/behaviors/group/layout.js
++++ b/node_modules/@hyperplexed/bubbles/dist/behaviors/group/layout.js
+@@ -21,7 +21,9 @@ export const dockSlot = (member, stack, centerY, side) => {
+     if (centerY === undefined || index === -1)
+         return restingPosition(el);
+     const center = clampCenter(centerY, el, stack.length);
+-    const top = center - el.offsetHeight / 2 - stackHalf(stack.length) + index * STACK_OFFSET;
++    // capad: stack grows UPWARD from the front bubble — index 0 (front, top
++    // z-order) sits at the bottom of the spread, peers rise above and behind.
++    const top = center - el.offsetHeight / 2 + stackHalf(stack.length) - index * STACK_OFFSET;
+     return { left: sideRestLeft(el, side), top };
+ };
+ /** Row slot: the open bubbles sit centered in a row along the top gap. */
+@@ -42,7 +44,8 @@ export const dockFromLanding = (member, stack) => {
+     const index = stack.findIndex((m) => m.id === member.id);
+     return {
+         side: getSnappedSide(member.el) ?? chooseSide(rect.left + rect.width / 2),
+-        centerY: rect.top + rect.height / 2 + stackHalf(stack.length) - index * STACK_OFFSET
++        // capad: inverse of the upward-growing dockSlot above.
++        centerY: rect.top + rect.height / 2 - stackHalf(stack.length) + index * STACK_OFFSET
+     };
+ };
+ //# sourceMappingURL=layout.js.map
+\ No newline at end of file

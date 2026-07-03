@@ -340,9 +340,13 @@ function makeSocialIcon(svg: string) {
 }
 
 /**
- * A social bubble is a launcher, not a panel: give its surface an individual
- * light and open the link on a clean tap (a drag that wanders past the guard
- * distance stays a drag). Returns a teardown.
+ * A social bubble is a launcher, not a panel. The FIRST click on a docked flock
+ * belongs to the library — it fans the stack open — so the link must not fire
+ * on it. The library commits that tap on pointerup and the DOM `click` lands
+ * after, by which point state() already reads "open"; so we sample the state at
+ * pointerdown instead. A clean tap on an already-open flock opens the link and
+ * tucks the stack home; a drag past the guard distance stays a drag. Returns a
+ * teardown.
  */
 function wireSocialBubble(icon: HTMLElement, s: SocialBubble, manager: BubbleManager) {
   const surface = icon.parentElement;
@@ -351,16 +355,20 @@ function wireSocialBubble(icon: HTMLElement, s: SocialBubble, manager: BubbleMan
   if (!btn) return () => {};
   let downX = 0;
   let downY = 0;
+  let openOnDown = false;
   const onDown = (e: PointerEvent) => {
     downX = e.clientX;
     downY = e.clientY;
+    openOnDown = manager.state() === "open";
   };
   const onClick = (e: MouseEvent) => {
     if (Math.hypot(e.clientX - downX, e.clientY - downY) >= 8) return; // it was a drag
+    // Docked when pressed → this gesture only fanned the flock open; leave the
+    // link for the next, deliberate click.
+    if (!openOnDown) return;
     if (s.href.startsWith("mailto:")) location.href = s.href;
     else window.open(s.href, "_blank", "noopener");
-    // the library treats the same click as "activate this bubble" and spreads
-    // the flock — these bubbles have no panel, so tuck it back into the dock
+    // launched — tuck the stack back into the dock
     window.setTimeout(() => {
       if (manager.state() === "open") manager.toggle();
     }, 60);
@@ -600,9 +608,10 @@ export function ContactWidget() {
     const face = makeFaceIcon();
     const ctrl = makeFaceController(face, reduce);
 
-    // Socials enter FIRST, deepest one leading (the array is ordered
-    // face-outward, so it's walked in reverse): each lands, the next stacks on
-    // top of it, and the message face arrives last — the front of the dock.
+    // Socials enter first (walked face-outward, hence reversed); the message
+    // face is added last, so the library makes it the front bubble. With the
+    // patched dock geometry the front bubble sits at the BOTTOM of the spread,
+    // the email face as the bottom overlay and the socials rising behind it.
     const socialStops: (() => void)[] = [];
     for (const s of [...SOCIAL_BUBBLES].reverse()) {
       const icon = makeSocialIcon(s.svg);
