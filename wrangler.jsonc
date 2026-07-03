@@ -12,6 +12,15 @@
     { "pattern": "capad.fyi", "custom_domain": true },
     { "pattern": "www.capad.fyi", "custom_domain": true }
   ],
+  // OpenNext's incremental cache: where revalidatePath/ISR write regenerated
+  // pages. Without it, prerendered pages are frozen at build time and the
+  // Sanity webhook can't actually refresh anything.
+  "kv_namespaces": [
+    {
+      "binding": "NEXT_INC_CACHE_KV",
+      "id": "2723bbf34f764ad8976016b186c6be88"
+    }
+  ],
   "observability": {
     "enabled": true
   }
