@@ -593,10 +593,10 @@ export function ContactWidget() {
         dismissBorder: "#0b0b0d",
         dismissIcon: "#f1f0ec",
       },
-      // the flock docks at the middle of the LEFT edge (the right belongs to
-      // the dot-nav rail) — the social stack fans out from behind the face
-      side: "left",
-      vertical: 0.5,
+      // the flock docks at the bottom-right corner — the classic messenger
+      // spot; the social stack rises from behind the face above it
+      side: "right",
+      vertical: 0.85,
       panelWidth: 500,
       panelMaxHeight: "86%",
       maxBubbles: 1 + SOCIAL_BUBBLES.length,
