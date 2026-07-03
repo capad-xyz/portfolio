@@ -558,8 +558,8 @@ body.lensing .cursor.on { opacity: 0; }
   will-change: width, height, transform;
 }
 .cap-dn-blob-dot.is-active { height: 28px; }
-.cap-dn-blob-dot.is-hover { width: 14px; height: 14px; }
-.cap-dn-blob-dot.is-active.is-hover { width: 14px; height: 30px; }
+.cap-dn-blob-dot.is-hover { width: 16px; height: 16px; }
+.cap-dn-blob-dot.is-active.is-hover { width: 16px; height: 30px; }
 .cap-dn-connector {
   position: absolute; right: 14px; width: 8px; border-radius: 999px;
   background: var(--ink); transform: translateX(50%); opacity: 0;
@@ -585,7 +585,7 @@ body.lensing .cursor.on { opacity: 0; }
    same font, padding, and right offset. */
 .cap-dn-pill {
   --pull: 0px;
-  position: absolute; right: 26px;
+  position: absolute; right: 22px;
   font-family: var(--font-mono), ui-monospace, monospace;
   font-size: 11px; letter-spacing: 0.08em; text-transform: lowercase;
   line-height: 1.4; color: transparent; white-space: nowrap;
@@ -605,21 +605,23 @@ body.lensing .cursor.on { opacity: 0; }
 .cap-dn-touch {
   position: absolute; right: 0; width: 160px; height: 42px;
   display: flex; align-items: center; justify-content: flex-end;
-  padding: 0 26px 0 0; cursor: none; background: transparent; border: 0;
+  padding: 0 22px 0 0; cursor: none; background: transparent; border: 0;
   transform: translateY(-50%); font-family: inherit; color: inherit;
 }
 .cap-dn-touch:focus-visible { outline: none; }
 .cap-dn-touch:hover .cap-dn-label,
 .cap-dn-touch:focus-visible .cap-dn-label {
-  opacity: 1; transform: translate(0, var(--pull, 0px)) scale(1);
+  opacity: 1; transform: translate(0, var(--pull, 0px)) scaleX(1);
 }
+/* the visible text mirrors the pill's exact motion (same offset, same scaleX,
+   same curves, no delay) so the label never slides against its chip */
 .cap-dn-label {
   font-family: var(--font-mono), ui-monospace, monospace;
   font-size: 11px; letter-spacing: 0.08em; text-transform: lowercase;
   line-height: 1.4; color: var(--paper); padding: 6px 12px;
-  opacity: 0; transform: translate(10px, 0) scale(0.9);
+  opacity: 0; transform: translate(8px, 0) scaleX(0.55);
   transition:
-    opacity 0.3s cubic-bezier(0.2, 0.7, 0.2, 1) 0.06s,
+    opacity 0.3s cubic-bezier(0.2, 0.7, 0.2, 1),
     transform 0.45s cubic-bezier(0.34, 1.4, 0.45, 1);
   pointer-events: none; white-space: nowrap; transform-origin: right center;
 }

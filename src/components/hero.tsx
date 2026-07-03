@@ -51,27 +51,25 @@ export function Hero() {
           }, t),
         ),
       );
-      // cache the CTA rect once revealed so the magnetic loop never reads layout per move
-      timers.push(
-        window.setTimeout(() => {
-          magnetic = true;
-          rect = cta.current?.getBoundingClientRect() ?? null;
-        }, 1400),
-      );
+      timers.push(window.setTimeout(() => (magnetic = true), 1400));
     }
 
-    // magnetic pull on the CTA (rect cached; no per-move layout read)
+    // Magnetic pull on the CTA. The rect is cached lazily and dropped on any
+    // scroll/resize — a stale rect after scrolling away and back left the pull
+    // zone pointing at where the button USED to be, so it never engaged.
     const onMove = (e: PointerEvent) => {
       const el = cta.current;
-      if (!el || !magnetic || !rect) return;
+      if (!el || !magnetic) return;
+      if (!rect) rect = el.getBoundingClientRect();
       const dx = e.clientX - (rect.left + rect.width / 2);
       const dy = e.clientY - (rect.top + rect.height / 2);
       el.style.transform = Math.hypot(dx, dy) < 150 ? `translate(${dx * 0.3}px, ${dy * 0.4}px)` : "";
     };
-    const onResize = () => (rect = cta.current?.getBoundingClientRect() ?? null);
+    const invalidate = () => (rect = null);
     if (!reduce) {
       addEventListener("pointermove", onMove, { passive: true });
-      addEventListener("resize", onResize, { passive: true });
+      addEventListener("resize", invalidate, { passive: true });
+      addEventListener("scroll", invalidate, { passive: true });
     }
 
     // The proof strip is viewport-fixed so it anchors the first impression, but
@@ -87,7 +85,8 @@ export function Hero() {
       timers.forEach(clearTimeout);
       heroIo.disconnect();
       removeEventListener("pointermove", onMove);
-      removeEventListener("resize", onResize);
+      removeEventListener("resize", invalidate);
+      removeEventListener("scroll", invalidate);
     };
   }, []);
 
