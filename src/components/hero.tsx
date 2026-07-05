@@ -157,7 +157,7 @@ export function Hero() {
       <div ref={ctaWrap} className="dev mt-8 flex flex-col items-center gap-5">
         <span className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white/40 px-3.5 py-1.5 font-mono text-[10px] uppercase tracking-[0.22em] text-[var(--ink)]/80">
           <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--ink)]" />
-          open to offers
+          open for the right problem
         </span>
         <div className="flex flex-wrap items-center justify-center gap-4">
           <a
