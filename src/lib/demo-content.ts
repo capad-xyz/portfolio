@@ -251,7 +251,7 @@ export const DEMO_TESTIMONIALS: Testimonial[] = [
   {
     _id: "demo-t3",
     quote:
-      "searchts quietly solves a problem every AI agent hits: it is fast, keyless, and clearly built by someone who sweats the details.",
+      "searchts gets the one thing paid unlockers actually charge for: your own IP is already past the bot-wall. Fast, keyless, and clearly built by someone who sweats the details.",
     name: "Open-source user",
     role: "Developer",
   },
