@@ -68,28 +68,56 @@ export const DEMO_PROJECTS: ProjectDetail[] = [
       { label: "PyPI", href: "https://pypi.org/project/searchts/", kind: "package" },
     ],
     hasStory: true,
+    // Ported from the Agent-Reach OSS Unlocker research paper (Notion) —
+    // mirrors the published Sanity body.
     body: [
       h("The problem"),
       p(
-        "AI agents and research tools constantly need to read arbitrary web pages, but the naive way they fetch is trivially blocked by modern anti-bot systems like Cloudflare, PerimeterX, and DataDome. The agent just gets a CAPTCHA or an empty shell and gives up.",
+        "AI agents and research tools constantly need to read arbitrary web pages, but the naive way they fetch is trivially blocked by modern anti-bot systems like Cloudflare, PerimeterX, and DataDome. The agent just gets a CAPTCHA or an empty shell, shrugs, and cites a third-party summary instead of the source.",
       ),
+      h("What a bot-wall actually checks"),
+      p("Anti-bot protection is layered, and each layer falls to a different technique:"),
+      ...ul([
+        "Headers: does the request carry a real browser's User-Agent and Accept headers? Trivial to satisfy.",
+        "TLS and HTTP/2 fingerprint: the exact handshake (JA3/JA4) a client speaks. Real browsers sound distinctive; plain scripts sound robotic. This is the key lever.",
+        "JavaScript challenges: run the page's JS to prove a real engine. Needs a real browser.",
+        "Interactive CAPTCHA: a human action. No free robot reliably beats this, and searchts says so instead of faking success.",
+        "IP reputation: is the address a datacenter or a home connection? This one is free for an individual.",
+      ]),
       h("Why it can be free"),
       p(
-        "Paid unlockers exist, but the thing they really charge for is a huge pool of clean residential IP addresses. searchts runs on your own machine, from your own connection, at personal volume, so it already has the one expensive piece for free.",
+        "Paid unlockers exist, but the thing they really charge for is a huge pool of clean residential IP addresses, maintained so their traffic does not get flagged. searchts runs on your own machine, from your own connection, at personal volume. Your home IP is already a clean residential address, so the single most expensive piece of the commercial product is something you already have.",
       ),
-      h("What I built"),
-      p("An escalating fetch ladder that stops at the first tier returning real content:"),
+      h("The escalating fetch ladder"),
+      p("A fetch walks a ladder and stops at the first tier that returns real content:"),
       ...ul([
-        "curl_cffi: impersonates a real Chrome's TLS and HTTP2 fingerprint. Fast, local, private. This tier alone turned a Zillow 403 into a genuine 422 KB page in testing.",
-        "Jina Reader: a JavaScript-rendering relay for pages that only fill in after running JS.",
-        "A stealth browser (patchright), launched lazily only when the cheaper tiers fail.",
+        "curl_cffi impersonates a real Chrome's TLS and HTTP/2 fingerprint in a single call. Fast, local, private: the URL never leaves your machine.",
+        "Jina Reader, a JavaScript-rendering relay, for pages that only fill in after running JS.",
+        "A stealth browser (patchright, an evasion-hardened Chromium), imported and launched lazily only when the cheaper tiers fail, then torn down. The browser's 300-600 MB cost is paid only on hard pages, never at idle.",
       ]),
       p(
-        "It reads, searches (keyless, multi-provider with reciprocal rank fusion), and transcribes video subtitles-first with a Whisper fallback, exposed as a CLI, an MCP server, a Claude Code skill, and a plain Python library. Installed CLIs unlock native channels — GitHub, Twitter/X, Reddit, LinkedIn, RSS — and the same unlocker grabs assets (images, fonts, CSS, even a page's palette) and remembers which tier worked per domain, so repeat fetches start at the cheapest thing that works. Fetched content is scrubbed of invisible-character tricks and flagged for prompt-injection indicators before it reaches an agent.",
+        "Raw HTML is extracted to clean Markdown with trafilatura, and the ladder remembers which tier worked per domain, so repeat fetches start at the cheapest thing that works.",
+      ),
+      h("Block detection is the subtle part"),
+      p(
+        "Deciding whether a response is a real page or a wall is where naive implementations break. Three rules, each forced by a real bug:",
+      ),
+      ...ul([
+        "Match block-page phrases, never vendor names. Zillow's genuine homepage ships the PerimeterX sensor script, so keying on vendor strings falsely flags 432 KB of real content.",
+        "Short is not blocked. Only an HTTP error or a challenge phrase counts as blocked; a thin page merely triggers escalation, with a best-effort fallback.",
+        "Catch soft failures dressed as success: a relay can return HTTP 200 with a body that says the upstream was 403. That phrase goes on the block list too.",
+      ]),
+      h("Proof, from a residential IP"),
+      p(
+        "The clearest single result: Zillow returned 403 to a naive fetch and a genuine 200 with a 422 KB page to the fingerprint tier. Same request, same machine. Wikipedia and a Cloudflare-protected terms page came through cleanly, each served by whichever tier fit best. And g2.com, behind DataDome's interactive CAPTCHA, was reported blocked honestly instead of returning junk.",
+      ),
+      h("Beyond the unlocker"),
+      p(
+        "It reads, searches (keyless, multi-provider with reciprocal rank fusion), and transcribes video subtitles-first with a Whisper fallback, exposed as a CLI, an MCP server, a Claude Code skill, and a plain Python library. Installed CLIs unlock native channels: GitHub, Twitter/X, Reddit, LinkedIn, RSS. The same unlocker grabs assets (images, fonts, CSS, even a page's palette), and fetched content is scrubbed of invisible-character tricks and flagged for prompt-injection indicators before it reaches an agent. Fetch receipts (which tier served it, when, and the final URL) turn what an agent read into a citation another agent can replay.",
       ),
       h("The honest ceiling"),
       p(
-        "An interactive CAPTCHA still needs a human — so instead of faking success, a --human flow opens a real browser, you solve it once, and the fetch continues. Built on and extending Agent-Reach (MIT), shipped open-source under MIT on PyPI: no API key, no paid proxy.",
+        "An interactive CAPTCHA still needs a human, so instead of faking success a --human flow opens a real browser, you solve it once, and the fetch continues. Personal scale only: one residential IP at low volume is the model, not mass scraping. Built on and extending Agent-Reach (MIT), shipped open-source under MIT on PyPI: no API key, no paid proxy, no subscription.",
       ),
     ],
   },
@@ -304,15 +332,29 @@ export const DEMO_STACK_GROUPS: StackGroup[] = [
     ],
   },
   { _id: "demo-s1", label: "languages", items: ["TypeScript", "Python", "Rust", "Kotlin", "Lua"] },
-  { _id: "demo-s2", label: "frameworks", items: ["Next.js", "React", "Svelte", "Tauri", "Electron"] },
+  {
+    _id: "demo-s2",
+    label: "frameworks",
+    items: ["Next.js", "React", "Svelte", "Tauri", "Electron", "Express"],
+  },
   {
     _id: "demo-s3",
     label: "frontend & motion",
-    items: ["Tailwind", "GSAP", "Motion", "Lenis", "SVG / WebGL"],
+    items: ["Tailwind", "GSAP", "Motion", "Lenis", "React Three Fiber", "SVG / WebGL"],
   },
   {
     _id: "demo-s4",
+    label: "backend & data",
+    items: ["Node.js", "MongoDB / Mongoose", "REST APIs", "JWT auth", "AWS S3"],
+  },
+  {
+    _id: "demo-s5",
+    label: "systems & mobile",
+    items: ["Android SDK", "Jetpack Compose", "Matrix / matrix-rust-sdk", "foreground services", "Docker"],
+  },
+  {
+    _id: "demo-s6",
     label: "tooling & infra",
-    items: ["Sanity", "Cloudflare", "PyPI", "Android SDK", "git"],
+    items: ["Sanity", "Cloudflare", "PyPI", "GitHub Actions", "git"],
   },
 ];
