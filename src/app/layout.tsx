@@ -20,9 +20,10 @@ const caveat = Caveat({
 });
 
 const SITE_URL = "https://capad.fyi";
+const TWITTER = "@aadarsh_io";
 const TITLE = "capad — developer tools & desktop apps";
 const DESCRIPTION =
-  "Aadarsh Upadhyay (capad): fast, genuinely-free developer tools and desktop apps.";
+  "Aadarsh Upadhyay (capad) builds fast, genuinely-free, open-source developer tools and desktop apps: searchts, GlyphMaps, Grove, and beep-beep-oss. Software engineer and architect.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -37,6 +38,18 @@ export const metadata: Metadata = {
     "developer tools",
     "desktop apps",
     "open source",
+    "searchts",
+    "GlyphMaps",
+    "Grove git client",
+    "beep-beep-oss",
+    "AI agents",
+    "Model Context Protocol",
+    "web unlocker",
+    "Nothing Phone Glyph Matrix",
+    "Tauri",
+    "Rust",
+    "Next.js",
+    "software engineer",
   ],
   authors: [{ name: "Aadarsh Upadhyay", url: SITE_URL }],
   creator: "Aadarsh Upadhyay",
@@ -59,6 +72,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
+    site: TWITTER,
+    creator: TWITTER,
     title: TITLE,
     description: DESCRIPTION,
     images: ["/opengraph-image.png"],
@@ -77,10 +92,38 @@ const personJsonLd = {
   name: "Aadarsh Upadhyay",
   alternateName: "capad",
   url: SITE_URL,
+  image: `${SITE_URL}/opengraph-image.png`,
   email: "mailto:connect@capad.fyi",
   jobTitle: "Software Engineer & Architect",
-  sameAs: ["https://github.com/capad-xyz"],
-  knowsAbout: ["developer tools", "desktop apps", "open source software"],
+  description: DESCRIPTION,
+  worksFor: { "@type": "Organization", name: "Appson Technologies" },
+  sameAs: [
+    "https://github.com/capad-xyz",
+    "https://x.com/aadarsh_io",
+  ],
+  knowsAbout: [
+    "developer tools",
+    "desktop apps",
+    "open source software",
+    "AI agents",
+    "Model Context Protocol",
+    "web scraping and unlocking",
+    "Next.js",
+    "Rust",
+    "Tauri",
+    "Android development",
+  ],
+};
+
+// The site as an entity, authored by the person above — helps search engines
+// tie the domain, brand ("capad"), and maker together for name/brand queries.
+const websiteJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "capad",
+  alternateName: "Aadarsh Upadhyay",
+  url: SITE_URL,
+  author: { "@type": "Person", name: "Aadarsh Upadhyay" },
 };
 
 export default function RootLayout({
@@ -97,6 +140,10 @@ export default function RootLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(personJsonLd) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
         />
         <a href="#main" className="skip-link">
           Skip to content

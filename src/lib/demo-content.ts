@@ -229,33 +229,31 @@ export const DEMO_PROJECTS: ProjectDetail[] = [
   },
 ];
 
-// Starter placeholders tied to real companies/projects, to be replaced with real
-// quotes. The NAMES are deliberate placeholders, not real endorsements. Mirrored
-// as unpublished drafts in Sanity (edit the names + wording there, then publish for
-// production). Dev-only preview; production shows only what is published in Sanity.
+// Mirrors the published Sanity testimonial documents (attribution is role-based,
+// not personal names; the searchts quote distils genuine reactions from the
+// launch thread, attributed anonymously). Keep this in sync with Sanity so dev
+// preview matches production.
 export const DEMO_TESTIMONIALS: Testimonial[] = [
   {
     _id: "demo-t1",
     quote:
       "Aadarsh owned the architecture of Compliance Sarathi end to end and shipped a reliable agentic assistant under real deadline pressure. He is who you want on the hard parts of a system.",
-    name: "Teammate name (to replace)",
-    role: "Engineering, Compliance Sarathi",
+    name: "Engineering, Compliance Sarathi",
     company: "Appson Technologies",
   },
   {
     _id: "demo-t2",
     quote:
       "On Wordibly he moved fast across the whole stack, from customer upload flows to the manager dashboards, and left the codebase better than he found it.",
-    name: "Teammate name (to replace)",
-    role: "Engineering, Wordibly",
+    name: "Engineering team, Wordibly",
     company: "Appson Technologies",
   },
   {
     _id: "demo-t3",
     quote:
-      "searchts quietly solves a problem every AI agent hits: it is fast, keyless, and clearly built by someone who sweats the details.",
-    name: "Open-source user (to replace)",
-    role: "Developer",
+      "Your agent can reason but it can't read; half the web 403s it. searchts fixes that from the machine you're already on: no proxy pool to fight, keyless, and its fetch receipts make what it reads something another agent can replay.",
+    name: "An agent-ops dev",
+    role: "on the searchts thread",
   },
 ];
 

@@ -47,7 +47,15 @@ export function LiquidIntro() {
       isReload = nav?.type === "reload";
     } catch {}
 
-    if (matchMedia("(prefers-reduced-motion: reduce)").matches || (seen && !isReload)) {
+    // Phones skip the liquid-drop overlay entirely — it's the heaviest thing on
+    // a mobile GPU and the hero still runs its own develop-in cascade. Desktop
+    // keeps the signature intro. (Reduced-motion and already-seen also skip.)
+    const skipIntro =
+      matchMedia("(prefers-reduced-motion: reduce)").matches ||
+      matchMedia("(max-width: 640px)").matches ||
+      (seen && !isReload);
+
+    if (skipIntro) {
       dispatchEvent(new Event("capad:loaded"));
       // defer a tick — setting state synchronously in an effect body triggers a
       // cascading render (react-hooks/set-state-in-effect)

@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     title: "Projects — capad",
     description:
       "Every project by Aadarsh Upadhyay (capad): shipped, in progress, and archived — all open source, each with its build story.",
-    images: ["/opengraph-image"],
+    images: ["/opengraph-image.png"],
   },
 };
 

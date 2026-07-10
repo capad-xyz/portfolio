@@ -94,8 +94,10 @@ export function ProjectCard({ p, index }: { p: Project; index: number }) {
               </span>
             </Link>
           )}
-          {/* the colophon: read last, so it sits last */}
-          <span className="ml-auto flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--muted)]">
+          {/* the colophon: read last, so it sits last. `basis-full` drops it onto
+              its own line in every card (never sharing the button row), so the
+              index/year/license reads consistently no matter how wide the links are. */}
+          <span className="flex w-full basis-full items-center justify-end gap-2 font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--muted)]">
             <span className="text-[var(--ink)]/70">{String(index).padStart(2, "0")}</span>
             {p.year && (
               <>

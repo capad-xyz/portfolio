@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100" role="img" aria-label="capad">
+  <defs>
+    <!-- dark squircle backing, faint top light so the bead reads as lit -->
+    <radialGradient id="bg" cx="50%" cy="16%" r="92%">
+      <stop offset="0%" stop-color="#1b1b1f" />
+      <stop offset="100%" stop-color="#0b0b0d" />
+    </radialGradient>
+    <!-- the liquid bead: bright top-left specular falling to a shadowed base -->
+    <radialGradient id="bead" cx="40%" cy="30%" r="80%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="20%" stop-color="#f8efd9" />
+      <stop offset="58%" stop-color="#e9dec2" />
+      <stop offset="100%" stop-color="#c7bb9d" />
+    </radialGradient>
+  </defs>
+  <rect x="0" y="0" width="100" height="100" rx="26" fill="url(#bg)" />
+  <!-- the signature falling drop: streamlined tip, round belly -->
+  <path d="M50 20 C 56 36, 72 50, 72 64 A 22 22 0 1 1 28 64 C 28 50, 44 36, 50 20 Z" fill="url(#bead)" />
+  <!-- glass specular glint -->
+  <ellipse cx="42" cy="46" rx="6.5" ry="9" fill="#ffffff" opacity="0.85" transform="rotate(-18 42 46)" />
+</svg>

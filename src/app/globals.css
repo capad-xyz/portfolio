@@ -681,6 +681,19 @@ body.lensing .cursor.on { opacity: 0; }
 body.studio-mode { cursor: auto; overflow-x: auto; }
 body.studio-mode .grain, body.studio-mode .ambient, body.studio-mode .cursor, body.studio-mode .drips, body.studio-mode .lens { display: none !important; }
 
+/* ---- phone: trim the heaviest motion and lighten the develop-in blurs so
+   reveals stay smooth on mobile GPUs. The liquid-drop intro is skipped in JS
+   (see liquid-intro.tsx); here we freeze the ambient clouds (their drift + wide
+   blur is the biggest passive cost) and shrink the reveal blur radii so each
+   piece lands without janking. The glass material itself is untouched. ---- */
+@media (max-width: 767px) {
+  .ambient span { animation: none; filter: blur(40px); opacity: 0.6; }
+  .dev { filter: blur(10px); }
+  .wordmark { filter: blur(12px); }
+  .wordmark.ghost { filter: blur(5px); }
+  .reveal-title { filter: blur(8px); }
+}
+
 ::selection { background: rgba(11, 11, 13, 0.12); }
 
 @media (prefers-reduced-motion: reduce) {

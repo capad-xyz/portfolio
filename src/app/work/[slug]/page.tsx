@@ -15,6 +15,16 @@ import { Reveal } from "@/components/reveal";
 // ISR: regenerate at most every 5 min so CMS edits appear without a redeploy.
 export const revalidate = 300;
 
+const SITE_URL = "https://capad.fyi";
+
+// SPDX id -> canonical license URL, so the structured data points at the real
+// license text rather than a bare string.
+const LICENSE_URL: Record<string, string> = {
+  MIT: "https://opensource.org/license/mit",
+  "GPL-3.0": "https://www.gnu.org/licenses/gpl-3.0.html",
+  "AGPL-3.0": "https://www.gnu.org/licenses/agpl-3.0.html",
+};
+
 /**
  * Project case study (`/work/[slug]`). The card grid surfaces the hook + metrics
  * and links here for the full Conflict -> Solution -> Impact narrative held in
@@ -44,13 +54,13 @@ export async function generateMetadata({
       url: `/work/${slug}`,
       title: `${project.title} — capad`,
       description: project.oneLiner,
-      images: ["/opengraph-image"],
+      images: ["/opengraph-image.png"],
     },
     twitter: {
       card: "summary_large_image",
       title: `${project.title} — capad`,
       description: project.oneLiner,
-      images: ["/opengraph-image"],
+      images: ["/opengraph-image.png"],
     },
   };
 }
@@ -77,8 +87,36 @@ export default async function ProjectPage({
   const prev = at > -1 && all.length > 1 ? all[(at - 1 + all.length) % all.length] : null;
   const next = at > -1 && all.length > 1 ? all[(at + 1) % all.length] : null;
 
+  // Each shipped project is a free, open-source SoftwareApplication — emit that
+  // machine-readably so search engines can surface it as a distinct work with
+  // its repo, license, and "$0" offer, not just a page under the site.
+  const codeRepo = project.links?.find((l) => l.kind === "code")?.href;
+  const isAndroid = project.tags?.includes("android");
+  const projectJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: project.title,
+    description: project.oneLiner,
+    applicationCategory: "DeveloperApplication",
+    operatingSystem: isAndroid ? "Android" : "Windows, macOS, Linux",
+    url: `${SITE_URL}/work/${slug}`,
+    author: { "@type": "Person", name: "Aadarsh Upadhyay", url: SITE_URL },
+    isAccessibleForFree: true,
+    offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+    ...(codeRepo ? { codeRepository: codeRepo } : {}),
+    ...(project.tags?.length ? { keywords: project.tags.join(", ") } : {}),
+    ...(project.year ? { datePublished: project.year } : {}),
+    ...(project.license && LICENSE_URL[project.license]
+      ? { license: LICENSE_URL[project.license] }
+      : {}),
+  };
+
   return (
     <main id="main" className="relative z-10 mx-auto max-w-3xl px-6 py-28 md:py-36">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(projectJsonLd) }}
+      />
       <Reveal>
         <Link
           href="/projects"
