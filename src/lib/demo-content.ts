@@ -326,7 +326,6 @@ export const DEMO_STACK_GROUPS: StackGroup[] = [
       "Claude API & MCP",
       "agentic tool-calling",
       "safety-gated actions",
-      "OpenAI / Gemini",
       "Claude Code skills",
       "LLM training data",
     ],
@@ -335,12 +334,12 @@ export const DEMO_STACK_GROUPS: StackGroup[] = [
   {
     _id: "demo-s2",
     label: "frameworks",
-    items: ["Next.js", "React", "Svelte", "Tauri", "Electron", "Express"],
+    items: ["Next.js", "React", "Svelte", "Tauri", "Electron"],
   },
   {
     _id: "demo-s3",
     label: "frontend & motion",
-    items: ["Tailwind", "GSAP", "Motion", "Lenis", "React Three Fiber", "SVG / WebGL"],
+    items: ["Tailwind", "GSAP", "Motion", "Lenis", "React Three Fiber"],
   },
   {
     _id: "demo-s4",
@@ -350,7 +349,7 @@ export const DEMO_STACK_GROUPS: StackGroup[] = [
   {
     _id: "demo-s5",
     label: "systems & mobile",
-    items: ["Android SDK", "Jetpack Compose", "Matrix / matrix-rust-sdk", "foreground services", "Docker"],
+    items: ["Android SDK", "Jetpack Compose", "Matrix / matrix-rust-sdk", "Docker"],
   },
   {
     _id: "demo-s6",

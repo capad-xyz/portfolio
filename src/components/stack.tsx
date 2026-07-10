@@ -37,11 +37,14 @@ export async function Stack() {
               <p className="font-mono text-[12px] uppercase tracking-[0.18em] text-[var(--muted)] md:pt-1">
                 {g.label}
               </p>
-              <div className="flex flex-wrap gap-2.5">
+              {/* lighter cut than before (px-4/py-2 read heavy once the list
+                  grew to seven groups): smaller pill, tighter gap, one line
+                  per row at this column width with ≤5 chips per group */}
+              <div className="flex flex-wrap gap-2">
                 {g.items?.map((t) => (
                   <span
                     key={t}
-                    className="chip lensable px-4 py-2 text-[13px] lowercase tracking-[0.04em]"
+                    className="chip lensable px-3.5 py-1.5 text-[12px] lowercase tracking-[0.04em]"
                   >
                     {t}
                   </span>
