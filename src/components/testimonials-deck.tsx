@@ -78,7 +78,10 @@ export function TestimonialsDeck({ items }: { items: Testimonial[] }) {
   const flip = useCallback(
     (target: number, mode: Mode, dir: number, thrown?: Throw) => {
       if (target === index) return;
-      setSplash((s) => ({ key: s.key + 1, mode, dir }));
+      // dot navigation flips clean: no ink splash and no exit ghost (below) —
+      // the burst + the leaving card's text smearing over the incoming quote
+      // read as a glitch when triggered from the dots
+      if (mode !== "dot") setSplash((s) => ({ key: s.key + 1, mode, dir }));
 
       // the incoming quote continues from wherever the drag surfaced it, or
       // eases up from nothing for a tap / dot — always a slow "develop", never a pop
@@ -95,15 +98,17 @@ export function TestimonialsDeck({ items }: { items: Testimonial[] }) {
           delay: mode === "tap" ? 0.12 : 0,
           ease: [0.4, 0, 0.2, 1],
         });
-        // every mode leaves the old card behind: a drag flings it, a tap or a
-        // dot jump pops it into an edge burst. Exits stack — each entry retires
-        // itself, so back-to-back flips never block the deck.
-        const key = `exit-${(exitSeq.current += 1)}`;
-        setLeaving((ls) => [...ls, { key, t: items[index], mode, dir, throw: thrown }]);
-        window.setTimeout(
-          () => setLeaving((ls) => ls.filter((l) => l.key !== key)),
-          EXIT_MS,
-        );
+        // a drag flings the old card, a tap pops it into an edge burst; dots
+        // skip the exit layer entirely (clean reshuffle). Exits stack — each
+        // entry retires itself, so back-to-back flips never block the deck.
+        if (mode !== "dot") {
+          const key = `exit-${(exitSeq.current += 1)}`;
+          setLeaving((ls) => [...ls, { key, t: items[index], mode, dir, throw: thrown }]);
+          window.setTimeout(
+            () => setLeaving((ls) => ls.filter((l) => l.key !== key)),
+            EXIT_MS,
+          );
+        }
       }
       setIndex(target);
     },
