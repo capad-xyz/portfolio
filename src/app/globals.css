@@ -187,8 +187,11 @@ body {
   mask: radial-gradient(circle at center, #000 30%, rgba(0, 0, 0, 0.85) 48%, rgba(0, 0, 0, 0.4) 64%, transparent 80%);
 }
 .lens.on::before { opacity: 1; scale: 1; }
-/* over a lensable element the gooey cursor steps aside for the lens */
+/* over a lensable element the gooey cursor AND its dripping trail step aside
+   for the lens — clear glass reads clean, not glass with ink raining under it.
+   Both layers keep their opacity transitions, so they melt out rather than pop. */
 body.lensing .cursor.on { opacity: 0; }
+body.lensing .drips.on { opacity: 0; }
 
 /* the hero's magnetic CTA needs transform in its transition list — the .glass
    material transition (unlayered) beats Tailwind's transition-transform, so
