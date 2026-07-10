@@ -146,28 +146,36 @@ export const DEMO_PROJECTS: ProjectDetail[] = [
       },
     ],
     hasStory: true,
+    // Ported from the Grove research paper (Notion) — mirrors Sanity.
     body: [
       h("Why it exists"),
       p(
-        "AI coding editors pour everything into the chat-and-agent loop and leave git review as a cramped side panel. But the agent produces diffs and commits at high volume, so the tool creating the most diffs has the worst diff UX. Grove fills that gap from the outside, beside any agent (Claude, Cursor, Windsurf, a terminal), including several at once.",
+        "AI coding editors pour everything into the chat-and-agent loop and leave git review as a cramped side panel. But the agent produces diffs and commits at high volume, so the tool creating the most diffs has the worst diff UX. Grove fills that gap from the outside, beside any agent (Claude, Cursor, Windsurf, a terminal), including several at once. It answers one question well: what just changed, across which files and commits, and is it good?",
       ),
       h("The wedge"),
       p(
-        "The Git GUI market is crowded, but the genuinely-free, genuinely-beautiful slice is nearly empty: GitKraken and Tower are paid, Fork and Sublime Merge nag, GitHub Desktop is thin, GitButler is source-available with a no-compete license. Grove is GPL-3.0: free as in actually free, and forks stay open.",
+        "The Git GUI market is crowded, but the genuinely-free, genuinely-beautiful slice is nearly empty: GitKraken and Tower are paid, Fork and Sublime Merge nag, GitHub Desktop is thin, GitButler is source-available with a no-compete license. Grove is GPL-3.0: free as in actually free, and forks stay open. GPL rather than AGPL because the network clause does nothing for a desktop app; copyleft still stops proprietary forks.",
       ),
       h("Three pillars"),
       ...ul([
-        "A beautiful read-first, edit-light surface (a custom commit-graph renderer, diffs, blame, stash, inline Monaco quick edits) that refreshes live as the repo changes under you.",
+        "A beautiful read-first, edit-light surface (commit graph, diffs, blame, stash, inline quick edits) that refreshes live as the repo changes under you.",
         "Worktree-first, because one-worktree-per-task is becoming how people run parallel agents.",
         "Bring-your-own agent for commit and PR text, never an in-house paid model.",
       ]),
-      h("What works, and how"),
+      h("What works today"),
       p(
-        "Already daily-usable on real repos: a custom SVG commit graph, virtualized for large repos (hollow nodes for unpushed commits, hover cards with details and quick jumps, real diffs even on merge commits), a diff and blame viewer with find-in-diff, stage/unstage and commit from the working-changes view, a worktree dashboard, an instant Spotlight search across files, commits, branches, and content, live refresh that redraws as your agent changes the repo, and a wired local-CLI agent for commit messages. Under it, a Tauri 2 shell with small Rust-core binaries, a Svelte 5 frontend, and a hybrid git engine: gix for fast reads, the user's own git binary for writes.",
+        "Already daily-usable on real repos with hundreds of commits and dozens of branches: a custom SVG commit graph (no off-the-shelf graph library; the look is the differentiator) with color-coded lanes, ref pills, hollow nodes for unpushed commits, and real diffs even on merge commits by diffing against the first parent. A diff and blame viewer with find-in-diff. A worktree dashboard showing every linked worktree with branch, clean or dirty state, and ahead/behind. And Spotlight: one Ctrl+K search across files (every path that ever existed in the repo), commit messages, branches, and file contents, made instant by a preloaded, precomputed index with per-query caching.",
+      ),
+      p(
+        "Live refresh runs on a Rust file-watcher: the graph, status, and worktrees redraw as your agent changes the repo, with a pulsing live indicator. One-click copy sits next to every SHA, path, and branch.",
+      ),
+      h("The engine underneath"),
+      p(
+        "A Tauri 2 shell with small Rust-core binaries and a Svelte 5 frontend. The git engine is a deliberate hybrid: gix (gitoxide) for fast reads with no C dependency, and the user's own git binary for writes, a single write boundary that sidesteps libgit2's Windows build pain while keeping every operation available.",
       ),
       h("Honest state"),
       p(
-        "Alpha: the v0 hero features have shipped and it runs my own repos daily. Windows-only for now, and the installers are unsigned — SmartScreen will warn until code-signing lands.",
+        "Alpha: the v0 hero features have shipped and it runs my own repos daily. Windows-only for now, and the installers are unsigned, so SmartScreen will warn until code-signing lands. Next up: syntax highlighting in diffs, a stash view, wiring the bring-your-own-agent pillar fully, and host integrations.",
       ),
     ],
   },
@@ -195,26 +203,38 @@ export const DEMO_PROJECTS: ProjectDetail[] = [
       },
     ],
     hasStory: true,
+    // Ported from the GlyphMaps build-story paper (Notion) — mirrors Sanity.
     body: [
       h("The idea"),
       p(
-        "Glance navigation on a phone screen is distracting and battery-hungry. The Nothing Phone (4a) Pro has a circular 13x13 grid of 137 LEDs on its back, exactly the right shape to draw a turn arrow. Flip the phone face-down on a mount and your next turn lights up on the back instead of the screen.",
+        "Glance navigation on a phone screen is distracting and battery-hungry. The Nothing Phone (4a) Pro has a circular 13x13 grid of 137 LEDs on its back, exactly the right shape to draw a turn arrow. Flip the phone face-down on a mount and your next turn lights up on the back instead of the screen. The screen is for routing; the back is for the glance.",
       ),
       h("Why it is not a Glyph Toy"),
       p(
-        "Nothing's official Glyph Toy API is throttled to always-on-display cadence, about one update a minute, useless for live nav. The setAppMatrixFrame call is not throttled, but it needs a foreground lifecycle to stay alive. So GlyphMaps runs as a foreground service that claims the Matrix only while you navigate and releases it the moment the route ends, with a 20-second idle watchdog as a safety net so your normal Glyph toy always comes back.",
+        "Nothing's official Glyph Toy API is throttled to always-on-display cadence, about one update a minute, useless for live navigation. The setAppMatrixFrame call is not throttled, but it needs a foreground lifecycle to stay alive. So GlyphMaps runs as a foreground service that claims the Matrix only while you navigate and releases it the moment the route ends, with a 20-second idle watchdog as a safety net so your normal Glyph toy always comes back. That single architectural choice is what makes the app exist.",
       ),
       h("How a turn travels"),
       p(
-        "A NotificationListenerService reads Google Maps' live navigation notification — scoped to the Maps package and the navigation category only — and parses the maneuver and distance. One pure composer turns that into a dot-matrix arrow with a scrolling distance marquee, and the same function drives both the LEDs and the in-app preview, so there is a single source of truth. The preview is speed-aware: a far-off turn reads as “continue, then turn” and flips to the direct arrow as you approach.",
+        "Google Maps has no documented turn-by-turn API; its live navigation notification is the only public surface, and the format had to be reverse-engineered from real captures. A NotificationListenerService, scoped to the Maps package and the navigation category only, parses the maneuver and distance out of each update. A turn lights up on the back within a few hundred milliseconds of Maps announcing it; the only latency you feel is Maps' own 2-5 second notification cadence.",
       ),
-      h("Shipped"),
       p(
-        "v1.0.0 is live on a real 4a Pro: a signed, R8-minified 2.3 MB APK on GitHub Releases, AGPL-3.0. Twelve maneuver shapes, each with a procedurally generated sweep animation so the static and animated arrows can never drift apart, plus per-LED brightness sliders and a choice of Static Glow or Sweeping Flow display modes.",
+        "Google's routing vocabulary has over 60 maneuver constants. At 13x13 LEDs most fine distinctions are invisible, so they collapse into 12 shapes, each recognisable at a glance: chevrons, corners, forks, sharp bends, a hooked U-turn, a ringed roundabout, an arrival flag. The matcher uses precedence rules (sharp-left must win over turn-left) and drops Maps' post-trip survey prompts on sight.",
+      ),
+      h("One pure composer"),
+      p(
+        "A single pure function turns the parsed state into a 13x13 brightness grid: the arrow on top, the distance scrolling as a marquee underneath (the grid is 13 LEDs wide; almost every distance string is wider). The same function drives both the LEDs and the in-app live preview, so what you see on screen and what is lit on the back are pixel-identical. Arrows are authored as plain ASCII strings where X is the bright head and o the dim tail, which makes the whole vocabulary readable as source code.",
+      ),
+      h("The sweep that cannot drift"),
+      p(
+        "The Sweeping Flow mode originally used hand-authored animation frames, one set per maneuver. They drifted: the animated LEFT arrow pointed at a different column than the static one. The fix was deleting every hand-authored frame and generating the sweep procedurally from the static pattern, so a settled sweep frame lights exactly the same cells at exactly the same brightness by construction. Drift is now impossible.",
       ),
       h("Private by construction"),
       p(
-        "It reads a navigation notification, so it was built to be provably harmless: 100% on-device, no network code, no analytics, no account. A pre-release privacy audit gated all notification-content logging behind a dev-only build flag.",
+        "It reads a navigation notification, so it was built to be provably harmless: 100% on-device, no network code, no analytics, no account. A pre-release privacy audit found the dev capture log could leak route details to logcat, so every code path that touches notification content is gated behind a dev-only build flag, and the release build strips logging entirely.",
+      ),
+      h("Shipped"),
+      p(
+        "v1.0.0 is live on a real 4a Pro: a signed, R8-minified 2.3 MB APK on GitHub Releases. Twelve maneuver shapes with procedurally generated sweep animations, per-LED brightness sliders, and Static Glow or Sweeping Flow display modes. Licensed AGPL-3.0 after a deliberate MIT-to-AGPL migration with a full history scrub, so forks stay open.",
       ),
     ],
   },
@@ -236,6 +256,8 @@ export const DEMO_PROJECTS: ProjectDetail[] = [
     license: "AGPL-3.0",
     links: [{ label: "Code", href: "https://github.com/capad-xyz/beep-beep-oss", kind: "code" }],
     hasStory: true,
+    // Ported from the beep-beep-oss "How It Actually Works" paper (Notion) —
+    // mirrors Sanity.
     body: [
       h("The problem"),
       p(
@@ -243,15 +265,23 @@ export const DEMO_PROJECTS: ProjectDetail[] = [
       ),
       h("The architecture"),
       p(
-        "It is Beeper's core architecture, rebuilt in the open: a Synapse homeserver, the mautrix bridges that translate WhatsApp and other networks into Matrix (the same bridges Beeper uses), and a custom client. Once a network is translated into Matrix, an open protocol, any Matrix client can read it, which is what makes a unified inbox possible.",
+        "It is Beeper's core architecture, rebuilt in the open: a Synapse homeserver, the mautrix bridges that translate WhatsApp and other networks into Matrix (literally the same bridge software powering Beeper), Postgres underneath, and a custom client on top. Matrix is an open protocol, email-but-for-chat: once a network is translated into it, any Matrix client can read it, which is what makes a unified inbox possible. Your phone sees the bridge as a linked device, exactly like WhatsApp Web.",
       ),
       h("The client"),
       p(
-        "A native Tauri 2 app — a React UI over a Rust core on matrix-rust-sdk, desktop and mobile from one core, not another Electron shell. The Phase 1 client is already a working two-way messenger: log in, a live inbox with real WhatsApp avatars, previews and search, open a room, read history, send with an optimistic echo, sessions that persist across restarts, and Simplified Sliding Sync for live, no-delay updates, all verified against real bridged WhatsApp chats.",
+        "A native Tauri 2 app: a React UI in the OS webview over a Rust core on matrix-rust-sdk, desktop and mobile from one core, not another Electron shell. The two halves talk over a typed IPC boundary where the Rust command list is the security boundary, and shared types are generated from the Rust structs, so the two languages cannot drift apart. One source of truth, two languages.",
+      ),
+      h("Making sync feel instant"),
+      p(
+        "The whole thesis is speed, so the sync path got the engineering: Simplified Sliding Sync as the engine, a reactive room-update stream pushed to the UI as debounced events (the inbox and the open conversation fill themselves, no refresh button), optimistic send that renders your message instantly and reconciles in the background with rollback on failure, and lazily fetched real WhatsApp avatars with per-room caching. All verified against real bridged WhatsApp chats: login, live inbox with unread badges and previews, open a room, read history, send.",
+      ),
+      h("Self-hosting's sharp edges"),
+      p(
+        "The honest lesson from running the stack: the sharp edges are operational, not architectural. Windows line endings silently broke the database init script (an invisible carriage return in a shebang), a Docker bind-mount quirk corrupted the bridge's trust tokens, and localhost resolving to IPv6 failed health checks against an IPv4 bind. Each one is documented in the repo so the next self-hoster doesn't pay for it twice.",
       ),
       h("Status"),
       p(
-        "Alpha, Phase 1 in progress. The live, no-delay sync that is the whole thesis is working; multi-account is designed in from the start (two WhatsApp accounts, side by side — bridged as a companion device, so ban risk stays low), and the infra ships with a setup guide including a fully-free self-host path on Oracle Cloud's Always Free tier. Instagram lands next via mautrix-meta; Signal and Telegram after. AGPL-3.0, so nobody can quietly absorb it into a closed product.",
+        "Alpha, Phase 1 complete as a working two-way messenger with live sync. Multi-account is designed in from the start (two WhatsApp accounts side by side, bridged as a companion device so ban risk stays low), and the infra ships with a setup guide including a fully-free self-host path on Oracle Cloud's Always Free tier. Instagram lands next via mautrix-meta; Signal and Telegram after. AGPL-3.0, so nobody can quietly absorb it into a closed product.",
       ),
     ],
   },
