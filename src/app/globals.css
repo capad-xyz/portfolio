@@ -550,6 +550,13 @@ body.lensing .drips.on { opacity: 0; }
   font-size: 11px; font-weight: 400; letter-spacing: 0.3em;
   color: var(--muted);
 }
+/* the opening paragraph is the hook — set it a step larger and darker so the
+   story starts with weight, magazine-lead style, then settles into body size */
+.case-body h2:first-of-type + p {
+  font-size: clamp(16.5px, 1.8vw, 18.5px);
+  line-height: 1.65;
+  color: rgba(11, 11, 13, 0.88);
+}
 
 /* ---- route-loading skeletons: liquid placeholders shown by loading.tsx while
    a case study / the index streams in. Ink-tinted bars with a slow glass sheen

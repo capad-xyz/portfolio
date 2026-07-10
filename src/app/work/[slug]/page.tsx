@@ -10,6 +10,7 @@ import {
 import { CaseStudyBody } from "@/components/portable-text";
 import { LiquidButton } from "@/components/liquid-button";
 import { OpenContactButton } from "@/components/open-contact-button";
+import { ReadingProgress } from "@/components/reading-progress";
 import { Reveal } from "@/components/reveal";
 
 // ISR: regenerate at most every 5 min so CMS edits appear without a redeploy.
@@ -113,6 +114,7 @@ export default async function ProjectPage({
 
   return (
     <main id="main" className="relative z-10 mx-auto max-w-3xl px-6 py-28 md:py-36">
+      <ReadingProgress />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(projectJsonLd) }}

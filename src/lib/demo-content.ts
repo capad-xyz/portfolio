@@ -73,51 +73,46 @@ export const DEMO_PROJECTS: ProjectDetail[] = [
     body: [
       h("The problem"),
       p(
-        "AI agents and research tools constantly need to read arbitrary web pages, but the naive way they fetch is trivially blocked by modern anti-bot systems like Cloudflare, PerimeterX, and DataDome. The agent just gets a CAPTCHA or an empty shell, shrugs, and cites a third-party summary instead of the source.",
+        "Ask an AI agent to go read a web page and watch what happens. Cloudflare, PerimeterX, or DataDome takes one look at its naive fetch, decides it's a robot (it is), and slams the door. The agent gets a CAPTCHA or an empty shell, shrugs, and quotes some third-party summary instead of the source. I got tired of watching that happen.",
+      ),
+      h("The trick paid unlockers don't spell out"),
+      p(
+        "Commercial unlockers charge real money to punch through bot-walls, but the thing you're actually renting is their pool of millions of clean residential IP addresses. Here's the joke: you already have one. searchts runs on your machine, from your home connection, at personal volume. The single most expensive piece of the paid product is sitting in your house.",
       ),
       h("What a bot-wall actually checks"),
-      p("Anti-bot protection is layered, and each layer falls to a different technique:"),
+      p("A bot-wall is a bouncer with a checklist, and each line falls to a different trick:"),
       ...ul([
-        "Headers: does the request carry a real browser's User-Agent and Accept headers? Trivial to satisfy.",
-        "TLS and HTTP/2 fingerprint: the exact handshake (JA3/JA4) a client speaks. Real browsers sound distinctive; plain scripts sound robotic. This is the key lever.",
-        "JavaScript challenges: run the page's JS to prove a real engine. Needs a real browser.",
-        "Interactive CAPTCHA: a human action. No free robot reliably beats this, and searchts says so instead of faking success.",
-        "IP reputation: is the address a datacenter or a home connection? This one is free for an individual.",
+        "Do you look like a browser? Headers. Trivial.",
+        "Do you sound like a browser? The TLS and HTTP/2 handshake (the JA3 fingerprint). Real Chrome has a distinctive accent; scripts sound robotic. This is the key lever.",
+        "Can you run JavaScript? Needs a real engine.",
+        "Can you press-and-hold like a human? An interactive CAPTCHA. No free robot beats this, and searchts admits it instead of faking success.",
+        "Which neighborhood are you from? Datacenter IPs get flagged. Your home IP walks right in.",
       ]),
-      h("Why it can be free"),
-      p(
-        "Paid unlockers exist, but the thing they really charge for is a huge pool of clean residential IP addresses, maintained so their traffic does not get flagged. searchts runs on your own machine, from your own connection, at personal volume. Your home IP is already a clean residential address, so the single most expensive piece of the commercial product is something you already have.",
-      ),
-      h("The escalating fetch ladder"),
-      p("A fetch walks a ladder and stops at the first tier that returns real content:"),
+      h("The escalating ladder"),
+      p("So a fetch walks a ladder, cheapest tier first, and stops at the first real content:"),
       ...ul([
-        "curl_cffi impersonates a real Chrome's TLS and HTTP/2 fingerprint in a single call. Fast, local, private: the URL never leaves your machine.",
-        "Jina Reader, a JavaScript-rendering relay, for pages that only fill in after running JS.",
-        "A stealth browser (patchright, an evasion-hardened Chromium), imported and launched lazily only when the cheaper tiers fail, then torn down. The browser's 300-600 MB cost is paid only on hard pages, never at idle.",
+        "curl_cffi puts on a real Chrome's exact TLS fingerprint in a single call. Fast, local, private: the URL never leaves your machine.",
+        "Jina Reader, a JavaScript-rendering relay, for pages that only exist after the JS runs.",
+        "A stealth browser (patchright), launched lazily only when the cheap tiers fail. You pay its 300-600 MB only on hard pages, never at idle.",
       ]),
       p(
-        "Raw HTML is extracted to clean Markdown with trafilatura, and the ladder remembers which tier worked per domain, so repeat fetches start at the cheapest thing that works.",
+        "The ladder remembers which tier worked per domain, so the second visit starts at the cheapest thing that works, and everything comes back as clean Markdown.",
       ),
-      h("Block detection is the subtle part"),
+      h("The bugs that taught me block detection"),
       p(
-        "Deciding whether a response is a real page or a wall is where naive implementations break. Three rules, each forced by a real bug:",
+        "Deciding 'real page or wall?' is where naive implementations die, and every rule here was paid for with a real bug. Zillow's genuine homepage ships the PerimeterX sensor script, so matching vendor names falsely flagged 432 KB of real content: match the wall's interstitial phrases, never its vendor. A 500-character minimum called example.com blocked: short is not blocked, short is an escalation hint. And one relay returned HTTP 200 with a body politely explaining the upstream 403: a failure dressed as success, straight onto the block list.",
       ),
-      ...ul([
-        "Match block-page phrases, never vendor names. Zillow's genuine homepage ships the PerimeterX sensor script, so keying on vendor strings falsely flags 432 KB of real content.",
-        "Short is not blocked. Only an HTTP error or a challenge phrase counts as blocked; a thin page merely triggers escalation, with a best-effort fallback.",
-        "Catch soft failures dressed as success: a relay can return HTTP 200 with a body that says the upstream was 403. That phrase goes on the block list too.",
-      ]),
-      h("Proof, from a residential IP"),
+      h("Proof"),
       p(
-        "The clearest single result: Zillow returned 403 to a naive fetch and a genuine 200 with a 422 KB page to the fingerprint tier. Same request, same machine. Wikipedia and a Cloudflare-protected terms page came through cleanly, each served by whichever tier fit best. And g2.com, behind DataDome's interactive CAPTCHA, was reported blocked honestly instead of returning junk.",
+        "One benchmark row says it all. Zillow: naive fetch, 403. Fingerprint tier, a genuine 200 with 422 KB of real listing data. Same request, same machine, same afternoon. And g2.com, sitting behind DataDome's interactive CAPTCHA, was reported blocked honestly instead of returning junk, because a tool that can't be trusted to say no can't be trusted to say yes either.",
       ),
       h("Beyond the unlocker"),
       p(
-        "It reads, searches (keyless, multi-provider with reciprocal rank fusion), and transcribes video subtitles-first with a Whisper fallback, exposed as a CLI, an MCP server, a Claude Code skill, and a plain Python library. Installed CLIs unlock native channels: GitHub, Twitter/X, Reddit, LinkedIn, RSS. The same unlocker grabs assets (images, fonts, CSS, even a page's palette), and fetched content is scrubbed of invisible-character tricks and flagged for prompt-injection indicators before it reaches an agent. Fetch receipts (which tier served it, when, and the final URL) turn what an agent read into a citation another agent can replay.",
+        "Reading is a third of it. searchts also searches (keyless, multi-provider, results fused with reciprocal rank) and transcribes video, subtitles-first with a Whisper fallback. It ships as a CLI, an MCP server, a Claude Code skill, and a plain Python library, and installed CLIs unlock native channels: GitHub, Twitter/X, Reddit, LinkedIn, RSS. Fetched content is scrubbed for invisible-character tricks and prompt-injection tells before it reaches an agent, and every read comes with a receipt (which tier, when, final URL), so what an agent read becomes a citation another agent can replay.",
       ),
       h("The honest ceiling"),
       p(
-        "An interactive CAPTCHA still needs a human, so instead of faking success a --human flow opens a real browser, you solve it once, and the fetch continues. Personal scale only: one residential IP at low volume is the model, not mass scraping. Built on and extending Agent-Reach (MIT), shipped open-source under MIT on PyPI: no API key, no paid proxy, no subscription.",
+        "An interactive CAPTCHA still needs a human. Instead of pretending otherwise, a --human flag opens a real browser, you solve it once, and the fetch continues. Personal scale only: one home IP at low volume, not a mass scraper. Built on Agent-Reach (MIT), shipped MIT on PyPI. No API key, no proxy bill, no subscription.",
       ),
     ],
   },
@@ -150,11 +145,11 @@ export const DEMO_PROJECTS: ProjectDetail[] = [
     body: [
       h("Why it exists"),
       p(
-        "AI coding editors pour everything into the chat-and-agent loop and leave git review as a cramped side panel. But the agent produces diffs and commits at high volume, so the tool creating the most diffs has the worst diff UX. Grove fills that gap from the outside, beside any agent (Claude, Cursor, Windsurf, a terminal), including several at once. It answers one question well: what just changed, across which files and commits, and is it good?",
+        "AI coding editors generate more diffs and commits than any tool in history, and they review them in a cramped side panel. Sit with that for a second: the tool creating the most diffs has the worst diff UX. Grove fills the gap from the outside, a desktop app that sits beside Claude, Cursor, Windsurf, a terminal agent, or all of them at once, and answers one question well: what just changed, across which files and commits, and is it good?",
       ),
       h("The wedge"),
       p(
-        "The Git GUI market is crowded, but the genuinely-free, genuinely-beautiful slice is nearly empty: GitKraken and Tower are paid, Fork and Sublime Merge nag, GitHub Desktop is thin, GitButler is source-available with a no-compete license. Grove is GPL-3.0: free as in actually free, and forks stay open. GPL rather than AGPL because the network clause does nothing for a desktop app; copyleft still stops proprietary forks.",
+        "The Git GUI market is crowded, and almost none of it is actually free. GitKraken and Tower are paid, Fork and Sublime Merge nag, GitHub Desktop is thin, GitButler is source-available with a no-compete clause. The genuinely-free, genuinely-beautiful slice is sitting there empty. Grove is GPL-3.0: free as in actually free, and forks stay open. (GPL rather than AGPL because the network clause does nothing for a desktop app; copyleft alone stops proprietary forks.)",
       ),
       h("Three pillars"),
       ...ul([
@@ -164,18 +159,18 @@ export const DEMO_PROJECTS: ProjectDetail[] = [
       ]),
       h("What works today"),
       p(
-        "Already daily-usable on real repos with hundreds of commits and dozens of branches: a custom SVG commit graph (no off-the-shelf graph library; the look is the differentiator) with color-coded lanes, ref pills, hollow nodes for unpushed commits, and real diffs even on merge commits by diffing against the first parent. A diff and blame viewer with find-in-diff. A worktree dashboard showing every linked worktree with branch, clean or dirty state, and ahead/behind. And Spotlight: one Ctrl+K search across files (every path that ever existed in the repo), commit messages, branches, and file contents, made instant by a preloaded, precomputed index with per-query caching.",
+        "This isn't a mockup. I review my own repos in it daily, including one with 400+ commits and dozens of branches. The commit graph is a custom SVG lane renderer, no off-the-shelf library, because the look is the whole differentiator: color-coded lanes, ref pills, hollow nodes for unpushed commits, and real diffs on merge commits (diffed against the first parent, so a merge never shows up empty). Around it: a diff and blame viewer, a worktree dashboard with clean-or-dirty and ahead/behind for every tree, and Spotlight, one Ctrl+K across files, commit messages, branches, and file contents, instant because the heavy every-path-that-ever-existed walk is precomputed once and cached per query.",
       ),
       p(
-        "Live refresh runs on a Rust file-watcher: the graph, status, and worktrees redraw as your agent changes the repo, with a pulsing live indicator. One-click copy sits next to every SHA, path, and branch.",
+        "And it's alive. A Rust file-watcher redraws the graph, status, and worktrees as your agent mutates the repo under you, with a pulsing live indicator. Every SHA, path, and branch gets a one-click copy.",
       ),
       h("The engine underneath"),
       p(
-        "A Tauri 2 shell with small Rust-core binaries and a Svelte 5 frontend. The git engine is a deliberate hybrid: gix (gitoxide) for fast reads with no C dependency, and the user's own git binary for writes, a single write boundary that sidesteps libgit2's Windows build pain while keeping every operation available.",
+        "A Tauri 2 shell, a small Rust core, a Svelte 5 frontend. The git engine is a deliberate hybrid: gix (gitoxide) for reads, because reads are the hot path and gix is fast with no C dependency, and the user's own git binary for writes, one clean write boundary. That combination sidesteps libgit2's Windows build pain without giving up a single operation.",
       ),
       h("Honest state"),
       p(
-        "Alpha: the v0 hero features have shipped and it runs my own repos daily. Windows-only for now, and the installers are unsigned, so SmartScreen will warn until code-signing lands. Next up: syntax highlighting in diffs, a stash view, wiring the bring-your-own-agent pillar fully, and host integrations.",
+        "Alpha. The v0 hero features have shipped and it survives daily use on real repos, but it's Windows-only for now and the installers are unsigned, so SmartScreen will warn until code-signing lands. Next up: syntax highlighting in diffs, a stash view, and wiring the bring-your-own-agent pillar fully.",
       ),
     ],
   },
@@ -207,34 +202,34 @@ export const DEMO_PROJECTS: ProjectDetail[] = [
     body: [
       h("The idea"),
       p(
-        "Glance navigation on a phone screen is distracting and battery-hungry. The Nothing Phone (4a) Pro has a circular 13x13 grid of 137 LEDs on its back, exactly the right shape to draw a turn arrow. Flip the phone face-down on a mount and your next turn lights up on the back instead of the screen. The screen is for routing; the back is for the glance.",
+        "My phone has 137 LEDs on its back, and for months they did nothing but blink at notifications. Meanwhile every drive meant glancing at a bright six-inch screen for what amounts to one arrow and one number. The Nothing Phone (4a) Pro's Glyph Matrix is a circular 13x13 dot grid, which happens to be exactly the right shape for a turn arrow. So: flip the phone face-down on the dash, and the next turn lights up on the back. The screen is for routing. The back is for the glance.",
       ),
-      h("Why it is not a Glyph Toy"),
+      h("The API that said no"),
       p(
-        "Nothing's official Glyph Toy API is throttled to always-on-display cadence, about one update a minute, useless for live navigation. The setAppMatrixFrame call is not throttled, but it needs a foreground lifecycle to stay alive. So GlyphMaps runs as a foreground service that claims the Matrix only while you navigate and releases it the moment the route ends, with a 20-second idle watchdog as a safety net so your normal Glyph toy always comes back. That single architectural choice is what makes the app exist.",
+        "Nothing's official way onto the Matrix is the Glyph Toy framework, and it's throttled to always-on-display cadence: one update a minute. Navigation needs one every couple of seconds. Dead end, by design. But the way in was hiding in plain sight: setAppMatrixFrame, the SDK's raw framebuffer call, isn't throttled at all. It just needs a foreground lifecycle to stay alive. So GlyphMaps runs as a foreground service that claims the Matrix when you start navigating and releases it the moment the route ends, with a 20-second watchdog so your usual Glyph toy always comes back. That one architectural choice is why the app exists.",
       ),
-      h("How a turn travels"),
+      h("Reverse-engineering the turn"),
       p(
-        "Google Maps has no documented turn-by-turn API; its live navigation notification is the only public surface, and the format had to be reverse-engineered from real captures. A NotificationListenerService, scoped to the Maps package and the navigation category only, parses the maneuver and distance out of each update. A turn lights up on the back within a few hundred milliseconds of Maps announcing it; the only latency you feel is Maps' own 2-5 second notification cadence.",
+        "Google Maps has no public turn-by-turn API. The only surface is its live navigation notification, so I logged real captures, diffed them across maneuvers, and reverse-engineered the format. A listener scoped to exactly the Maps package and the navigation category parses out the maneuver and distance, and a turn hits the back of the phone within a few hundred milliseconds of Maps announcing it.",
       ),
       p(
-        "Google's routing vocabulary has over 60 maneuver constants. At 13x13 LEDs most fine distinctions are invisible, so they collapse into 12 shapes, each recognisable at a glance: chevrons, corners, forks, sharp bends, a hooked U-turn, a ringed roundabout, an arrival flag. The matcher uses precedence rules (sharp-left must win over turn-left) and drops Maps' post-trip survey prompts on sight.",
+        "Google's routing vocabulary has over 60 maneuver constants. On a 13x13 grid most of those distinctions are invisible, so they collapse into 12 shapes you can read at arm's length: chevrons, corners, forks, a hooked U-turn, a ringed roundabout, an arrival flag. Precedence matters here (sharp-left has to win over turn-left), and the post-trip 'How was your route?' survey gets dropped at the door.",
       ),
-      h("One pure composer"),
+      h("One pure function"),
       p(
-        "A single pure function turns the parsed state into a 13x13 brightness grid: the arrow on top, the distance scrolling as a marquee underneath (the grid is 13 LEDs wide; almost every distance string is wider). The same function drives both the LEDs and the in-app live preview, so what you see on screen and what is lit on the back are pixel-identical. Arrows are authored as plain ASCII strings where X is the bright head and o the dim tail, which makes the whole vocabulary readable as source code.",
+        "Everything renders through a single pure composer: parsed state in, 13x13 brightness grid out. Arrow on top, distance scrolling underneath as a marquee, because the grid is 13 LEDs wide and '1.5 km' isn't. The same function drives the LEDs and the in-app preview, so what the screen shows and what the back lights are pixel-identical. The arrows themselves are authored as ASCII strings, X for the bright head, o for the dim tail. The whole vocabulary is readable in the source.",
       ),
       h("The sweep that cannot drift"),
       p(
-        "The Sweeping Flow mode originally used hand-authored animation frames, one set per maneuver. They drifted: the animated LEFT arrow pointed at a different column than the static one. The fix was deleting every hand-authored frame and generating the sweep procedurally from the static pattern, so a settled sweep frame lights exactly the same cells at exactly the same brightness by construction. Drift is now impossible.",
+        "The animated mode originally used hand-drawn frames, one set per arrow. They drifted: the animated LEFT pointed at a different column than the static LEFT. Two sources of truth, both wrong. I deleted every hand-authored frame, and now the sweep is generated procedurally from the static pattern, so a settled animation frame lights exactly the same cells at exactly the same brightness. Drift isn't fixed. It's impossible.",
       ),
       h("Private by construction"),
       p(
-        "It reads a navigation notification, so it was built to be provably harmless: 100% on-device, no network code, no analytics, no account. A pre-release privacy audit found the dev capture log could leak route details to logcat, so every code path that touches notification content is gated behind a dev-only build flag, and the release build strips logging entirely.",
+        "An app that reads your navigation notifications had better be provably harmless: 100% on-device, no network code, no analytics, no account. A pre-release privacy audit still caught something real, though. The dev capture log could leak street names to logcat, so every code path that touches notification content is now gated behind a dev-only build flag, and the release build strips logging entirely.",
       ),
       h("Shipped"),
       p(
-        "v1.0.0 is live on a real 4a Pro: a signed, R8-minified 2.3 MB APK on GitHub Releases. Twelve maneuver shapes with procedurally generated sweep animations, per-LED brightness sliders, and Static Glow or Sweeping Flow display modes. Licensed AGPL-3.0 after a deliberate MIT-to-AGPL migration with a full history scrub, so forks stay open.",
+        "v1.0.0 runs on my actual phone on actual drives: a signed, R8-minified 2.3 MB APK on GitHub Releases. Twelve arrows, twelve generated sweeps, brightness sliders, two display modes. AGPL-3.0, after a deliberate MIT-to-AGPL migration with a full history scrub, so no one can quietly take it closed.",
       ),
     ],
   },
@@ -261,23 +256,23 @@ export const DEMO_PROJECTS: ProjectDetail[] = [
     body: [
       h("The problem"),
       p(
-        "Universal-chat apps gate basic functionality behind subscription tiers, including how fast your own messages sync. beep-beep-oss takes the opposite stance: self-hosting removes the artificial throttling entirely, and every messaging feature in the open-source client is free.",
+        "Somewhere along the way, chat apps started charging you for your own messages: unified-inbox products gate how fast your chats sync behind a subscription tier. beep-beep-oss is the opposite stance. Self-host it, and the throttle simply doesn't exist. Every messaging feature in the open client is free, permanently.",
       ),
       h("The architecture"),
       p(
-        "It is Beeper's core architecture, rebuilt in the open: a Synapse homeserver, the mautrix bridges that translate WhatsApp and other networks into Matrix (literally the same bridge software powering Beeper), Postgres underneath, and a custom client on top. Matrix is an open protocol, email-but-for-chat: once a network is translated into it, any Matrix client can read it, which is what makes a unified inbox possible. Your phone sees the bridge as a linked device, exactly like WhatsApp Web.",
+        "It's Beeper's core architecture, rebuilt in the open: a Synapse homeserver, Postgres underneath, the mautrix bridges (literally the same bridge software Beeper runs) translating WhatsApp into Matrix, and a custom client on top. Matrix is the trick. It's an open protocol, basically email for chat: once a network is translated into it, any Matrix client can read it. That's the entire unified-inbox dream in one sentence. Your phone just sees another linked device, exactly like WhatsApp Web.",
       ),
       h("The client"),
       p(
-        "A native Tauri 2 app: a React UI in the OS webview over a Rust core on matrix-rust-sdk, desktop and mobile from one core, not another Electron shell. The two halves talk over a typed IPC boundary where the Rust command list is the security boundary, and shared types are generated from the Rust structs, so the two languages cannot drift apart. One source of truth, two languages.",
+        "A native Tauri 2 app: React in the OS webview over a Rust core on matrix-rust-sdk, desktop and mobile from one core, not another Electron shell hauling a whole browser around. The two halves talk across a typed IPC boundary where the Rust command list is the security boundary, and the TypeScript types are generated from the Rust structs, so the two languages cannot drift apart. One source of truth, two languages.",
       ),
       h("Making sync feel instant"),
       p(
-        "The whole thesis is speed, so the sync path got the engineering: Simplified Sliding Sync as the engine, a reactive room-update stream pushed to the UI as debounced events (the inbox and the open conversation fill themselves, no refresh button), optimistic send that renders your message instantly and reconciles in the background with rollback on failure, and lazily fetched real WhatsApp avatars with per-room caching. All verified against real bridged WhatsApp chats: login, live inbox with unread badges and previews, open a room, read history, send.",
+        "Speed is the thesis, so the sync path got the real engineering. Simplified Sliding Sync as the engine. A reactive room-update stream pushed to the UI as debounced events, so the inbox and the open conversation fill themselves, no refresh button anywhere. Optimistic send that paints your message instantly and quietly reconciles in the background, with rollback if the network fails you. Lazily fetched real WhatsApp avatars, cached per room. All of it verified against real bridged WhatsApp chats, not a demo server.",
       ),
       h("Self-hosting's sharp edges"),
       p(
-        "The honest lesson from running the stack: the sharp edges are operational, not architectural. Windows line endings silently broke the database init script (an invisible carriage return in a shebang), a Docker bind-mount quirk corrupted the bridge's trust tokens, and localhost resolving to IPv6 failed health checks against an IPv4 bind. Each one is documented in the repo so the next self-hoster doesn't pay for it twice.",
+        "Running your own stack teaches you fast that the sharp edges are operational, not architectural. Windows line endings broke the database init script with a single invisible carriage return in a shebang. A Docker bind-mount quirk corrupted the bridge's trust tokens. localhost resolved to IPv6 while the server bound IPv4. Every one of them is documented in the repo, so the next self-hoster doesn't pay the same toll.",
       ),
       h("Status"),
       p(

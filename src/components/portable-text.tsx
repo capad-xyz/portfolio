@@ -12,12 +12,15 @@ import type { PortableTextBlock } from "@portabletext/types";
 const components: PortableTextComponents = {
   block: {
     normal: ({ children }) => (
-      <p className="mt-5 text-[15px] leading-[1.7] text-[var(--ink)]/80 md:text-base">
+      <p className="mt-5 text-[15px] leading-[1.75] text-[var(--ink)]/80 [text-wrap:pretty] md:text-base">
         {children}
       </p>
     ),
+    // generous air above each chapter — with the auto-numbered eyebrow (see
+    // .case-body h2::before) the extra space makes every section read as its
+    // own scene rather than a subheading in a wall of text
     h2: ({ children }) => (
-      <h2 className="mt-12 text-[clamp(22px,3vw,30px)] font-bold tracking-[-0.02em]">
+      <h2 className="mt-16 text-[clamp(22px,3vw,30px)] font-bold tracking-[-0.02em]">
         {children}
       </h2>
     ),
@@ -34,12 +37,12 @@ const components: PortableTextComponents = {
   },
   list: {
     bullet: ({ children }) => (
-      <ul className="mt-5 list-disc space-y-2 pl-5 text-[15px] leading-[1.7] text-[var(--ink)]/80 md:text-base">
+      <ul className="mt-5 list-disc space-y-2.5 pl-5 text-[15px] leading-[1.75] text-[var(--ink)]/80 [text-wrap:pretty] marker:text-[var(--ink)]/30 md:text-base">
         {children}
       </ul>
     ),
     number: ({ children }) => (
-      <ol className="mt-5 list-decimal space-y-2 pl-5 text-[15px] leading-[1.7] text-[var(--ink)]/80 md:text-base">
+      <ol className="mt-5 list-decimal space-y-2.5 pl-5 text-[15px] leading-[1.75] text-[var(--ink)]/80 [text-wrap:pretty] marker:font-mono marker:text-[13px] marker:text-[var(--ink)]/40 md:text-base">
         {children}
       </ol>
     ),
