@@ -1,21 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100" role="img" aria-label="capad">
-  <defs>
-    <!-- dark squircle backing, faint top light so the bead reads as lit -->
-    <radialGradient id="bg" cx="50%" cy="16%" r="92%">
-      <stop offset="0%" stop-color="#1b1b1f" />
-      <stop offset="100%" stop-color="#0b0b0d" />
-    </radialGradient>
-    <!-- the liquid bead: bright top-left specular falling to a shadowed base -->
-    <radialGradient id="bead" cx="40%" cy="30%" r="80%">
-      <stop offset="0%" stop-color="#ffffff" />
-      <stop offset="20%" stop-color="#f8efd9" />
-      <stop offset="58%" stop-color="#e9dec2" />
-      <stop offset="100%" stop-color="#c7bb9d" />
-    </radialGradient>
-  </defs>
-  <rect x="0" y="0" width="100" height="100" rx="26" fill="url(#bg)" />
-  <!-- the signature falling drop: streamlined tip, round belly -->
-  <path d="M50 20 C 56 36, 72 50, 72 64 A 22 22 0 1 1 28 64 C 28 50, 44 36, 50 20 Z" fill="url(#bead)" />
-  <!-- glass specular glint -->
-  <ellipse cx="42" cy="46" rx="6.5" ry="9" fill="#ffffff" opacity="0.85" transform="rotate(-18 42 46)" />
+  <!-- flat, bold, no gradients: survives 16px tab rendering without smearing -->
+  <rect width="100" height="100" rx="24" fill="#0b0b0d"/>
+  <!-- the capad c with a liquid drop falling off its terminal — the brand
+       letter carrying the site's liquid gesture. c sits up-left and the drop
+       is oversized + separated so both shapes stay legible at 16px. -->
+  <path d="M 66 32 A 24 24 0 1 0 66 62" fill="none" stroke="#f1e6c8" stroke-width="15" stroke-linecap="round"/>
+  <path d="M73 52 C 77 60, 84 65, 84 72 A 11 11 0 1 1 62 72 C 62 65, 69 60, 73 52 Z" fill="#f1e6c8"/>
 </svg>

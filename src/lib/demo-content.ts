@@ -251,9 +251,9 @@ export const DEMO_TESTIMONIALS: Testimonial[] = [
   {
     _id: "demo-t3",
     quote:
-      "Your agent can reason but it can't read; half the web 403s it. searchts fixes that from the machine you're already on: no proxy pool to fight, keyless, and its fetch receipts make what it reads something another agent can replay.",
-    name: "An agent-ops dev",
-    role: "on the searchts thread",
+      "searchts quietly solves a problem every AI agent hits: it is fast, keyless, and clearly built by someone who sweats the details.",
+    name: "Open-source user",
+    role: "Developer",
   },
 ];
 
