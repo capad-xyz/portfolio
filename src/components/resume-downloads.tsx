@@ -38,7 +38,7 @@ export function ResumeDownloads({
    * purpose, so making them pick costs nothing — and it stops a second identical
    * "Download the PDF" from reading as a duplicate of the one at the top.
    */
-  variant?: "split" | "menu";
+  variant?: "split" | "menu" | "single";
   label?: string;
   className?: string;
 }) {
@@ -146,7 +146,12 @@ export function ResumeDownloads({
 
   /** The format list. Shared so both variants stay in step by construction. */
   const menu = (shown: ResumeDownload[], heading: string) => (
-    <div ref={panel} className="dl-panel glass min-w-[252px] rounded-[18px] p-2">
+    // `flat`: the specular bloom is sized for large panes (220px), and this
+    // panel is 252px wide — it lands as a wash across the middle rather than a
+    // highlight on an edge. Flat keeps the bevel, shadow and geometry and drops
+    // only the bloom, which is what a menu wants: a surface you read, not one
+    // that performs.
+    <div ref={panel} className="dl-panel glass flat min-w-[252px] rounded-[18px] p-2">
       <p className="px-3 pb-1.5 pt-1 font-mono text-[10px] uppercase tracking-[0.22em] text-[var(--muted)]">
         {heading}
       </p>
@@ -182,10 +187,14 @@ export function ResumeDownloads({
           <LiquidButton
             as="summary"
             ariaLabel="Download the resume"
-            className="gap-2 px-7 py-[14px] text-[15px] font-semibold"
+            className="px-7 py-[14px] text-[15px] font-semibold"
           >
-            {label}
-            {chevron}
+            {/* One inline-flex row: the label span is inline-block, and an SVG
+                sibling drops to its own line without this. */}
+            <span className="inline-flex items-center gap-2 whitespace-nowrap">
+              {label}
+              {chevron}
+            </span>
           </LiquidButton>
           {menu(options, "choose a format")}
         </details>
@@ -203,8 +212,10 @@ export function ResumeDownloads({
     </LiquidButton>
   );
 
-  // One format configured is not a menu. Render the plain button and stop.
-  if (!rest.length) {
+  // `single` is the header: the PDF, one click, nothing beside it. The other
+  // formats are not lost — the closing CTA offers all of them. Also the natural
+  // shape when only one format is configured at all.
+  if (variant === "single" || !rest.length) {
     return <div className={`inline-flex print:hidden ${className}`}>{button}</div>;
   }
 

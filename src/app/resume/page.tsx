@@ -108,10 +108,11 @@ export default async function ResumePage() {
         </header>
 
         {/* Above everything, including the prose: the whole point of this page is
-            that a recruiter can take the file without reading it first. The PDF
-            stays one click; the other formats sit behind the chevron. */}
+            that a recruiter can take the file without reading it first. One
+            button, one format, no decision — the PDF is what they came for.
+            Anyone wanting DOCX or Markdown finds all three at the close. */}
         <div className="reveal-up mt-8 flex flex-wrap items-center gap-x-5 gap-y-3 print:hidden">
-          <ResumeDownloads options={resume.downloads} />
+          <ResumeDownloads options={resume.downloads} variant="single" />
           {resume.updated && (
             <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--muted)]">
               {resume.updated}
