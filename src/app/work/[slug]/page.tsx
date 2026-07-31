@@ -143,7 +143,18 @@ export default async function ProjectPage({
           )}
         </div>
 
-        <h1 className="reveal-title mt-4 text-[clamp(40px,7vw,76px)] font-bold leading-[0.92] tracking-[-0.03em]">
+        {/* Receiving end of the card morph — the name matches project-card.tsx.
+            Deliberately WITHOUT `reveal-title`: that class starts at opacity 0 /
+            blur(14px) and is promoted to `.in` by an IntersectionObserver, so a
+            morph arriving here would land on an invisible element and then blur
+            itself back in. The morph IS this title's entrance; on a cold load
+            (no transition to morph from) it simply renders present, which is the
+            right hierarchy anyway — the headline anchors while the body develops
+            in around it. */}
+        <h1
+          className="work-morph mt-4 text-[clamp(40px,7vw,76px)] font-bold leading-[0.92] tracking-[-0.03em]"
+          style={{ viewTransitionName: `work-title-${slug}` }}
+        >
           {project.title}
         </h1>
 

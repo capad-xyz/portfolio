@@ -19,6 +19,12 @@ low-friction CTA. (Sources in research-ux.md.)
 - **Build:** GSAP **MorphSVG** drop->splash, hand a single `progress` uniform to an
   R3F `shaderMaterial` ripple/displacement pass, whose `smoothstep` circle doubles
   as the `clip-path` reveal. One timeline, one value, three layers.
+  _(As shipped: no shader pass and no MorphSVG. `liquid-intro.tsx` runs one GSAP
+  timeline over plain DOM nodes (`.drop`, `.pool`, `.ring`, `.splashlet`,
+  `.wave`) — anticipation swell, gravity fall with squash-and-stretch, then a
+  "develop wave" the hero reveals in sync with. The one-timeline idea survived;
+  WebGL and the `clip-path` reveal did not. Timing contract: 0.56s impact /
+  1.15s loaded / 1.35s teardown, mirrored in `hero.tsx`.)_
 - **Why:** the first impression IS the material; design = credibility verdict.
 
 ## 1. Hero
@@ -36,7 +42,8 @@ low-friction CTA. (Sources in research-ux.md.)
   with the demo GIF we built) · **Grove** (git review companion) · **GlyphMaps**
   (Maps on the Nothing Glyph Matrix). Each: name · a hook + outcome line
   (curiosity gap) · tags · demo media · links. Click -> case study.
-- **Build:** glass cards (`MeshTransmissionMaterial` or CSS glass + refraction);
+- **Build:** glass cards (CSS glass + SVG refraction — `MeshTransmissionMaterial`
+  was the original plan; shipped without WebGL, see PRD §6);
   scroll-scrubbed `clip-path` + scale morph on enter; hover ripple from cursor
   point; shared-element morph into the case page.
 - **Why:** best work first; curiosity-gap stories; concrete proof = competence.
@@ -100,7 +107,8 @@ Grain/noise overlay everywhere to keep flat areas alive and hide blur banding.
 - **Magnetic buttons:** https://blog.olivierlarose.com/tutorials/magnetic-button
 - **blobity** (liquid cursor): https://blobity.dev/
 - **Libraries:** GSAP (+ MorphSVG, DrawSVG, ScrollTrigger) · Motion (springs) ·
-  Lenis · R3F + drei (`shaderMaterial`, `MeshTransmissionMaterial`) · OGL `Flowmap`
-  (cursor-velocity distortion) · blobity.
+  Lenis · blobity. _(R3F + drei and OGL `Flowmap` were scoped here but never
+  shipped — the glass and the cursor distortion are both done with CSS +
+  SVG filters instead, and the packages have been removed.)_
 - **Perf:** one WebGL context across routes; direct DOM mutation in hot loops;
   one shared clock; cache bound objects; idle guard; reduced-motion = static page.

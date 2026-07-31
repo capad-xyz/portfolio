@@ -17,6 +17,9 @@ export function Hero() {
   const tag = useRef<HTMLParagraphElement>(null);
   const ctaWrap = useRef<HTMLDivElement>(null);
   const proof = useRef<HTMLDivElement>(null);
+  // zero-height marker pinned to the hero's bottom edge; the strip hides when
+  // this crosses the clearance line (see the observer below)
+  const tail = useRef<HTMLDivElement>(null);
   const cta = useRef<HTMLAnchorElement>(null);
   const fill = useRef<HTMLSpanElement>(null);
 
@@ -73,17 +76,34 @@ export function Hero() {
     }
 
     // The proof strip is viewport-fixed so it anchors the first impression, but
-    // past the hero it would sit on top of the deck and the sign-off — fade it
-    // out as soon as the hero leaves the viewport, back in on return.
-    const heroIo = new IntersectionObserver(
-      ([en]) => proof.current?.classList.toggle("gone", !en.isIntersecting),
-      { threshold: 0.15 },
+    // past the hero it would sit on top of the deck and the sign-off. It has to
+    // clear out BEFORE the deck reaches it, not when the hero finally leaves —
+    // watching the hero at threshold 0.15 meant waiting until 85% of it was gone,
+    // by which point the first row of cards was already sliding underneath.
+    //
+    // What we actually want is a half-plane test: "has the hero's bottom edge
+    // risen above the strip's clearance line?" IntersectionObserver only does
+    // band tests, so blowing the root's top margin out to 9999px removes the
+    // upper edge from the equation and leaves `isIntersecting` depending solely
+    // on the sentinel vs the raised bottom edge. Without that, the test would
+    // flip back to false once the sentinel scrolled off the top and the strip
+    // would pop back over the lower sections.
+    //
+    // The clearance is deliberately SMALL. The hero is min-h-screen, so the deck
+    // starts exactly at the fold while the strip floats ~24px above it — the two
+    // are already only a couple of dozen px apart at rest, and the deck slides
+    // under the strip within ~15px of scroll. A generous clearance would fire
+    // LATER and make the overlap worse, not better; the strip has to commit to
+    // leaving almost as soon as the page moves.
+    const tailIo = new IntersectionObserver(
+      ([en]) => proof.current?.classList.toggle("gone", en.isIntersecting),
+      { rootMargin: "9999px 0px -48px 0px", threshold: 0 },
     );
-    if (root.current) heroIo.observe(root.current);
+    if (tail.current) tailIo.observe(tail.current);
 
     return () => {
       timers.forEach(clearTimeout);
-      heroIo.disconnect();
+      tailIo.disconnect();
       removeEventListener("pointermove", onMove);
       removeEventListener("resize", invalidate);
       removeEventListener("scroll", invalidate);
@@ -184,6 +204,10 @@ export function Hero() {
         <span className="text-[var(--ink)]/55">shipping in the open:</span>
         <span>searchts &nbsp;·&nbsp; glyphmaps &nbsp;·&nbsp; grove &nbsp;·&nbsp; beep-beep-oss</span>
       </div>
+
+      {/* Absolute (not in flow) so it marks the hero's bottom edge without
+          adding height to a justify-center column. Observed above. */}
+      <div ref={tail} aria-hidden className="pointer-events-none absolute bottom-0 left-0 h-0 w-full" />
     </section>
   );
 }

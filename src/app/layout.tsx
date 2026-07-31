@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Caveat } from "next/font/google";
 import "./globals.css";
 import { SiteShell } from "@/components/site-shell";
+import { PerfGuard } from "@/components/perf-guard";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -148,6 +149,7 @@ export default function RootLayout({
         <a href="#main" className="skip-link">
           Skip to content
         </a>
+        <PerfGuard />
         <SiteShell>{children}</SiteShell>
       </body>
     </html>

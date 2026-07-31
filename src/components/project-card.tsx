@@ -18,7 +18,16 @@ export function ProjectCard({ p, index }: { p: Project; index: number }) {
   return (
     <article className="reveal-up card-lift glass lensable relative flex flex-col rounded-[24px] p-6 md:p-8">
       <div className="flex items-start justify-between gap-4">
-        <h3 className="text-[clamp(26px,3vw,34px)] font-bold leading-[1.02] tracking-[-0.02em]">
+        {/* Shared element: this title morphs into the case study's <h1>.
+            The pairing is done by the browser, not React — `view-transition-name`
+            must match the one in work/[slug]/page.tsx, and `.work-morph` carries
+            the `view-transition-class` the CSS targets. (React's <ViewTransition>
+            component would be the tidier API, but it is not exported by the
+            React release this project is pinned to.) */}
+        <h3
+          className="work-morph text-[clamp(26px,3vw,34px)] font-bold leading-[1.02] tracking-[-0.02em]"
+          style={{ viewTransitionName: `work-title-${p.slug}` }}
+        >
           <Link href={`/work/${p.slug}`} className="transition-opacity hover:opacity-70">
             {p.title}
           </Link>

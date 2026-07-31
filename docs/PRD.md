@@ -43,8 +43,10 @@ fallbacks**, and ONE signature delight peak (peak-end rule).
 - **Scroll is the narrative.** GSAP ScrollTrigger + Lenis drive a choreographed
   journey - pinned moments, parallax depth, glass that assembles/refracts as you
   move.
-- **WebGL-forward.** R3F glass that reacts to scroll + cursor and is genuinely
-  **light-filled and refractive** (the fix for the flat dark shard).
+- **Refraction-forward.** Glass that reacts to scroll + cursor and is genuinely
+  **light-filled and refractive** (the fix for the flat dark shard). Originally
+  specced as WebGL/R3F; delivered with `backdrop-filter` + SVG displacement,
+  which met the bar without a GL context (see §6).
 - **Dramatic transitions.** Shared-element morphs (card -> project page), liquid
   section dissolves, blur/scale reveals.
 - **Pervasive micro-physics.** Springs on every hover/press; magnetic buttons;
@@ -82,8 +84,15 @@ tags, a "flagship" flag, role/year.
 ## 6. Tech
 
 Next 16 + React 19 + Tailwind v4 - Motion (micro) - GSAP ScrollTrigger + Lenis
-(scroll) - R3F + drei `MeshTransmissionMaterial` (WebGL) - next-sanity + TypeGen.
+(scroll) - next-sanity + TypeGen.
 **Rebuild the glass material for LIGHT.** Deploy: Cloudflare Pages on capad.fyi.
+
+> **Shipped without WebGL.** The plan was R3F + drei `MeshTransmissionMaterial`.
+> The glass is instead pure CSS `backdrop-filter` plus SVG displacement filters
+> (`#refract` / `#lens` in `glass-filters.tsx`), which matches the look at a
+> fraction of the weight and needs no GL context. R3F, drei and three were
+> removed from the dependency tree once the last component using them was
+> orphaned — see §7, the WebGL budget below no longer applies.
 
 ## 7. Performance & accessibility
 

@@ -48,17 +48,37 @@ export function LiquidLens() {
     };
     addEventListener("pointermove", onMove, { passive: true });
 
-    // should the lens show at the current cursor position? (one layout pass/frame)
+    // The 8-point ring costs 8 of the 9 hit-tests this does, and it only refines
+    // an answer the centre test already gated. Re-running it every frame was
+    // ~1.5ms (9% of a 60fps budget) to recompute a boolean that cannot change
+    // meaningfully over a few px — the lens is a 230px disc. So the ring result
+    // is cached and only recomputed once the pointer has actually travelled.
+    // The centre test still runs every frame: it's one call, and it's the one
+    // that flips the instant you cross onto a control.
+    let ringOk = false;
+    let ringX = NaN;
+    let ringY = NaN;
+    const RING_REFRESH = 6; // px of travel before the ring is worth redoing
+
     const lensableAt = () => {
       const center = document.elementFromPoint(x, y);
       if (!center) return false;
       if (center.closest(INTERACTIVE)) return false; // directly over a control
       if (!center.closest(".lensable")) return false; // only over opted-in content
-      for (const [dx, dy] of OFFSETS) {
-        const near = document.elementFromPoint(x + dx * RING, y + dy * RING);
-        if (near?.closest(INTERACTIVE)) return false; // a control is within reach
+
+      if (!(Math.hypot(x - ringX, y - ringY) < RING_REFRESH)) {
+        ringX = x;
+        ringY = y;
+        ringOk = true;
+        for (const [dx, dy] of OFFSETS) {
+          const near = document.elementFromPoint(x + dx * RING, y + dy * RING);
+          if (near?.closest(INTERACTIVE)) {
+            ringOk = false; // a control is within reach
+            break;
+          }
+        }
       }
-      return true;
+      return ringOk;
     };
 
     const loop = () => {

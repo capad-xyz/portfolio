@@ -78,9 +78,11 @@ export function TestimonialsDeck({ items }: { items: Testimonial[] }) {
   const flip = useCallback(
     (target: number, mode: Mode, dir: number, thrown?: Throw) => {
       if (target === index) return;
-      // dot navigation flips clean: no ink splash and no exit ghost (below) —
-      // the burst + the leaving card's text smearing over the incoming quote
-      // read as a glitch when triggered from the dots
+      // Dots still skip the ink splash — a burst of drip reads as a glitch when
+      // the gesture was a precise click on a target rather than a throw. They DO
+      // now get the exit card (below): that was only withheld because the old
+      // exit smeared the leaving quote over the incoming one, which the rewritten
+      // deal-off no longer does.
       if (mode !== "dot") setSplash((s) => ({ key: s.key + 1, mode, dir }));
 
       // the incoming quote continues from wherever the drag surfaced it, or
@@ -92,23 +94,26 @@ export function TestimonialsDeck({ items }: { items: Testimonial[] }) {
       } else {
         frontUp.set(start);
         animate(frontUp, 1, {
-          // the incoming quote develops up as the old card leaves; dots land a
-          // touch quicker so navigation still feels responsive
-          duration: mode === "dot" ? 0.4 : 0.55,
-          delay: mode === "tap" ? 0.12 : 0,
+          // The incoming quote develops up as the old card leaves; dots land a
+          // touch quicker so navigation still feels responsive. The old tap had
+          // a 0.12s stall before it started, which was there to keep the two
+          // quotes from overlapping — now that the leaving card drops its text
+          // in 0.17s that guard is unnecessary, and removing most of it makes
+          // the swap read as one continuous move instead of two beats.
+          duration: mode === "dot" ? 0.5 : 0.6,
+          delay: mode === "tap" ? 0.05 : 0,
           ease: [0.4, 0, 0.2, 1],
         });
-        // a drag flings the old card, a tap pops it into an edge burst; dots
-        // skip the exit layer entirely (clean reshuffle). Exits stack — each
-        // entry retires itself, so back-to-back flips never block the deck.
-        if (mode !== "dot") {
-          const key = `exit-${(exitSeq.current += 1)}`;
-          setLeaving((ls) => [...ls, { key, t: items[index], mode, dir, throw: thrown }]);
-          window.setTimeout(
-            () => setLeaving((ls) => ls.filter((l) => l.key !== key)),
-            EXIT_MS,
-          );
-        }
+        // A drag flings the old card along its throw; a tap or a dot deals it
+        // off sideways. Every mode gets an exit now, so the deck always shows
+        // you which card left and where it went. Exits stack — each entry
+        // retires itself, so back-to-back flips never block the deck.
+        const key = `exit-${(exitSeq.current += 1)}`;
+        setLeaving((ls) => [...ls, { key, t: items[index], mode, dir, throw: thrown }]);
+        window.setTimeout(
+          () => setLeaving((ls) => ls.filter((l) => l.key !== key)),
+          EXIT_MS,
+        );
       }
       setIndex(target);
     },
@@ -230,7 +235,8 @@ export function TestimonialsDeck({ items }: { items: Testimonial[] }) {
                 next("tap", 1);
               }}
             >
-              <Card t={t} interactive={front} reveal={reveal} />
+              {/* only the front plate runs the live backdrop — see `live` */}
+              <Card t={t} interactive={front} reveal={reveal} live={front} />
             </motion.div>
           );
         })}
@@ -287,12 +293,34 @@ function pos_isExiting(leaving: Leaving[], id: string) {
 /**
  * The card being thrown away. For a drag it starts at the release point and
  * springs to a far target with the throw's own velocity fed into the spring, so
- * fast flicks fly fast and hard ones fly far. For a tap it pours straight down.
+ * fast flicks fly fast and hard ones fly far.
+ *
+ * For a tap or a dot it gets dealt off the deck: a quick counter-lift (the card
+ * winds up against the direction it's about to go — anticipation is what makes
+ * the move read as intent rather than a dissolve), then it sails out sideways
+ * with a tumble. Crucially it stays FULLY OPAQUE until it's clear of the stack
+ * and only fades on the way out. The old version poured straight down in place
+ * at falling opacity, so the outgoing quote sat translucent on top of the
+ * incoming one and you could read both at once — that smear is what kept dot
+ * navigation from being allowed an exit card at all.
  */
 function ExitCard({ leaving }: { leaving: Leaving }) {
   const { t, mode, dir, throw: thr } = leaving;
   const isDrag = mode === "drag" && thr;
 
+  // Why this card leaves the viewport instead of fading in place:
+  //
+  // It is `inset-x-0` — a full-width plate. A half-hearted 480px slide leaves
+  // most of its width still covering the incoming card, so if it is fading at
+  // the same time you read BOTH quotes through each other. That was the ghost.
+  //
+  // The fix is not to fade faster, it is to never be translucent while
+  // overlapping. Held at full opacity it OCCLUDES the incoming card rather than
+  // blending with it, so it stays perfectly readable the whole way out, and it
+  // only fades once it is past 55% of a viewport width and nothing is behind it
+  // to smear. Distances are in `vw` on purpose: a percentage would be relative
+  // to the card's own width, which clears the card underneath but not the
+  // screen, and how far "off screen" is depends on the viewport, not the card.
   const spring = { type: "spring" as const, stiffness: 90, damping: 16 };
 
   return (
@@ -307,7 +335,16 @@ function ExitCard({ leaving }: { leaving: Leaving }) {
       animate={
         isDrag
           ? { x: thr!.to.x, y: thr!.to.y, rotate: dir * 22, scale: 0.9, opacity: 0 }
-          : { x: 0, y: [0, 4, 14], scale: [1, 1.06, 0.78], opacity: [1, 0.9, 0] }
+          : {
+              // wind up against `dir`, then slide clean off the screen
+              x: ["0vw", `${dir * -1.5}vw`, `${dir * 42}vw`, `${dir * 104}vw`],
+              y: [0, -14, 6, 30],
+              // a gentle tumble, not a cartwheel — it has to stay readable
+              rotate: [0, dir * -2.5, dir * 5, dir * 10],
+              scale: [1, 1.04, 1, 0.96],
+              // fully opaque until it is 42vw out and nothing is behind it
+              opacity: [1, 1, 1, 0],
+            }
       }
       transition={
         isDrag
@@ -318,9 +355,15 @@ function ExitCard({ leaving }: { leaving: Leaving }) {
               scale: { duration: EXIT_MS / 1000 },
               opacity: { duration: 0.42, ease: "easeIn" },
             }
-          : { duration: 0.42, ease: [0.34, 0, 0.3, 1], times: [0, 0.35, 1] }
+          : {
+              // must finish inside EXIT_MS or the node is pulled mid-flight
+              duration: 0.66,
+              ease: [0.3, 0.02, 0.22, 1],
+              times: [0, 0.16, 0.55, 1],
+            }
       }
     >
+      {/* reveal stays 1: the card is meant to be read on its way out */}
       <Card t={t} interactive={false} reveal={1} />
     </motion.div>
   );
@@ -330,10 +373,19 @@ function Card({
   t,
   interactive,
   reveal,
+  live = true,
 }: {
   t: Testimonial;
   interactive: boolean;
   reveal: MotionValue<number> | number;
+  /**
+   * Whether this plate runs the live liquid-glass backdrop.
+   *
+   * Deliberately NOT derived from `interactive`: the exiting card is
+   * non-interactive but is the one you are actually watching, so it keeps the
+   * real material. Only the cards buried in the stack go flat — see `.glass.flat`.
+   */
+  live?: boolean;
 }) {
   // Adaptive measure: quotes near the schema's 400-char ceiling step down a
   // size so the attribution always fits inside the fixed-height plate.
@@ -348,7 +400,7 @@ function Card({
   return (
     <figure
       data-grab={interactive ? "" : undefined}
-      className={`glass ${interactive ? "lensable" : ""} flex flex-col rounded-[28px] p-8 md:p-10`}
+      className={`glass ${live ? "" : "flat"} ${interactive ? "lensable" : ""} flex flex-col rounded-[28px] p-8 md:p-10`}
       style={{ height: CARD_H }}
     >
       {/* quote develops in as the card lands / surfaces, so text never shows
@@ -384,7 +436,7 @@ function Card({
  * off the lower edge. The shared goo filter fuses the blobs into liquid.
  */
 function Drip({ mode, dir }: { mode: Mode; dir: number }) {
-  if (mode !== "drag") return <Burst />; // tap & dot pop from the edges
+  if (mode !== "drag") return <Burst dir={dir} />; // tap & dot pop from the edges
 
   const base = [
     { x: 0, s: 20, delay: 0.0, fall: 100, drift: dir * 120 },
@@ -440,24 +492,44 @@ function Drip({ mode, dir }: { mode: Mode; dir: number }) {
  * overlay is sized to the front card so the blobs sit on its border; positions
  * are deterministic (no RNG) so they're SSR-stable.
  */
-function Burst() {
-  const N = 22;
+function Burst({ dir }: { dir: number }) {
+  const N = 26;
+  // Deterministic hash, not Math.random — the positions must be identical on the
+  // server and the client or React screams about the mismatch. Irregular enough
+  // to read as spatter, stable enough to hydrate.
+  const rnd = (i: number, k: number) => {
+    const v = Math.sin(i * 127.1 + k * 311.7) * 43758.5453;
+    return v - Math.floor(v);
+  };
+
   const drops = Array.from({ length: N }, (_, i) => {
-    const a = (i / N) * Math.PI * 2;
+    // Jitter each blob off its slot on the ring. A perfectly even ring is what
+    // made this read as a mechanical pulse rather than a splash — real spatter
+    // clusters and leaves gaps.
+    const a = ((i + (rnd(i, 1) - 0.5) * 1.7) / N) * Math.PI * 2;
     const cos = Math.cos(a);
     const sin = Math.sin(a);
     const m = Math.max(Math.abs(cos), Math.abs(sin)) || 1;
     const nx = cos / m; // −1..1 across the card's border
     const ny = sin / m; // −1..1 down the card's border
+    // 0 = fine fast mist, 1 = fat slow droplet. One roll drives size, speed,
+    // reach and weight together, so each blob is internally consistent — big
+    // ones are heavy and lag, small ones snap away. Uniform timing was the other
+    // half of why the old burst looked flat.
+    const heavy = rnd(i, 2);
     return {
       lx: 50 + nx * 47, // % across → sits on the edge
       ty: 50 + ny * 47, // % down
-      ox: nx, // outward direction
+      // bias the whole spray after the departing card: the liquid follows the
+      // throw instead of ignoring it
+      ox: nx + dir * 0.5,
       oy: ny,
-      size: 9 + ((i * 13) % 5) * 3,
-      spread: 54 + ((i * 29) % 3) * 34,
-      fall: 60 + ((i * 17) % 4) * 46,
-      delay: ((i * 7) % 5) * 0.014,
+      size: 5 + heavy * 19,
+      spread: 44 + rnd(i, 3) * 180,
+      fall: 40 + rnd(i, 4) * 200,
+      dur: 0.5 + heavy * 0.8,
+      delay: rnd(i, 5) * 0.15,
+      peak: 0.32 + heavy * 0.36,
     };
   });
 
@@ -483,18 +555,22 @@ function Burst() {
             marginLeft: -d.size / 2,
             marginTop: -d.size / 2,
           }}
-          initial={{ x: 0, y: 0, scale: 0.3, opacity: 0 }}
+          initial={{ x: 0, y: 0, scale: 0.25, opacity: 0 }}
           animate={{
-            x: [0, d.ox * d.spread * 0.5, d.ox * d.spread],
-            y: [0, d.oy * d.spread * 0.5, d.oy * d.spread + d.fall],
-            scale: [0.3, 1.15, 0.1],
-            opacity: [0, 0.5, 0],
+            x: [0, d.ox * d.spread * 0.45, d.ox * d.spread],
+            y: [0, d.oy * d.spread * 0.45, d.oy * d.spread + d.fall],
+            scale: [0.25, 1.2, 0.08],
+            opacity: [0, d.peak, 0],
           }}
           transition={{
-            duration: 0.9,
+            // per-blob duration is the point: 0.5s for mist, 1.3s for the fat
+            // ones, so the spray desynchronises instead of pulsing as one ring
+            duration: d.dur,
             delay: d.delay,
-            ease: [0.25, 0, 0.35, 1],
-            times: [0, 0.3, 1],
+            // ejected hard, then coasting — the old ease started slow, which is
+            // not how anything splashes
+            ease: [0.16, 0.8, 0.3, 1],
+            times: [0, 0.28, 1],
           }}
         />
       ))}

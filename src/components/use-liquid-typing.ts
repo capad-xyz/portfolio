@@ -65,8 +65,7 @@ export function useLiquidTyping(formRef: RefObject<HTMLFormElement | null>) {
     const drips: Drip[] = [];
     for (let i = 0; i < POOL; i++) {
       const el = document.createElement("i");
-      el.style.transform = "translate3d(-9999px,-9999px,0)";
-      layer.appendChild(el);
+      layer.appendChild(el); // starts display:none via CSS until first spawn
       drips.push({ el, on: false, x: 0, y: 0, vx: 0, vy: 0, life: 0, ttl: 0, size: 1, phase: 0 });
     }
 
@@ -128,7 +127,7 @@ export function useLiquidTyping(formRef: RefObject<HTMLFormElement | null>) {
         if (p >= 1 || d.y > innerHeight + 60) {
           d.on = false;
           d.el.style.opacity = "0";
-          d.el.style.transform = "translate3d(-9999px,-9999px,0)";
+          d.el.style.display = "none"; // leave the goo layer's ink union entirely
           alive--;
           continue;
         }
@@ -159,6 +158,7 @@ export function useLiquidTyping(formRef: RefObject<HTMLFormElement | null>) {
       d.size = size;
       d.phase = rand(0, Math.PI * 2);
       d.el.style.opacity = "0";
+      d.el.style.display = "block"; // rejoin the layer; parked nodes are display:none
       if (!raf) {
         prev = 0;
         raf = requestAnimationFrame(loop);

@@ -8,6 +8,13 @@
   --my: 50%;
 }
 @property --rv { syntax: "<length>"; inherits: false; initial-value: 0px; }
+/* The cursor spotlight rewrites --mx/--my on every .glass pane each time the
+   pointer moves. Left as plain custom properties they INHERIT, so each write
+   dirties the pane's whole subtree for style recalc — measured at ~7ms/frame
+   across ~172 descendants, for a value only the pane itself reads. Declaring
+   them non-inheriting confines the invalidation to the element. Same pixels. */
+@property --mx { syntax: "<length-percentage>"; inherits: false; initial-value: 50%; }
+@property --my { syntax: "<length-percentage>"; inherits: false; initial-value: 50%; }
 
 @theme inline {
   --color-paper: var(--paper);
@@ -117,6 +124,24 @@ body {
       0 0 0 0.5px rgba(255, 255, 255, 0.6);
   }
 }
+/* ---- buried plates: same glass, no live backdrop.
+   A stack of .glass cards is the one genuinely super-linear case on the page —
+   backdrop-filter reads back everything painted beneath it, so the front card of
+   the testimonial deck was reading through two more backdrop-filtered cards
+   (measured ~2.62x average layer depth over the same box). The cards behind are
+   at opacity 0 and an ~18px sliver respectively: there is no refraction there
+   anyone can resolve, so they pay the most expensive effect on the page to show
+   nothing. A slightly denser flat fill reads the same at that size — arguably
+   better, since a stack of plates should look solid.
+   Keeps the bevel, the shadows and the geometry; drops only the filter and the
+   cursor specular (a mix-blend-mode: screen pass that a buried card can't use). */
+.glass.flat {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  background: rgba(255, 255, 255, 0.62);
+}
+.glass.flat::after { display: none; }
+
 /* beveled rim: a 1px light gradient ring that reads as a real glass edge —
    bright where the overhead light catches (top-left), falling to shadow */
 .glass::before {
@@ -159,7 +184,11 @@ body {
     0 44px 100px -54px rgba(20, 20, 30, 0.6),
     0 0 0 0.5px rgba(255, 255, 255, 0.5);
   -webkit-backdrop-filter: blur(7px);
-  backdrop-filter: blur(3px) saturate(135%) url(#refract);
+  /* No url(#refract) here: this pane is ~27% of the viewport and the FIRST thing
+     painted, but it only blurs 3px — far too little for the displacement to be
+     visible. It was paying the most expensive filter in the sheet for an effect
+     you cannot see. The .glass panes, which blur 8px, still get it. */
+  backdrop-filter: blur(3px) saturate(135%);
 }
 
 /* ---- liquid-glass lens: rides the cursor over .lensable content; its edge is
@@ -365,7 +394,14 @@ body.lensing .drips.on { opacity: 0; }
   margin-left: -7px; margin-top: -8px;
   border-radius: 50% 50% 50% 50% / 58% 58% 42% 42%;
   background: var(--ink); opacity: 0;
-  transform: translate3d(-9999px, -9999px, 0); will-change: transform, opacity;
+  will-change: transform, opacity;
+  /* Parked droplets are display:none, not shoved offscreen to -9999px. Parking
+     inside the layer keeps them in its ink union, so a single live droplet
+     stretched the filtered region from ~14x16 to roughly 10773x10445 — and each
+     parked node still asked the compositor for a layer via will-change. A
+     display:none element generates no box, so the union stays tight and the
+     speculative layers go away. Set back to block on spawn. */
+  display: none;
 }
 
 /* ---- caret drip: same mercury as the cursor trail, beaded at the text caret
@@ -382,7 +418,12 @@ body.lensing .drips.on { opacity: 0; }
   margin-left: -6.5px; margin-top: -7.5px;
   border-radius: 50% 50% 50% 50% / 58% 58% 42% 42%;
   background: var(--ink); opacity: 0;
-  transform: translate3d(-9999px, -9999px, 0); will-change: transform, opacity;
+  will-change: transform, opacity;
+  /* Same parking rule as .drips: display:none, never -9999px. This layer is
+     mounted on EVERY page whether or not the contact panel is open, so its 18
+     nodes sat inside a filtered layer's ink union — each also asking the
+     compositor for a speculative layer — for an effect most visitors never see. */
+  display: none;
 }
 
 /* ---- contact-bubble face: normally an envelope, it morphs into a winking
@@ -537,7 +578,14 @@ body.lensing .drips.on { opacity: 0; }
    the `translate` property (Tailwind), so `transform` here only nudges down;
    filter stays in the transition list for the .dev develop-in. ---- */
 .proof-strip { transition: opacity 0.45s ease, filter 0.6s ease, transform 0.45s ease; }
-.proof-strip.gone { opacity: 0 !important; transform: translateY(12px); pointer-events: none; }
+/* Leaving is urgent, arriving is not: the deck starts at the fold and slides
+   under the strip within a few px of scroll, so the exit has to be quick and
+   move DOWN out of the collision zone rather than just fading in place. Putting
+   the short duration on .gone keeps the return trip at the leisurely 0.45s. */
+.proof-strip.gone {
+  opacity: 0 !important; transform: translateY(34px); pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
 
 /* ---- case-study chapters: each h2 gets an auto-incrementing mono index, so
    the Sanity body needs zero markup to read as numbered sections ---- */
@@ -684,6 +732,65 @@ body.lensing .drips.on { opacity: 0; }
 @media (prefers-reduced-motion: reduce) {
   .cap-dn-blob-dot, .cap-dn-connector, .cap-dn-label, .cap-dn-pill, .cap-dn-splash {
     transition: none; animation: none;
+  }
+}
+
+/* ---- adaptive quality: set by PerfGuard when a short rAF probe finds the
+   machine can't hold ~37fps. Two changes, in cost order.
+
+   1. Freeze the clouds. Their drift is what keeps every backdrop-filter surface
+      permanently dirty — while they move, no pane's filter result is reusable,
+      so the whole glass system re-renders every frame. Stopping them is what
+      makes the rest cacheable. (Same treatment the phone breakpoint already
+      applies for the same stated reason.)
+   2. Drop the SVG reference filters from the backdrop chains. An SVG filter
+      inside backdrop-filter is the most expensive thing here — feDisplacementMap
+      is a per-pixel gather over a region expanded to 140%/180%. The
+      blur/saturate/brightness stay, because those map to native compositor ops.
+      The panes still read as glass; they just lose the edge refraction.
+
+   Everything else — the bevel, the specular, the shadows, the layout — is
+   untouched, so the design holds together at either tier. ---- */
+body.perf-lite .ambient span { animation: none; filter: blur(40px); opacity: 0.62; }
+body.perf-lite .glass {
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+  backdrop-filter: blur(8px) saturate(190%) brightness(1.05);
+}
+body.perf-lite .lens::before {
+  -webkit-backdrop-filter: blur(1.4px) saturate(170%) brightness(1.04);
+  backdrop-filter: blur(1.4px) saturate(170%) brightness(1.04);
+}
+
+/* ---- shared-element morph: a project card's title flies into the case-study
+   headline (project-card.tsx <-> work/[slug]/page.tsx, paired by ViewTransition
+   name). 420ms is the window where the move is slow enough to read as one object
+   travelling but fast enough not to feel like waiting.
+
+   The blur keyframe is doing real work: the two ends are different font sizes,
+   so the browser interpolates between two text rasterisations and the glyphs
+   crawl mid-flight. A touch of blur at the midpoint hides that entirely — the
+   same trick the rest of the site uses to "develop" things out of the glass. ---- */
+/* the shared name is set inline (it's per-slug); the class is what the pseudo
+   selectors below key off, so both ends only need `.work-morph` */
+.work-morph { view-transition-class: morph; }
+::view-transition-group(.morph) {
+  animation-duration: 420ms;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+::view-transition-image-pair(.morph) { animation-name: morph-via-blur; }
+@keyframes morph-via-blur {
+  35% { filter: blur(3px); }
+}
+
+/* Positional motion is the main trigger for motion sensitivity, and a title
+   flying across the viewport is exactly that — kill it outright rather than
+   soften it. Content then swaps instantly, the browser's own default. */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
   }
 }
 
