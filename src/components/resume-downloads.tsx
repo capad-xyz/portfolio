@@ -26,9 +26,20 @@ import { LiquidButton } from "./liquid-button";
  */
 export function ResumeDownloads({
   options,
+  variant = "split",
+  label = "Download",
   className = "",
 }: {
   options: ResumeDownload[];
+  /**
+   * `split` (the header): the first format is a one-click button, the rest sit
+   * behind the chevron. `menu` (the closing CTA): a single "Download" that opens
+   * every format. By then the reader has finished the page and is choosing on
+   * purpose, so making them pick costs nothing — and it stops a second identical
+   * "Download the PDF" from reading as a duplicate of the one at the top.
+   */
+  variant?: "split" | "menu";
+  label?: string;
   className?: string;
 }) {
   const details = useRef<HTMLDetailsElement>(null);
@@ -116,6 +127,72 @@ export function ResumeDownloads({
     el.open = false;
   };
 
+  const chevron = (
+    <svg
+      className="dl-chevron"
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M6 9.5 12 15.5 18 9.5" />
+    </svg>
+  );
+
+  /** The format list. Shared so both variants stay in step by construction. */
+  const menu = (shown: ResumeDownload[], heading: string) => (
+    <div ref={panel} className="dl-panel glass min-w-[252px] rounded-[18px] p-2">
+      <p className="px-3 pb-1.5 pt-1 font-mono text-[10px] uppercase tracking-[0.22em] text-[var(--muted)]">
+        {heading}
+      </p>
+      <ul className="flex flex-col">
+        {shown.map((o) => (
+          <li key={o.href}>
+            <a
+              href={o.href}
+              {...(o.filename ? { download: o.filename } : {})}
+              onClick={() => close(false)}
+              className="group flex items-center justify-between gap-8 rounded-[12px] px-3 py-2.5 transition-colors hover:bg-[var(--ink)]"
+            >
+              <span className="text-[14px] leading-none text-[var(--ink)] transition-colors group-hover:text-[var(--paper)]">
+                {o.label}
+              </span>
+              <span className="font-mono text-[10px] uppercase leading-none tracking-[0.2em] text-[var(--muted)] transition-colors group-hover:text-[var(--paper)]/70">
+                {o.format}
+              </span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+
+  // Every format behind one button. The label is the whole toggle, so there is
+  // no primary link to miss — and with a single format configured it still
+  // opens to that one rather than pretending to be a choice.
+  if (variant === "menu") {
+    return (
+      <div className={`inline-flex print:hidden ${className}`}>
+        <details ref={details} className="dl-menu relative" onKeyDown={onKeyDown} onBlur={onBlur}>
+          <LiquidButton
+            as="summary"
+            ariaLabel="Download the resume"
+            className="gap-2 px-7 py-[14px] text-[15px] font-semibold"
+          >
+            {label}
+            {chevron}
+          </LiquidButton>
+          {menu(options, "choose a format")}
+        </details>
+      </div>
+    );
+  }
+
   const button = (
     <LiquidButton
       href={primary.href}
@@ -137,47 +214,11 @@ export function ResumeDownloads({
 
       <details ref={details} className="dl-menu relative" onKeyDown={onKeyDown} onBlur={onBlur}>
         <LiquidButton as="summary" variant="outline" ariaLabel="Other formats" className="px-4">
-          <svg
-            className="dl-chevron"
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.4"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden
-          >
-            <path d="M6 9.5 12 15.5 18 9.5" />
-          </svg>
+          {chevron}
         </LiquidButton>
 
         {/* Placement lives in globals.css, not here — see .dl-menu > .dl-panel. */}
-        <div ref={panel} className="dl-panel glass min-w-[252px] rounded-[18px] p-2">
-          <p className="px-3 pb-1.5 pt-1 font-mono text-[10px] uppercase tracking-[0.22em] text-[var(--muted)]">
-            other formats
-          </p>
-          <ul className="flex flex-col">
-            {rest.map((o) => (
-              <li key={o.href}>
-                <a
-                  href={o.href}
-                  {...(o.filename ? { download: o.filename } : {})}
-                  onClick={() => close(false)}
-                  className="group flex items-center justify-between gap-8 rounded-[12px] px-3 py-2.5 transition-colors hover:bg-[var(--ink)]"
-                >
-                  <span className="text-[14px] leading-none text-[var(--ink)] transition-colors group-hover:text-[var(--paper)]">
-                    {o.label}
-                  </span>
-                  <span className="font-mono text-[10px] uppercase leading-none tracking-[0.2em] text-[var(--muted)] transition-colors group-hover:text-[var(--paper)]/70">
-                    {o.format}
-                  </span>
-                </a>
-              </li>
-            ))}
-          </ul>
-        </div>
+        {menu(rest, "other formats")}
       </details>
     </div>
   );

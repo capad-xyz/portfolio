@@ -280,7 +280,10 @@ export default async function ResumePage() {
         </div>
 
         <div className="reveal-up mt-16 flex flex-wrap items-center gap-4 print:hidden">
-          <ResumeDownloads options={resume.downloads} />
+          {/* The closing CTA offers every format behind one button: by here the
+              reader has chosen deliberately, and a second "Download the PDF"
+              would just read as the header's button repeated. */}
+          <ResumeDownloads options={resume.downloads} variant="menu" />
           <OpenContactButton variant="outline" className="px-6 py-[14px] text-[15px] font-medium">
             Start a conversation
           </OpenContactButton>
