@@ -7,13 +7,20 @@ import { LiquidCursor } from "./liquid-cursor";
 import { SmoothScroll } from "./smooth-scroll";
 import { ContactWidget } from "./contact-widget";
 import { DotNav } from "./dot-nav";
+import type { SocialLink } from "@/lib/sanity";
 
 /**
  * The main-site chrome (liquid cursor, smooth scroll, ambient clouds, grain,
  * SVG filters) wraps every page except `/studio`. The studio is its own SPA
  * and must feel native (real cursor, native scroll, no overlays).
  */
-export function SiteShell({ children }: { children: ReactNode }) {
+export function SiteShell({
+  children,
+  socials,
+}: {
+  children: ReactNode;
+  socials: SocialLink[];
+}) {
   const path = usePathname();
   const isStudio = path?.startsWith("/studio") ?? false;
   // The dot-nav is the homepage section spine; its targets (#work, #experience…)
@@ -42,7 +49,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
         {children}
         {isHome && <DotNav />}
       </SmoothScroll>
-      <ContactWidget />
+      <ContactWidget socials={socials} />
     </>
   );
 }

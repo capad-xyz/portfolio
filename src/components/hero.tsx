@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef } from "react";
 
 /**
@@ -21,6 +22,7 @@ export function Hero() {
   // this crosses the clearance line (see the observer below)
   const tail = useRef<HTMLDivElement>(null);
   const cta = useRef<HTMLAnchorElement>(null);
+  const pill = useRef<HTMLAnchorElement>(null);
   const fill = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
@@ -28,6 +30,10 @@ export function Hero() {
     const timers: number[] = [];
     let magnetic = false;
     let rect: DOMRect | null = null;
+    // How far the CTA may rise before it would touch the availability pill.
+    // Measured rather than assumed, so changing the stack's gap can't silently
+    // reintroduce the overlap. Invalidated with the rect.
+    let headroom: number | null = null;
 
     if (reduce) {
       [plate, eyebrow, sig, tag, ctaWrap, proof].forEach((r) => r.current?.classList.add("in"));
@@ -66,9 +72,24 @@ export function Hero() {
       if (!rect) rect = el.getBoundingClientRect();
       const dx = e.clientX - (rect.left + rect.width / 2);
       const dy = e.clientY - (rect.top + rect.height / 2);
-      el.style.transform = Math.hypot(dx, dy) < 150 ? `translate(${dx * 0.3}px, ${dy * 0.4}px)` : "";
+      if (Math.hypot(dx, dy) >= 150) {
+        el.style.transform = "";
+        return;
+      }
+      if (headroom === null) {
+        const above = pill.current?.getBoundingClientRect();
+        // 6px so the two never kiss, only approach
+        headroom = above ? Math.max(0, rect.top - above.bottom - 6) : 0;
+      }
+      // Sideways and downward pull stay exactly as they were; only the rise is
+      // capped, and only by however much room actually exists above.
+      const ty = Math.max(dy * 0.4, -headroom);
+      el.style.transform = `translate(${dx * 0.3}px, ${ty}px)`;
     };
-    const invalidate = () => (rect = null);
+    const invalidate = () => {
+      rect = null;
+      headroom = null;
+    };
     if (!reduce) {
       addEventListener("pointermove", onMove, { passive: true });
       addEventListener("resize", invalidate, { passive: true });
@@ -175,10 +196,34 @@ export function Hero() {
           converts. Primary CTA stays the work (proof first), contact is the
           quiet second door. */}
       <div ref={ctaWrap} className="dev mt-8 flex flex-col items-center gap-5">
-        <span className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white/40 px-3.5 py-1.5 font-mono text-[10px] uppercase tracking-[0.22em] text-[var(--ink)]/80">
-          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--ink)]" />
-          open for the right problem
-        </span>
+        {/* The availability pill is also the door to the resume. On hover the
+            label rolls over to say so: the live dot stays (it is the signal),
+            the words swap. Both labels are aria-hidden and the link carries an
+            explicit name, so a screen reader hears one thing, not two. */}
+        <Link
+          ref={pill}
+          href="/resume"
+          aria-label="Read the resume"
+          className="group inline-flex items-center gap-2 rounded-full border border-black/10 bg-white/40 px-3.5 py-1.5 font-mono text-[10px] uppercase tracking-[0.22em] text-[var(--ink)]/80 transition-colors duration-300 hover:border-black/25 hover:bg-white/70 hover:text-[var(--ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ink)]/35 focus-visible:ring-offset-2"
+        >
+          <span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-[var(--ink)] transition-transform duration-300 group-hover:scale-[1.6] motion-reduce:transition-none" />
+          <span aria-hidden className="relative block overflow-hidden">
+            <span className="block transition-transform duration-300 ease-out group-hover:-translate-y-full group-focus-visible:-translate-y-full motion-reduce:transition-none">
+              open for the right problem
+            </span>
+            <span className="absolute inset-0 block translate-y-full transition-transform duration-300 ease-out group-hover:translate-y-0 group-focus-visible:translate-y-0 motion-reduce:transition-none">
+              read the resume
+            </span>
+          </span>
+          {/* Sits outside the roll so it is visible at rest. Without it the pill
+              only announces itself on hover, which no touch device ever sees. */}
+          <span
+            aria-hidden
+            className="shrink-0 transition-transform duration-300 ease-out group-hover:translate-x-0.5 motion-reduce:transition-none"
+          >
+            &rarr;
+          </span>
+        </Link>
         <div className="flex flex-wrap items-center justify-center gap-4">
           <a
             href="#work"

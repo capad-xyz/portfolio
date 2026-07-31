@@ -19,6 +19,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "weekly",
       priority: 0.8,
     },
+    // /cv is deliberately absent: it 308s to /resume, and a sitemap should only
+    // ever list the canonical URL.
+    {
+      url: `${SITE_URL}/resume`,
+      lastModified,
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
     ...slugs.map((slug) => ({
       url: `${SITE_URL}/work/${slug}`,
       lastModified,

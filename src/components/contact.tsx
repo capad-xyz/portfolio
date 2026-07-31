@@ -66,6 +66,8 @@ export function Contact() {
         >
           <a className="transition hover:text-[var(--ink)]" href="#work">work</a>
           <a className="transition hover:text-[var(--ink)]" href="/projects">all projects</a>
+          {/* the one link a recruiter is actually hunting for */}
+          <a className="transition hover:text-[var(--ink)]" href="/resume">resume</a>
           <a className="transition hover:text-[var(--ink)]" href="#experience">experience</a>
           <a className="transition hover:text-[var(--ink)]" href="#about">about</a>
           <a className="transition hover:text-[var(--ink)]" href="#stack">stack</a>

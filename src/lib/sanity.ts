@@ -6,6 +6,9 @@ import {
   DEMO_TESTIMONIALS,
   DEMO_WORK_EXPERIENCE,
   DEMO_STACK_GROUPS,
+  DEMO_ALSO_SHIPPED,
+  DEMO_SOCIAL_LINKS,
+  DEMO_RESUME,
 } from "./demo-content";
 
 // While demo mode is on, demo content OVERRIDES the CMS so every section is
@@ -90,6 +93,81 @@ export type StackGroup = {
   _id: string;
   label: string;
   items: string[];
+};
+
+/** "built" = his own; "contributed" = someone else's project he shipped a fix to. */
+export type AlsoShippedKind = "built" | "contributed";
+
+/** One clause in the homepage footnote under the four-card grid. */
+export type AlsoShipped = {
+  _id: string;
+  name: string;
+  note: string;
+  kind?: AlsoShippedKind;
+  href?: string;
+};
+
+/**
+ * One bubble in the floating contact stack. `iconPath` is SVG path data (the
+ * `d` attribute), never markup — the widget builds the element and sets only
+ * that attribute, so the CMS cannot inject anything executable.
+ */
+export type SocialLink = {
+  _id: string;
+  label: string;
+  href: string;
+  iconPath: string;
+  iconViewBox: string;
+  iconSize?: number;
+  surface?: string;
+};
+
+export type ResumeContact = {
+  label: string;
+  value: string;
+  href?: string;
+};
+
+export type ResumeEducation = {
+  credential: string;
+  institution: string;
+  period?: string;
+  note?: string;
+};
+
+/** One format the resume can be taken away in, already resolved to a real href. */
+export type ResumeDownload = {
+  /** The words on the control, e.g. "Download the PDF". */
+  label: string;
+  /** Short hint beside the label in the menu, e.g. "PDF". */
+  format: string;
+  href: string;
+  /**
+   * What the browser saves it as. Only honoured same-origin — browsers ignore
+   * `download` cross-origin, which is why Sanity-hosted files ask that CDN for
+   * the attachment header instead (the `?dl=` below).
+   */
+  filename?: string;
+};
+
+export type Resume = {
+  headline: string;
+  summary: string;
+  availability?: string;
+  contacts?: ResumeContact[];
+  education?: ResumeEducation[];
+  /**
+   * Never empty. The CMS drives the list; if it has nothing to say, this falls
+   * back to the PDF committed to /public, so a recruiter is never handed a page
+   * with no way to take the file.
+   */
+  downloads: ResumeDownload[];
+  /**
+   * Legacy single-PDF field, still read as the fallback when `downloads` is
+   * empty. Absolute Sanity CDN URL, set only when a PDF has been uploaded.
+   */
+  fileUrl?: string;
+  updated?: string;
 };
 
 // Shared card-level projection. `hasStory` lets the grid link to a case study
@@ -253,4 +331,129 @@ const STACK_GROUPS_QUERY = `
 export async function getStackGroups(): Promise<StackGroup[]> {
   if (DEMO_ENABLED) return DEMO_STACK_GROUPS;
   return safeFetch<StackGroup[]>(STACK_GROUPS_QUERY, {}, [], "stack groups");
+}
+
+// The contact bubbles. `enabled` lets a channel be parked without deleting it
+// (and losing the icon path with it). Falls back to the demo set rather than an
+// empty array: a contact stack with no way to reach anyone is worse than a
+// slightly stale one.
+const SOCIAL_LINKS_QUERY = `
+  *[_type == "socialLink" && enabled != false] | order(order asc, _createdAt asc){
+    _id, label, href, iconPath, iconViewBox, iconSize, surface
+  }
+`;
+
+export async function getSocialLinks(): Promise<SocialLink[]> {
+  if (DEMO_ENABLED) return DEMO_SOCIAL_LINKS;
+  const links = await safeFetch<SocialLink[]>(SOCIAL_LINKS_QUERY, {}, [], "social links");
+  return links.length ? links : DEMO_SOCIAL_LINKS;
+}
+
+// The homepage grid is capped at four flagships on purpose, so the smaller real
+// work lives in a footnote under it. Editable from the CMS rather than baked
+// into the component — new small things ship far more often than deploys do.
+const ALSO_SHIPPED_QUERY = `
+  *[_type == "alsoShipped"] | order(order asc, _createdAt asc){
+    _id, name, note, kind, href
+  }
+`;
+
+export async function getAlsoShipped(): Promise<AlsoShipped[]> {
+  if (DEMO_ENABLED) return DEMO_ALSO_SHIPPED;
+  return safeFetch<AlsoShipped[]>(ALSO_SHIPPED_QUERY, {}, [], "also shipped");
+}
+
+// Singleton: one published `resume` document drives /resume and /cv. Experience,
+// projects and the stack are NOT duplicated here — the page composes them from
+// the documents that already own them, so nothing can drift.
+const RESUME_QUERY = `
+  *[_type == "resume"][0]{
+    headline,
+    summary,
+    availability,
+    contacts[]{label, value, href},
+    education[]{credential, institution, period, note},
+    downloads[]{
+      label,
+      format,
+      url,
+      filename,
+      "fileUrl": file.asset->url,
+      "uploadedName": file.asset->originalFilename
+    },
+    "fileUrl": file.asset->url,
+    updated
+  }
+`;
+
+/** A `downloads` row as it comes out of GROQ, before the href is worked out. */
+type RawResumeDownload = {
+  label?: string;
+  format?: string;
+  url?: string;
+  filename?: string;
+  fileUrl?: string;
+  uploadedName?: string;
+};
+
+type RawResume = Omit<Resume, "downloads"> & { downloads?: RawResumeDownload[] };
+
+/** Last path segment of a URL or path, query and hash stripped. */
+function basename(href: string): string | undefined {
+  const path = href.split(/[?#]/)[0];
+  return path.slice(path.lastIndexOf("/") + 1) || undefined;
+}
+
+// The copy committed to the repo. It is what makes the download unbreakable:
+// even with the CMS unreachable and nothing configured, /resume still hands over
+// a real file.
+const PUBLIC_RESUME_PDF = "/Aadarsh_Upadhyay_Resume.pdf";
+const PUBLIC_RESUME_PDF_NAME = "Aadarsh_Upadhyay_Resume.pdf";
+
+/**
+ * Turn the CMS rows into links the page can render without thinking. Rows with
+ * neither a file nor a link are dropped rather than rendered as dead controls.
+ */
+function resolveDownloads(raw?: RawResumeDownload[]): ResumeDownload[] {
+  return (raw ?? []).flatMap<ResumeDownload>((d) => {
+    const source = d.fileUrl ?? d.url;
+    if (!source || !d.label) return [];
+    const filename = d.filename?.trim() || d.uploadedName || basename(source);
+    // Sanity's CDN is another origin, where `download` is ignored; `?dl=` is how
+    // you ask it for the attachment header instead.
+    const href =
+      d.fileUrl && filename ? `${d.fileUrl}?dl=${encodeURIComponent(filename)}` : source;
+    return [{ label: d.label, format: d.format?.trim() || "FILE", href, filename }];
+  });
+}
+
+/** What the control offers when the CMS lists nothing: the committed PDF. */
+function fallbackDownloads(fileUrl?: string): ResumeDownload[] {
+  return [
+    {
+      label: "Download the PDF",
+      format: "PDF",
+      href: fileUrl
+        ? `${fileUrl}?dl=${encodeURIComponent(PUBLIC_RESUME_PDF_NAME)}`
+        : PUBLIC_RESUME_PDF,
+      filename: PUBLIC_RESUME_PDF_NAME,
+    },
+  ];
+}
+
+/**
+ * Unlike every other getter here, this one never returns empty. /resume is the
+ * page he links from job applications, so a missing document or an unreachable
+ * CMS must not hand a recruiter a blank page — it falls through to the mirrored
+ * copy in demo-content, which is the same real, verified content, not filler.
+ *
+ * `downloads` gets the same treatment one level down: an empty or unfilled list
+ * still resolves to the PDF committed to /public.
+ */
+export async function getResume(): Promise<Resume> {
+  if (DEMO_ENABLED) return DEMO_RESUME;
+  const doc = await safeFetch<RawResume | null>(RESUME_QUERY, {}, null, "resume");
+  if (!doc?.headline) return DEMO_RESUME;
+  const downloads = resolveDownloads(doc.downloads);
+  return { ...doc, downloads: downloads.length ? downloads : fallbackDownloads(doc.fileUrl) };
 }

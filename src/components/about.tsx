@@ -29,10 +29,11 @@ export function About() {
 
         <div className="flex flex-col gap-6 text-center text-[clamp(15px,1.6vw,18px)] leading-[1.65] text-[var(--ink)]/80">
           <p className="reveal-up">
-            I architect and ship AI platforms for a living — agentic assistants with
-            safety-gated actions, multi-provider LLM systems, the hard parts. And as
-            capad, I ship small, genuinely-free tools and desktop apps nobody asked
-            me to make. I can&apos;t leave a good idea alone: most people think
+            I architect and ship AI platforms — agentic assistants with safety-gated
+            actions, multi-provider LLM systems, the hard parts. That was the day job
+            through July 2026, and it&apos;s the work I&apos;m looking for next. As
+            capad, I ship small, genuinely-free tools and desktop apps nobody asked me
+            to make. I can&apos;t leave a good idea alone: most people think
             &ldquo;that would be cool&rdquo; and move on. I build it.
           </p>
           <p className="reveal-up">
@@ -54,6 +55,13 @@ export function About() {
               className="text-[var(--ink)] underline decoration-[var(--muted)] underline-offset-4 transition hover:decoration-[var(--ink)]"
             >
               say hello
+            </a>
+            {" — or take "}
+            <a
+              href="/resume"
+              className="text-[var(--ink)] underline decoration-[var(--muted)] underline-offset-4 transition hover:decoration-[var(--ink)]"
+            >
+              the resume
             </a>
             .
           </p>

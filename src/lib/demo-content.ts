@@ -1,4 +1,12 @@
-import type { ProjectDetail, Testimonial, WorkExperience, StackGroup } from "./sanity";
+import type {
+  ProjectDetail,
+  Testimonial,
+  WorkExperience,
+  StackGroup,
+  AlsoShipped,
+  Resume,
+  SocialLink,
+} from "./sanity";
 import type { PortableTextBlock } from "@portabletext/types";
 
 /**
@@ -9,11 +17,16 @@ import type { PortableTextBlock } from "@portabletext/types";
  * build and off in production — force on with NEXT_PUBLIC_DEMO_CONTENT=1, or off
  * with =0 (to preview real CMS content in dev). See DEMO_ENABLED in sanity.ts.
  *
- * ⚠️ The PROJECTS below (metrics, licenses, links, case-study bodies) are REAL,
- * verified against the repos and the Notion write-ups, and mirror the published
- * Sanity documents. TESTIMONIALS are intentionally empty (the earlier fictional
- * names/quotes were removed). Work experience and stack are real. To drop demo
- * entirely, delete this file and the `DEMO_*` references in sanity.ts.
+ * ⚠️ Nothing in here is invented. The PROJECTS (metrics, licenses, links,
+ * case-study bodies) are verified against the repos and the Notion write-ups;
+ * the TESTIMONIALS are the real published quotes with the real source links;
+ * experience, stack and resume are his actual history. Every block mirrors a
+ * published Sanity document — edit one side and you must edit the other. To drop
+ * demo entirely, delete this file and the `DEMO_*` references in sanity.ts.
+ *
+ * DEMO_RESUME has a second job: it is also the production fallback for /resume
+ * (see getResume in sanity.ts), so it is the one block that can reach a real
+ * visitor. Hold it to the standard of the printed resume.
  */
 
 // deterministic keys (no Date/Math.random) — evaluated once at module load
@@ -282,31 +295,46 @@ export const DEMO_PROJECTS: ProjectDetail[] = [
   },
 ];
 
-// Mirrors the published Sanity testimonial documents (attribution is role-based,
-// not personal names; the searchts quote distils genuine reactions from the
-// launch thread, attributed anonymously). Keep this in sync with Sanity so dev
-// preview matches production.
+// Mirrors the four FEATURED Sanity testimonial documents, in their published
+// order — the same set `getTestimonials` returns in production. Three carry a
+// `link` to the PR comment or post they were said in; the deck renders that as a
+// "source" affordance and simply omits it on the fourth. Keep this in sync with
+// Sanity so dev preview matches production.
 export const DEMO_TESTIMONIALS: Testimonial[] = [
   {
     _id: "demo-t1",
     quote:
-      "Aadarsh owned the architecture of Compliance Sarathi end to end and shipped a reliable agentic assistant under real deadline pressure. He is who you want on the hard parts of a system.",
-    name: "Engineering, Compliance Sarathi",
-    company: "Appson Technologies",
+      "#133 is one of the best bug reports this project has had. You attached a debugger to the main process, took a CPU profile, and came back with a before/after table showing system.identify going from timeout to 0.7 ms.",
+    name: "amirlehmam",
+    role: "Maintainer",
+    company: "wmux",
+    link: "https://github.com/amirlehmam/wmux/pull/135#issuecomment-5144877705",
   },
   {
     _id: "demo-t2",
     quote:
-      "On Wordibly he moved fast across the whole stack, from customer upload flows to the manager dashboards, and left the codebase better than he found it.",
-    name: "Engineering team, Wordibly",
-    company: "Appson Technologies",
+      "\"from your own IP\" is the whole insight. a proxy pool fights the bot-wall; your own IP is already through it, same reason a human's browser doesn't trip cloudflare. an agent acting from where you already are doesn't need to sneak in. nice build.",
+    name: "Phi Browser",
+    role: "on searchts",
+    company: "@phibrowser",
+    link: "https://x.com/phibrowser/status/2075049980268822770",
   },
   {
     _id: "demo-t3",
     quote:
-      "searchts gets the one thing paid unlockers actually charge for: your own IP is already past the bot-wall. Fast, keyless, and clearly built by someone who sweats the details.",
-    name: "Open-source user",
-    role: "Developer",
+      "fetch-time + final_url turns read output into something a reviewer can cite later. Tier/status is useful; redirect + timestamp makes it durable.",
+    name: "Dang_nh",
+    role: "on searchts",
+    company: "@hikariraina",
+    link: "https://x.com/aadarsh_io/status/2075055433493160062",
+  },
+  {
+    _id: "demo-t4",
+    quote:
+      "Aadarsh owned the architecture of Compliance Sarathi end to end and shipped a reliable agentic assistant under real deadline pressure. He is who you want on the hard parts of a system.",
+    name: "Engineering, Compliance Sarathi",
+    role: "Engineering",
+    company: "Appson Technologies",
   },
 ];
 
@@ -316,13 +344,16 @@ export const DEMO_WORK_EXPERIENCE: WorkExperience[] = [
     position: "Software Engineer & Architect",
     company: "Compliance Sarathi · Appson Technologies",
     startYear: "2026",
-    current: true,
+    endYear: "2026",
+    // The Appson contract ended 31 Jul 2026. Not `current` — the timeline's
+    // pulsing "current" badge is a live claim and has to stay true.
+    current: false,
     summary:
-      "Main engineer and architect of Compliance Sarathi, an AI-powered ROC and corporate-compliance platform for Indian companies. Designed its agentic AI assistant with a safety-gated action layer, a multi-provider LLM service (OpenAI, Gemini, Claude), and a deterministic statutory-deadline engine, leading architecture, core build, and client delivery on a React + Node / MongoDB stack.",
+      "Main engineer and architect of Compliance Sarathi, an AI-powered ROC and corporate-compliance platform for Indian companies, where I wrote 542 of 647 commits (84%). Designed its agentic AI assistant with a safety-gated action layer, a multi-provider LLM service (OpenAI, Gemini, Claude), and a deterministic statutory-deadline engine, leading architecture, core build, and client delivery on a React + Node / MongoDB stack.",
   },
   {
     _id: "demo-w2",
-    position: "Junior Software Engineer",
+    position: "Software Engineer",
     company: "Wordibly · Appson Technologies",
     startYear: "2025",
     endYear: "2026",
@@ -355,7 +386,10 @@ export const DEMO_STACK_GROUPS: StackGroup[] = [
       "LLM training data",
     ],
   },
-  { _id: "demo-s1", label: "languages", items: ["TypeScript", "Python", "Rust", "Kotlin", "Lua"] },
+  // Only what he can be interviewed on. Rust and Kotlin shipped real software
+  // (Grove, beep-beep-oss, GlyphMaps) but with heavy Claude Code assistance, so
+  // they are not listed as languages he speaks — same as the published Sanity doc.
+  { _id: "demo-s1", label: "languages", items: ["TypeScript", "JavaScript", "Python"] },
   {
     _id: "demo-s2",
     label: "frameworks",
@@ -382,3 +416,128 @@ export const DEMO_STACK_GROUPS: StackGroup[] = [
     items: ["Sanity", "Cloudflare", "PyPI", "GitHub Actions", "git"],
   },
 ];
+
+// The floating contact stack. Doubles as the seed set: `getSocialLinks` falls
+// back to this when the CMS returns nothing, so the bubbles never disappear
+// mid-migration. Icons are path data only — the widget builds the <svg> and
+// sets `d`, so nothing here (or in the CMS) can inject markup.
+export const DEMO_SOCIAL_LINKS: SocialLink[] = [
+  {
+    _id: "demo-s1",
+    label: "GitHub - capad-xyz",
+    href: "https://github.com/capad-xyz",
+    iconViewBox: "0 0 16 16",
+    iconSize: 21,
+    iconPath:
+      "M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z",
+    surface:
+      "radial-gradient(circle at 30% 22%, #8b8b95 0%, #26262c 52%, #08080a 100%)",
+  },
+  {
+    _id: "demo-s2",
+    label: "LinkedIn - Aadarsh Upadhyay",
+    href: "https://www.linkedin.com/in/aadarshupadhyay",
+    iconViewBox: "0 0 24 24",
+    iconSize: 19,
+    iconPath:
+      "M20.45 20.45h-3.56v-5.57c0-1.33-.03-3.04-1.85-3.04-1.86 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.63-1.85 3.36-1.85 3.59 0 4.26 2.36 4.26 5.44v6.3ZM5.34 7.43a2.07 2.07 0 1 1 0-4.13 2.07 2.07 0 0 1 0 4.13ZM7.12 20.45H3.55V9h3.57v11.45ZM22.22 0H1.77C.79 0 0 .77 0 1.72v20.56C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.72V1.72C24 .77 23.2 0 22.22 0Z",
+    surface:
+      "radial-gradient(circle at 34% 26%, #7e7e88 0%, #1f1f25 50%, #060608 100%)",
+  },
+  {
+    _id: "demo-s3",
+    label: "X - @aadarsh_io",
+    href: "https://x.com/aadarsh_io",
+    iconViewBox: "0 0 24 24",
+    iconSize: 19,
+    iconPath:
+      "M18.9 1.15h3.68l-8.04 9.19L24 22.85h-7.41l-5.8-7.58-6.64 7.58H.47l8.6-9.83L0 1.15h7.59l5.24 6.93 6.07-6.93Zm-1.29 19.5h2.04L6.49 3.24H4.3l13.31 17.41Z",
+    surface:
+      "radial-gradient(circle at 42% 32%, #6d6d77 0%, #17171c 48%, #030304 100%)",
+  },
+];
+
+// The homepage footnote under the four-card grid. Mirrors the published Sanity
+// `alsoShipped` documents. `kind: "contributed"` is not decoration — the
+// homepage renders those under a lead-in that says the project is not his.
+// Links are only set where a real one exists; the two older Windows toys have no
+// public URL and render as plain text rather than pointing at nothing.
+export const DEMO_ALSO_SHIPPED: AlsoShipped[] = [
+  {
+    _id: "demo-a1",
+    name: "CoffeeBreath",
+    note: "a Rainmeter music widget that breathes with the song's album art",
+    kind: "built",
+  },
+  {
+    _id: "demo-a2",
+    name: "Discord Voice Overlay",
+    note: "a glass desktop overlay for live voice control",
+    kind: "built",
+  },
+  {
+    _id: "demo-a3",
+    name: "burncard",
+    note: "local-first AI usage and cost telemetry for Claude Code, one npx burncard away",
+    kind: "built",
+    href: "https://github.com/capad-xyz/burncard",
+  },
+  {
+    _id: "demo-a4",
+    name: "wmux",
+    note: "a main-process freeze in a terminal multiplexer; diagnosed, patched, merged, shipped in v0.40.0",
+    kind: "contributed",
+    href: "https://github.com/amirlehmam/wmux/pull/135",
+  },
+];
+
+// /resume and /cv. Mirrors the published Sanity `resume` singleton, and doubles
+// as the production floor for that page (see getResume in sanity.ts): a recruiter
+// arriving from a job application must never meet an empty resume because the
+// CMS blinked. Everything here is copied from the real one-page PDF in /public.
+//
+// The phone number is deliberately NOT in `contacts`. It is on the PDF, which is
+// one click away; putting it in HTML hands it to every scraper that crawls the
+// site. One CMS entry away if he wants it.
+export const DEMO_RESUME: Resume = {
+  headline: "Software Engineer & Architect",
+  summary:
+    "Software engineer and architect who owns systems end to end: architecture, core build, and direct client delivery. My sweet spot is forward-deployed-style work — take a vague client ask, tinker until I find what the client and the system actually want, and ship it as a production feature. Most recently the primary engineer and architect of an agentic AI compliance SaaS, where I wrote 542 of its 647 commits. Nights and weekends I ship open-source developer tools with real releases on PyPI, npm, and signed APKs.",
+  availability: "Remote-first; open to relocation worldwide (visa sponsorship welcome)",
+  contacts: [
+    { label: "email", value: "hi@capad.fyi", href: "mailto:hi@capad.fyi" },
+    { label: "site", value: "capad.fyi", href: "https://capad.fyi" },
+    { label: "github", value: "github.com/capad-xyz", href: "https://github.com/capad-xyz" },
+    {
+      label: "linkedin",
+      value: "in/aadarshupadhyay",
+      href: "https://www.linkedin.com/in/aadarshupadhyay",
+    },
+    { label: "x", value: "@aadarsh_io", href: "https://x.com/aadarsh_io" },
+  ],
+  education: [
+    {
+      credential: "BCA (Hons.)",
+      institution: "The Maharaja Sayajirao University of Baroda",
+      period: "2024 - 2028 (expected)",
+    },
+  ],
+  // Mirrors `resume.downloads` in the CMS. Order is the design: the first entry
+  // is the big one-click button, the rest sit behind the "other formats" menu.
+  // Both files are committed to /public, so this list works with Sanity down.
+  downloads: [
+    {
+      label: "Download the PDF",
+      format: "PDF",
+      href: "/Aadarsh_Upadhyay_Resume.pdf",
+      filename: "Aadarsh_Upadhyay_Resume.pdf",
+    },
+    {
+      label: "Download the Word file",
+      format: "DOCX",
+      href: "/Aadarsh_Upadhyay_Resume.docx",
+      filename: "Aadarsh_Upadhyay_Resume.docx",
+    },
+  ],
+  updated: "PDF · one page · updated Aug 2026",
+};

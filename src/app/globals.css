@@ -304,6 +304,54 @@ body.lensing .drips.on { opacity: 0; }
 
 /* quieter secondary CTA: transparent with a hairline border, same ink flood */
 .lqbtn-outline { background: transparent; border: 1px solid rgba(11, 11, 13, 0.15); }
+
+/* ---- /resume download menu: a native <details> disclosure wearing the liquid
+   button, so the browser keeps the open state, Enter/Space and the exposed ARIA
+   while the control still looks like everything else here.
+
+   A <summary> is `display: list-item` by default, which is what draws the
+   disclosure triangle; the Tailwind `inline-flex` on the pill already takes that
+   away in Blink and Gecko, but WebKit draws its own ::-webkit-details-marker and
+   needs telling twice. The rest is the open state answering in the site's usual
+   language: the chevron turns over, the panel condenses in from its corner.
+   See components/resume-downloads.tsx. ---- */
+.lqbtn-summary { list-style: none; }
+.lqbtn-summary::-webkit-details-marker { display: none; }
+
+/* The toggle fills the height of whichever primary button it is sitting beside,
+   so the pair reads as one control rather than a pill with a badge stuck to it.
+   <details> is left as display:block on purpose — changing it is what breaks the
+   native open/close in older WebKit — so the summary takes the height through
+   the stretched item instead. */
+.dl-menu { align-self: stretch; }
+.dl-menu > summary { height: 100%; }
+
+/* The panel has to be positioned HERE rather than with a Tailwind `absolute`:
+   .glass is unlayered in this sheet and sets `position: relative`, and unlayered
+   rules beat anything in Tailwind's utilities layer regardless of order. Left to
+   the utility the panel stays in flow and shoves the page down when it opens. */
+.dl-menu > .dl-panel {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 30;
+  transform-origin: 100% 0;
+}
+
+.dl-chevron { transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.dl-menu[open] .dl-chevron { transform: rotate(180deg); }
+@keyframes dl-panel-in {
+  from { opacity: 0; transform: translateY(-8px) scale(0.97); }
+}
+.dl-menu[open] .dl-panel { animation: dl-panel-in 0.32s cubic-bezier(0.16, 1, 0.3, 1); }
+@media (prefers-reduced-motion: reduce) {
+  .dl-chevron { transition: none; }
+  .dl-menu[open] .dl-panel { animation: none; }
+}
+/* Paper has no dropdowns. The whole control is already hidden at the call site;
+   this is the belt to that pair of braces, so a menu left open at Ctrl+P can
+   never print as a floating box with nothing under it. */
+@media print { .dl-menu { display: none !important; } }
 /* the contact modal renders above the custom-cursor layer, so it uses the
    native cursor — keep the submit button's pointer rather than the hidden one */
 .contact-panel .lqbtn { cursor: pointer; }
@@ -809,6 +857,58 @@ body.studio-mode .grain, body.studio-mode .ambient, body.studio-mode .cursor, bo
   .wordmark { filter: blur(12px); }
   .wordmark.ghost { filter: blur(5px); }
   .reveal-title { filter: blur(8px); }
+}
+
+/* ---- print / save-as-PDF ----
+   /resume is the one page here that people put on paper: some recruiters print
+   rather than download. Ctrl+P has to produce a document, not a screenshot of a
+   glass UI. Global rather than route-scoped, so every page prints sanely.
+
+   1. Only <main> survives. Every page renders its content inside
+      `<main id="main">`; everything else that is a direct child of <body> is
+      chrome the printer must never see — the ambient clouds, the grain, the
+      liquid cursor and its drip layer, the SVG filter defs, and the contact
+      flock (which the bubbles library appends straight to <body> with no class
+      of its own to target, so there is nothing more surgical to aim at).
+   2. Un-hide the scroll reveals. `.reveal-up` starts at opacity 0 and is
+      promoted to `.in` by an IntersectionObserver, so any section the reader
+      never scrolled past would otherwise print as a blank gap.
+   3. Glass becomes paper. backdrop-filter and the layered shadows cost a
+      cartridge and render as grey mud; the geometry — radius, hairline rule —
+      is what actually carries the design onto the page. ---- */
+@media print {
+  body:not(.studio-mode) > *:not(main) { display: none !important; }
+  html, body {
+    background: #fff !important;
+    overflow: visible !important;
+  }
+  body { color: #000; cursor: auto; }
+
+  .reveal-up, .reveal-title, .dev, .wordmark {
+    opacity: 1 !important;
+    filter: none !important;
+    transform: none !important;
+    transition: none !important;
+    animation: none !important;
+  }
+
+  .glass, .chip {
+    background: #fff !important;
+    border: 1px solid rgba(0, 0, 0, 0.22) !important;
+    box-shadow: none !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    color: #000;
+  }
+  .glass::before, .glass::after { display: none !important; }
+
+  /* links print as plain text — a blue underline on paper points nowhere */
+  a { text-decoration: none; color: inherit; }
+  /* …except where the label alone is useless on paper ("Code", "PyPI"): those
+     opt in and print their address after the label. */
+  a.print-url::after { content: " " attr(href); opacity: 0.65; }
+
+  @page { margin: 14mm; }
 }
 
 ::selection { background: rgba(11, 11, 13, 0.12); }

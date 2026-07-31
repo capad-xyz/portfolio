@@ -1,5 +1,6 @@
+import { Fragment } from "react";
 import Link from "next/link";
-import { getFeaturedProjects } from "@/lib/sanity";
+import { getAlsoShipped, getFeaturedProjects, type AlsoShipped } from "@/lib/sanity";
 import { ProjectCard } from "./project-card";
 import { Reveal } from "./reveal";
 
@@ -15,9 +16,14 @@ const COUNT_WORDS = [
 const countWord = (n: number) => COUNT_WORDS[n] ?? String(n);
 
 export async function FeaturedWork() {
-  const projects = await getFeaturedProjects();
+  const [projects, also] = await Promise.all([getFeaturedProjects(), getAlsoShipped()]);
   const shipped = projects.filter((p) => p.status === "done").length;
   const ongoing = projects.filter((p) => p.status === "ongoing").length;
+  // Two lines, not one, because they make different claims. `built` is his work;
+  // `contributed` is somebody else's project he fixed, and that distinction is
+  // not something a reader should have to infer from a verb.
+  const built = also.filter((a) => a.kind !== "contributed");
+  const contributed = also.filter((a) => a.kind === "contributed");
 
   return (
     <section id="work" className="relative z-10 mx-auto max-w-6xl px-6 py-28 md:py-36">
@@ -41,14 +47,29 @@ export async function FeaturedWork() {
         </div>
 
         {/* The smaller shipped delights — real, just not flagship-sized. A quiet
-            footnote keeps the grid honest about the four while showing range. */}
-        <p className="reveal-up mx-auto mt-10 max-w-2xl text-center font-mono text-[12px] leading-[2] tracking-[0.04em] text-[var(--muted)]">
-          also shipped, smaller: <span className="text-[var(--ink)]/75">CoffeeBreath</span> — a
-          Rainmeter music widget that breathes with the song&apos;s album art ·{" "}
-          <span className="text-[var(--ink)]/75">Discord Voice Overlay</span> — a glass
-          desktop overlay for live voice control
-        </p>
+            footnote keeps the grid honest about the four while showing range.
+            Content is CMS-driven (`alsoShipped`); the two lead-ins below are not,
+            because they are the authorship claim, not a caption. */}
+        {(built.length > 0 || contributed.length > 0) && (
+          <div className="reveal-up mx-auto mt-10 flex max-w-2xl flex-col gap-1.5 text-center font-mono text-[12px] leading-[2] tracking-[0.04em] text-[var(--muted)]">
+            {built.length > 0 && (
+              <p>
+                {"also shipped, smaller: "}
+                <Footnote items={built} />
+              </p>
+            )}
+            {contributed.length > 0 && (
+              <p>
+                {"not mine, I just fixed it: "}
+                <Footnote items={contributed} />
+              </p>
+            )}
+          </div>
+        )}
 
+        {/* The resume lives on the hero availability pill, where someone who
+            arrived from an application finds it without scrolling. This exit
+            stays about the work. */}
         <div className="reveal-up mt-8 text-center">
           <Link
             href="/projects"
@@ -62,5 +83,43 @@ export async function FeaturedWork() {
         </div>
       </Reveal>
     </section>
+  );
+}
+
+/**
+ * One footnote line: `name — what it is`, joined by middots. The name links out
+ * only when the CMS entry actually carries a URL; otherwise it stays plain text
+ * rather than becoming a dead affordance.
+ *
+ * Every gap is either inside a template string or inside its own element: this
+ * JSX compiler drops the whitespace between an expression and adjacent text (see
+ * the header comment above), so a bare `{x} — {y}` would render glued together.
+ */
+function Footnote({ items }: { items: AlsoShipped[] }) {
+  return (
+    <>
+      {items.map((a, i) => (
+        <Fragment key={a._id}>
+          {i > 0 && (
+            <span aria-hidden className="px-1.5 opacity-50">
+              ·
+            </span>
+          )}
+          {a.href ? (
+            <a
+              href={a.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[var(--ink)]/75 underline decoration-[var(--muted)]/40 underline-offset-4 transition hover:text-[var(--ink)] hover:decoration-[var(--ink)]"
+            >
+              {a.name}
+            </a>
+          ) : (
+            <span className="text-[var(--ink)]/75">{a.name}</span>
+          )}
+          {` — ${a.note}`}
+        </Fragment>
+      ))}
+    </>
   );
 }

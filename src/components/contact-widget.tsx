@@ -5,6 +5,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { createBubbles, type BubbleManager } from "@hyperplexed/bubbles";
 import { LiquidButton } from "./liquid-button";
 import { useLiquidTyping } from "./use-liquid-typing";
+import type { SocialLink } from "@/lib/sanity";
 
 type Status = "idle" | "sending" | "ok" | "error";
 
@@ -302,48 +303,36 @@ function makeFaceIcon() {
  * own light — the gradient's origin and depth shift per bubble, so the stack
  * reads as siblings, not clones. Add a channel = add one entry here.
  */
-type SocialBubble = {
-  id: string;
-  label: string;
-  href: string;
-  /** Same mercury family, individually lit. */
-  surface: string;
-  /** Paper-coloured glyph, 24×24 viewBox. */
-  svg: string;
-};
+type SocialBubble = SocialLink;
 
-const SOCIAL_BUBBLES: SocialBubble[] = [
-  {
-    id: "github",
-    label: "GitHub — capad-xyz",
-    href: "https://github.com/capad-xyz",
-    surface:
-      "radial-gradient(circle at 30% 22%, #8b8b95 0%, #26262c 52%, #08080a 100%)",
-    svg:
-      '<svg viewBox="0 0 16 16" width="21" height="21" fill="#f1f0ec" aria-hidden="true">' +
-      '<path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>' +
-      "</svg>",
-  },
-  {
-    // the message face already covers email (panel + mailto fallback), so the
-    // second social slot belongs to X rather than a duplicate email door
-    id: "x",
-    label: "X — @aadarsh_io",
-    href: "https://x.com/aadarsh_io",
-    surface:
-      "radial-gradient(circle at 42% 32%, #6d6d77 0%, #17171c 48%, #030304 100%)",
-    svg:
-      '<svg viewBox="0 0 24 24" width="19" height="19" fill="#f1f0ec" aria-hidden="true">' +
-      '<path d="M18.9 1.15h3.68l-8.04 9.19L24 22.85h-7.41l-5.8-7.58-6.64 7.58H.47l8.6-9.83L0 1.15h7.59l5.24 6.93 6.07-6.93Zm-1.29 19.5h2.04L6.49 3.24H4.3l13.31 17.41Z"/>' +
-      "</svg>",
-  },
-];
+const SVG_NS = "http://www.w3.org/2000/svg";
 
-function makeSocialIcon(svg: string) {
+/**
+ * Builds the glyph from path data rather than markup.
+ *
+ * The CMS supplies only the `d` string and a viewBox; the <svg> and <path> are
+ * constructed here and `d` is the sole attribute taken from content. That keeps
+ * "add a new platform without a deploy" working while making it impossible for
+ * anything typed into Sanity to inject markup into the page — which `innerHTML`
+ * with a full SVG string would have allowed.
+ */
+function makeSocialIcon(s: SocialBubble) {
   const wrap = document.createElement("div");
   wrap.style.cssText =
     "display:flex; align-items:center; justify-content:center; width:24px; height:24px; color:#f1f0ec;";
-  wrap.innerHTML = svg;
+
+  const size = String(s.iconSize ?? 19);
+  const svg = document.createElementNS(SVG_NS, "svg");
+  svg.setAttribute("viewBox", s.iconViewBox || "0 0 24 24");
+  svg.setAttribute("width", size);
+  svg.setAttribute("height", size);
+  svg.setAttribute("fill", "#f1f0ec");
+  svg.setAttribute("aria-hidden", "true");
+
+  const path = document.createElementNS(SVG_NS, "path");
+  path.setAttribute("d", s.iconPath);
+  svg.appendChild(path);
+  wrap.appendChild(svg);
   return wrap;
 }
 
@@ -358,7 +347,9 @@ function makeSocialIcon(svg: string) {
  */
 function wireSocialBubble(icon: HTMLElement, s: SocialBubble, manager: BubbleManager) {
   const surface = icon.parentElement;
-  if (surface) surface.style.background = s.surface;
+  // Optional in the CMS — without one the bubble keeps the flock's shared
+  // mercury default rather than rendering as a bare circle.
+  if (surface && s.surface) surface.style.background = s.surface;
   const btn = icon.closest<HTMLElement>('[role="button"]') ?? surface;
   if (!btn) return () => {};
   let downX = 0;
@@ -583,11 +574,16 @@ function watchDismissProximity(face: HTMLElement, ctrl: FaceController) {
   };
 }
 
-export function ContactWidget() {
+export function ContactWidget({ socials }: { socials: SocialLink[] }) {
   const managerRef = useRef<BubbleManager | null>(null);
+  // The flock is built imperatively once and never re-rendered, so the list is
+  // read through a ref: a later CMS edit arrives on the next page load, not by
+  // tearing down a stack the visitor may be mid-drag on.
+  const socialsRef = useRef(socials);
 
   useEffect(() => {
     if (managerRef.current) return;
+    const bubbles = socialsRef.current;
 
     const manager = createBubbles({
       theme: "light",
@@ -616,7 +612,7 @@ export function ContactWidget() {
       vertical: 1,
       panelWidth: 500,
       panelMaxHeight: "86%",
-      maxBubbles: 1 + SOCIAL_BUBBLES.length,
+      maxBubbles: 1 + bubbles.length,
     });
 
     let panelRoot: Root | null = null;
@@ -630,9 +626,9 @@ export function ContactWidget() {
     // patched dock geometry the front bubble sits at the BOTTOM of the spread,
     // the email face as the bottom overlay and the socials rising behind it.
     const socialStops: (() => void)[] = [];
-    for (const s of [...SOCIAL_BUBBLES].reverse()) {
-      const icon = makeSocialIcon(s.svg);
-      manager.add({ id: s.id, label: s.label, icon });
+    for (const s of [...bubbles].reverse()) {
+      const icon = makeSocialIcon(s);
+      manager.add({ id: s._id, label: s.label, icon });
       socialStops.push(wireSocialBubble(icon, s, manager));
     }
 

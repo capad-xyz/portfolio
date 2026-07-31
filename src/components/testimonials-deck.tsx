@@ -423,9 +423,49 @@ function Card({
           {t.role && <span>{t.role}</span>}
           {t.role && t.company && <span className="opacity-30">at</span>}
           {t.company && <span>{t.company}</span>}
+          <SourceLink t={t} interactive={interactive} />
         </figcaption>
       </motion.div>
     </figure>
+  );
+}
+
+/**
+ * The receipt. The whole point of this section is that the quotes are checkable,
+ * so when a testimonial carries a `link` the card ends with a quiet "source" that
+ * opens the PR comment / post it came from. No link in the CMS renders nothing at
+ * all — three of the four live quotes have one, and the card must look finished
+ * either way.
+ *
+ * Two details that are load-bearing rather than decorative:
+ *   · The card is a drag/tap surface, so a pointerdown here would start a fling
+ *     and the trailing click would flip the deck as well as follow the link.
+ *     Both are stopped at this element.
+ *   · Only the FRONT card's link is tabbable. The whole deck is in the DOM at
+ *     once (buried plates are just opacity 0), so leaving every link focusable
+ *     would put four invisible stops in the tab order for one visible card.
+ */
+function SourceLink({ t, interactive }: { t: Testimonial; interactive: boolean }) {
+  if (!t.link) return null;
+  return (
+    <a
+      href={t.link}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={`Source: ${t.name}`}
+      tabIndex={interactive ? undefined : -1}
+      onPointerDown={(e) => e.stopPropagation()}
+      onClick={(e) => e.stopPropagation()}
+      className="group/src ml-auto inline-flex shrink-0 items-center gap-1.5 text-[var(--ink)]/55 underline decoration-[var(--muted)]/40 underline-offset-[5px] transition hover:text-[var(--ink)] hover:decoration-[var(--ink)]"
+    >
+      source
+      <span
+        aria-hidden
+        className="transition-transform group-hover/src:translate-x-px group-hover/src:-translate-y-px"
+      >
+        &#8599;
+      </span>
+    </a>
   );
 }
 

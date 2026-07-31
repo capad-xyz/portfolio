@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Caveat } from "next/font/google";
 import "./globals.css";
 import { SiteShell } from "@/components/site-shell";
 import { PerfGuard } from "@/components/perf-guard";
+import { getSocialLinks } from "@/lib/sanity";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -97,7 +98,10 @@ const personJsonLd = {
   email: "mailto:connect@capad.fyi",
   jobTitle: "Software Engineer & Architect",
   description: DESCRIPTION,
-  worksFor: { "@type": "Organization", name: "Appson Technologies" },
+  // No `worksFor`: the Appson contract ended 31 Jul 2026, and a structured-data
+  // employer claim is read by recruiter tooling as current. `jobTitle` is the
+  // discipline, not an employer, so it stays. Add `worksFor` back on the day
+  // there is a real answer.
   sameAs: [
     "https://github.com/capad-xyz",
     "https://x.com/aadarsh_io",
@@ -127,11 +131,15 @@ const websiteJsonLd = {
   author: { "@type": "Person", name: "Aadarsh Upadhyay" },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Fetched in the layout rather than per-page: the contact flock is chrome, it
+  // rides every route, and one CDN-cached read here beats one per page.
+  const socials = await getSocialLinks();
+
   return (
     <html
       lang="en"
@@ -150,7 +158,7 @@ export default function RootLayout({
           Skip to content
         </a>
         <PerfGuard />
-        <SiteShell>{children}</SiteShell>
+        <SiteShell socials={socials}>{children}</SiteShell>
       </body>
     </html>
   );
