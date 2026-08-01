@@ -1,30 +1,17 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import {
-  getAllProjects,
-  getProjectBySlug,
-  getProjectSlugs,
-  type ProjectStatus,
-} from "@/lib/sanity";
+import { getAllProjects, getProjectBySlug, getProjectSlugs } from "@/lib/sanity";
 import { CaseStudyBody } from "@/components/portable-text";
-import { LiquidButton } from "@/components/liquid-button";
 import { OpenContactButton } from "@/components/open-contact-button";
 import { ReadingProgress } from "@/components/reading-progress";
 import { Reveal } from "@/components/reveal";
+import { LICENSE_URL, ProjectHeader, ProjectTags } from "@/components/project-header";
 
 // ISR: regenerate at most every 5 min so CMS edits appear without a redeploy.
 export const revalidate = 300;
 
 const SITE_URL = "https://capad.fyi";
-
-// SPDX id -> canonical license URL, so the structured data points at the real
-// license text rather than a bare string.
-const LICENSE_URL: Record<string, string> = {
-  MIT: "https://opensource.org/license/mit",
-  "GPL-3.0": "https://www.gnu.org/licenses/gpl-3.0.html",
-  "AGPL-3.0": "https://www.gnu.org/licenses/agpl-3.0.html",
-};
 
 /**
  * Project case study (`/work/[slug]`). The card grid surfaces the hook + metrics
@@ -65,12 +52,6 @@ export async function generateMetadata({
     },
   };
 }
-
-const STATUS_LABEL: Record<ProjectStatus, string> = {
-  done: "shipped",
-  ongoing: "in progress",
-  archived: "archived",
-};
 
 export default async function ProjectPage({
   params,
@@ -127,71 +108,7 @@ export default async function ProjectPage({
           <span aria-hidden>&larr;</span> the build stories
         </Link>
 
-        <div className="reveal-up mt-8 flex flex-wrap items-center gap-3 font-mono text-[11px] uppercase tracking-[0.22em] text-[var(--muted)]">
-          <span className="text-[var(--ink)]">{STATUS_LABEL[project.status]}</span>
-          {project.year && (
-            <>
-              <span className="opacity-30">/</span>
-              <span>{project.year}</span>
-            </>
-          )}
-          {project.license && (
-            <>
-              <span className="opacity-30">/</span>
-              <span>{project.license}</span>
-            </>
-          )}
-        </div>
-
-        {/* Receiving end of the card morph — the name matches project-card.tsx.
-            Deliberately WITHOUT `reveal-title`: that class starts at opacity 0 /
-            blur(14px) and is promoted to `.in` by an IntersectionObserver, so a
-            morph arriving here would land on an invisible element and then blur
-            itself back in. The morph IS this title's entrance; on a cold load
-            (no transition to morph from) it simply renders present, which is the
-            right hierarchy anyway — the headline anchors while the body develops
-            in around it. */}
-        <h1
-          className="work-morph mt-4 text-[clamp(40px,7vw,76px)] font-bold leading-[0.92] tracking-[-0.03em]"
-          style={{ viewTransitionName: `work-title-${slug}` }}
-        >
-          {project.title}
-        </h1>
-
-        <p className="reveal-up mt-5 max-w-2xl text-[clamp(17px,2vw,21px)] leading-[1.5] text-[var(--ink)]/85 [text-wrap:pretty]">
-          {project.oneLiner}
-        </p>
-
-        {project.metrics && project.metrics.length > 0 && (
-          <dl className="reveal-up glass lensable mt-10 flex flex-wrap gap-x-12 gap-y-6 rounded-[20px] px-8 py-6">
-            {project.metrics.map((m) => (
-              <div key={`${m.value}-${m.label}`}>
-                <dt className="text-[clamp(28px,4vw,40px)] font-bold leading-none tracking-[-0.02em]">
-                  {m.value}
-                </dt>
-                <dd className="mt-1.5 font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--muted)]">
-                  {m.label}
-                </dd>
-              </div>
-            ))}
-          </dl>
-        )}
-
-        {project.links && project.links.length > 0 && (
-          <div className="reveal-up mt-9 flex flex-wrap gap-3">
-            {project.links.map((l) => (
-              <LiquidButton
-                key={l.href}
-                href={l.href}
-                external
-                variant="outline"
-                className="px-5 py-2.5 text-sm font-medium"
-              >
-                {l.label}
-              </LiquidButton>
-            ))}
-          </div>
-        )}
+        <ProjectHeader project={project} slug={slug} />
 
         {project.body && project.body.length > 0 && (
           <div className="case-body reveal-up mt-14 border-t border-black/10 pt-12">
@@ -199,15 +116,7 @@ export default async function ProjectPage({
           </div>
         )}
 
-        {project.tags && project.tags.length > 0 && (
-          <div className="reveal-up mt-14 flex flex-wrap gap-2 border-t border-black/10 pt-8">
-            {project.tags.map((t) => (
-              <span key={t} className="chip px-3 py-1 text-[11px] lowercase">
-                {t}
-              </span>
-            ))}
-          </div>
-        )}
+        <ProjectTags tags={project.tags} />
 
         <div className="reveal-up mt-16">
           <OpenContactButton />

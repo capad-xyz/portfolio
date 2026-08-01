@@ -1,105 +1,111 @@
 import type { Metadata } from "next";
-import { LiquidIntro } from "@/components/liquid-intro";
-import { LiquidLens } from "@/components/liquid-lens";
+import { notFound } from "next/navigation";
+import { getProjectBySlug } from "@/lib/sanity";
+import { CaseStudyBody } from "@/components/portable-text";
+import { OpenContactButton } from "@/components/open-contact-button";
+import { ReadingProgress } from "@/components/reading-progress";
 import { Reveal } from "@/components/reveal";
-import { GlyphmapsHero } from "@/components/glyphmaps/gm-hero";
-import { GmSections } from "@/components/glyphmaps/gm-sections";
+import { LICENSE_URL, ProjectHeader, ProjectTags } from "@/components/project-header";
 import { GmFooter } from "@/components/glyphmaps/gm-footer";
-import { getGlyphmapsPage } from "@/lib/glyphmaps-content";
-
-// Same ISR window as the main site: CMS edits land within 5 minutes without a
-// redeploy, and the Sanity webhook can revalidate sooner.
-export const revalidate = 300;
 
 /**
- * Serialise JSON-LD for inline injection. Unlike the root layout's two blocks,
- * this one carries CMS-authored text, and `JSON.stringify` does not escape
- * `<` — so a stray `</script>` in a Sanity field would close the tag and let
- * the rest execute. Escaping the three characters that can start markup keeps
- * the payload valid JSON while making that impossible.
+ * glyphmaps.capad.fyi — the product face of the `glyphmaps` project document.
+ *
+ * The same view and the same content as capad.fyi/work/glyphmaps, rendered by
+ * the same components, minus the three things that only make sense inside a
+ * portfolio: the "the build stories" link back to /projects, and the prev/next
+ * rail through the neighbouring projects. Someone who arrived at a product
+ * domain should not be handed a link onward to searchts.
+ *
+ * It is a separate route rather than a rewrite onto /work/glyphmaps because
+ * Next keys the incremental cache on the resolved route: pointing both hosts at
+ * one path would make them share a cache entry and serve each other's HTML.
+ * Distinct routes, distinct keys, nothing to configure.
  */
-function jsonLd(data: unknown) {
-  return JSON.stringify(data)
-    .replace(/</g, "\\u003c")
-    .replace(/>/g, "\\u003e")
-    .replace(/&/g, "\\u0026");
-}
+
+export const revalidate = 300;
+
+const SITE_URL = "https://glyphmaps.capad.fyi";
+const SLUG = "glyphmaps";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const page = await getGlyphmapsPage();
-  const title = page.seoTitle ?? "GlyphMaps — navigation on the Nothing Glyph Matrix";
-  const description = page.seoDescription ?? page.heroTagline;
-  const images = page.ogImage?.url ? [page.ogImage.url] : undefined;
+  const project = await getProjectBySlug(SLUG);
+  if (!project) return { title: { absolute: "GlyphMaps" } };
   return {
-    title: { absolute: title },
-    description,
-    openGraph: { title, description, url: "/", ...(images ? { images } : {}) },
+    title: { absolute: "GlyphMaps — navigation on the Nothing Glyph Matrix" },
+    description: project.oneLiner,
+    alternates: { canonical: "/" },
+    openGraph: {
+      type: "website",
+      url: "/",
+      title: "GlyphMaps",
+      description: project.oneLiner,
+      images: ["/opengraph-image.png"],
+    },
     twitter: {
       card: "summary_large_image",
-      title,
-      description,
-      ...(images ? { images } : {}),
+      title: "GlyphMaps",
+      description: project.oneLiner,
+      images: ["/opengraph-image.png"],
     },
   };
 }
 
-export default async function GlyphmapsHome() {
-  const page = await getGlyphmapsPage();
+export default async function GlyphmapsPage() {
+  const project = await getProjectBySlug(SLUG);
+  if (!project) notFound();
 
-  // Only claims that hold: a free, open-source Android utility. No rating, no
-  // install count — those would have to be invented, and this markup is the
-  // one place a search engine would repeat them verbatim.
-  const appJsonLd = {
+  // Only claims that hold. No rating and no install count — those would have to
+  // be invented, and this markup is exactly where a search engine would repeat
+  // them verbatim.
+  const codeRepo = project.links?.find((l) => l.kind === "code")?.href;
+  const jsonLd = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
     name: "GlyphMaps",
+    description: project.oneLiner,
     applicationCategory: "TravelApplication",
     operatingSystem: "Android 14+",
-    softwareVersion: "1.0.0",
-    url: "https://glyphmaps.capad.fyi",
-    downloadUrl: "https://github.com/capad-xyz/GlyphMaps/releases/latest",
-    license: "https://www.gnu.org/licenses/agpl-3.0.html",
+    url: SITE_URL,
     isAccessibleForFree: true,
     offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
     author: { "@type": "Person", name: "Aadarsh Upadhyay", url: "https://capad.fyi" },
-    description: page.seoDescription ?? page.heroTagline,
+    ...(codeRepo ? { codeRepository: codeRepo } : {}),
+    ...(project.tags?.length ? { keywords: project.tags.join(", ") } : {}),
+    ...(project.year ? { datePublished: project.year } : {}),
+    ...(project.license && LICENSE_URL[project.license]
+      ? { license: LICENSE_URL[project.license] }
+      : {}),
   };
 
   return (
-    <main id="main" className="relative z-10">
+    <main id="main" className="relative z-10 mx-auto max-w-3xl px-6 py-28 md:py-36">
+      <ReadingProgress />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: jsonLd(appJsonLd) }}
+        // JSON.stringify does not escape `<`, and this payload carries CMS text,
+        // so a stray `</script>` in a Sanity field would close the tag early.
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
+        }}
       />
-      <LiquidIntro />
-      <LiquidLens />
+      <Reveal>
+        <span className="section-eyebrow reveal-up">nothing phone (4a) pro · glyph matrix</span>
 
-      <GlyphmapsHero
-        eyebrow={page.heroEyebrow}
-        title={page.heroTitle}
-        tagline={page.heroTagline}
-        note={page.heroNote}
-        ctas={page.ctas}
-        metrics={page.metrics}
-        maneuvers={page.heroManeuvers}
-      />
+        <ProjectHeader project={project} slug={SLUG} morph={false} />
 
-      <GmSections sections={page.sections ?? []} />
-
-      {(page.closingTitle || page.closingBody) && (
-        <section className="gm-section">
-          <div className="gm-narrow text-center">
-            <Reveal>
-              {page.closingTitle && (
-                <h2 className="gm-feature-title reveal-title">{page.closingTitle}</h2>
-              )}
-              {page.closingBody && (
-                <p className="gm-feature-body reveal-up">{page.closingBody}</p>
-              )}
-            </Reveal>
+        {project.body && project.body.length > 0 && (
+          <div className="case-body reveal-up mt-14 border-t border-black/10 pt-12">
+            <CaseStudyBody value={project.body} />
           </div>
-        </section>
-      )}
+        )}
+
+        <ProjectTags tags={project.tags} />
+
+        <div className="reveal-up mt-16">
+          <OpenContactButton />
+        </div>
+      </Reveal>
 
       <GmFooter />
     </main>

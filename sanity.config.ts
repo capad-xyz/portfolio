@@ -4,10 +4,10 @@ import { visionTool } from "@sanity/vision";
 import { schemaTypes } from "./src/sanity/schemas";
 import { structure } from "./src/sanity/structure";
 
-// Landing page + privacy policy are one-of-a-kind documents reached from the
-// desk, so they're kept out of the global "create new" menu — a second
-// glyphmapsPage would silently compete with the live one.
-const SINGLETONS = new Set(["glyphmapsPage", "glyphmapsPrivacy"]);
+// The privacy policy is a one-of-a-kind document reached from the desk, so it
+// stays out of the global "create new" menu — a second copy would silently
+// compete with the live one.
+const SINGLETONS = new Set(["glyphmapsPrivacy"]);
 
 export default defineConfig({
   name: "default",

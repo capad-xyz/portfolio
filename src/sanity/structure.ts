@@ -3,17 +3,22 @@ import type { StructureResolver } from "sanity/structure";
 /**
  * Studio desk layout.
  *
- * One Sanity project now backs two sites, so the desk splits by site rather
- * than dumping every document type into one flat list. The GlyphMaps landing
- * page and privacy policy are singletons — pinned as single documents so they
- * can't be duplicated into an ambiguous "which one is live?" state.
+ * One Sanity project now backs two hostnames, but only just: glyphmaps.capad.fyi
+ * renders the existing `glyphmaps` project document, so the only content that
+ * lives solely on that host is its privacy policy. It is pinned as a singleton —
+ * one document, reached from here, never duplicated into an ambiguous "which one
+ * is live?" state.
  *
- * The section object types (gmFeature, gmShowcase, …) are deliberately absent:
- * they only ever exist inside `glyphmapsPage.sections`, never standalone.
+ * Everything else is capad.fyi content, listed automatically so a new document
+ * type appears without this file being touched.
+ *
+ * NOTE(merge): the `resume-and-cms-copy` branch has its own, better-titled desk
+ * (Resume / Projects / Also shipped / Work experience / Stack / Kind words /
+ * Contact bubbles). That one should win — the only thing worth carrying across
+ * from here is the "glyphmaps" list item below.
  */
 
-const GLYPHMAPS_SINGLETONS = ["glyphmapsPage", "glyphmapsPrivacy"];
-const CAPAD_TYPES = ["project", "workExperience", "testimonial", "stackGroup"];
+const GLYPHMAPS_SINGLETONS = ["glyphmapsPrivacy"];
 
 export const structure: StructureResolver = (S) =>
   S.list()
@@ -24,20 +29,12 @@ export const structure: StructureResolver = (S) =>
         .child(
           S.list()
             .title("capad.fyi")
-            .items([
-              S.documentTypeListItem("project").title("Projects"),
-              S.documentTypeListItem("workExperience").title("Work experience"),
-              S.documentTypeListItem("testimonial").title("Testimonials"),
-              S.documentTypeListItem("stackGroup").title("Stack groups"),
-              // Anything added to the capad schema later shows up here without
-              // needing this file touched.
-              ...S.documentTypeListItems().filter((item) => {
+            .items(
+              S.documentTypeListItems().filter((item) => {
                 const id = item.getId();
-                return (
-                  !!id && !CAPAD_TYPES.includes(id) && !GLYPHMAPS_SINGLETONS.includes(id)
-                );
+                return !!id && !GLYPHMAPS_SINGLETONS.includes(id);
               }),
-            ]),
+            ),
         ),
       S.divider(),
       S.listItem()
@@ -46,19 +43,13 @@ export const structure: StructureResolver = (S) =>
           S.list()
             .title("glyphmaps.capad.fyi")
             .items([
-              S.listItem()
-                .title("Landing page")
-                .id("glyphmapsPage")
-                .child(
-                  S.document().schemaType("glyphmapsPage").documentId("glyphmapsPage"),
-                ),
+              // The landing page is the `glyphmaps` project document, edited
+              // under capad.fyi -> Projects. Only the policy is host-specific.
               S.listItem()
                 .title("Privacy policy")
                 .id("glyphmapsPrivacy")
                 .child(
-                  S.document()
-                    .schemaType("glyphmapsPrivacy")
-                    .documentId("glyphmapsPrivacy"),
+                  S.document().schemaType("glyphmapsPrivacy").documentId("glyphmapsPrivacy"),
                 ),
             ]),
         ),

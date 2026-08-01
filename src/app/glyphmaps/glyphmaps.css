@@ -1,187 +1,22 @@
 /**
- * GlyphMaps section styles.
+ * The little that glyphmaps.capad.fyi needs on top of the shared sheet.
  *
- * Kept out of globals.css on purpose: the two sites share one design system,
- * and the shared sheet should keep describing the shared material (glass,
- * cursor, reveal) rather than growing a product-specific tail. Everything here
- * builds on the tokens and classes already defined globally — --ink, --paper,
- * --muted, .glass, .reveal-up — so parity is inherited, not re-implemented.
+ * The landing page is the project case study rendered by the shared project
+ * components, so it brings its styling with it and nothing is restated here.
+ * What is left is the privacy page's two blocks and the footer — kept out of
+ * globals.css so the shared sheet keeps describing shared material (glass,
+ * cursor, reveal) rather than growing a per-host tail.
  */
-
-/* ---------------------------------------------------------------- matrix */
-
-.gm-matrix {
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 18px;
-}
-
-/* The panel is the back of the phone: near-black, faintly domed, so the LEDs
-   read as physical light rather than as dots drawn on paper. */
-.gm-matrix-panel {
-  position: relative;
-  width: min(300px, 78vw);
-  aspect-ratio: 1;
-  border-radius: 26px;
-  padding: 16px;
-  background:
-    radial-gradient(120% 120% at 30% 22%, #1b1b1f, #0a0a0c 62%);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.14) inset,
-    0 -18px 40px -30px rgba(0, 0, 0, 0.9) inset,
-    0 30px 60px -30px rgba(20, 20, 30, 0.55),
-    0 2px 8px -3px rgba(20, 20, 30, 0.25);
-}
-
-.gm-matrix-panel svg {
-  width: 100%;
-  height: 100%;
-  display: block;
-  overflow: visible;
-}
-
-.gm-led-off {
-  fill: #ffffff;
-  opacity: 0.055;
-}
-
-/* Warm cream, the colour the panel actually emits. The glow is a drop-shadow
-   rather than a blur filter so 137 nodes stay cheap to composite. */
-.gm-led-on {
-  fill: #f7e8c0;
-  filter: drop-shadow(0 0 3px rgba(247, 232, 192, 0.9))
-    drop-shadow(0 0 8px rgba(247, 232, 192, 0.45));
-  transition: opacity 0.16s linear;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .gm-led-on {
-    transition: none;
-  }
-}
-
-.gm-matrix-caption {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  text-align: center;
-}
-
-.gm-matrix-label {
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  color: var(--ink);
-}
-
-.gm-matrix-dist {
-  font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 11px;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
-/* ---------------------------------------------------------------- device */
-
-/* The panel seated in a rear shell, which is the only framing that explains
-   the product: it is what you see when the phone is face-down on a mount. */
-.gm-device {
-  display: flex;
-  justify-content: center;
-  perspective: 1200px;
-}
-
-.gm-device-shell {
-  position: relative;
-  width: min(330px, 84vw);
-  aspect-ratio: 71 / 146;
-  border-radius: 38px;
-  padding: 26px 22px;
-  background: linear-gradient(160deg, #26262b, #101013 46%, #0a0a0c);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.2) inset,
-    0 -20px 50px -34px rgba(0, 0, 0, 0.9) inset,
-    0 44px 90px -42px rgba(20, 20, 30, 0.62),
-    0 3px 10px -4px rgba(20, 20, 30, 0.3);
-}
-
-.gm-device-glass {
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  background: linear-gradient(
-    150deg,
-    rgba(255, 255, 255, 0.16),
-    rgba(255, 255, 255, 0.02) 34%,
-    transparent 62%
-  );
-}
-
-.gm-device .gm-device-matrix .gm-matrix-panel {
-  width: 100%;
-  padding: 6px;
-  border-radius: 50%;
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.1) inset;
-  background: radial-gradient(120% 120% at 32% 24%, #191a1e, #08080a 66%);
-}
-
-/* The (4a) Pro's camera island sits above the Matrix; two quiet lenses are
-   enough to place it without pretending to be a product render. */
-.gm-device-lens {
-  position: absolute;
-  right: 26px;
-  top: 26px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.gm-device-lens span {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 34% 30%, #3a3a41, #101013 70%);
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.06), 0 2px 6px rgba(0, 0, 0, 0.5);
-}
-
-/* ------------------------------------------------------------- page bits */
 
 .gm-section {
   position: relative;
   padding: clamp(64px, 10vw, 128px) 24px;
 }
 
-.gm-wrap {
-  margin: 0 auto;
-  width: 100%;
-  max-width: 1080px;
-}
-
 .gm-narrow {
   margin: 0 auto;
   width: 100%;
   max-width: 720px;
-}
-
-.gm-feature {
-  display: grid;
-  gap: clamp(32px, 6vw, 72px);
-  align-items: center;
-  grid-template-columns: 1fr;
-}
-
-@media (min-width: 900px) {
-  .gm-feature {
-    grid-template-columns: 1fr 1fr;
-  }
-  .gm-feature.is-flipped .gm-feature-visual {
-    order: -1;
-  }
 }
 
 .gm-feature-title {
@@ -192,236 +27,7 @@
   line-height: 1.08;
 }
 
-.gm-feature-body {
-  margin-top: 18px;
-  font-size: clamp(15px, 1.5vw, 17px);
-  line-height: 1.7;
-  color: rgb(from var(--ink) r g b / 0.78);
-  text-wrap: pretty;
-}
-
-/* metrics */
-
-.gm-metrics {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 10px;
-}
-
-.gm-metric {
-  border-radius: 18px;
-  padding: 14px 20px;
-  text-align: center;
-  min-width: 108px;
-}
-
-.gm-metric-value {
-  font-size: 24px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  line-height: 1;
-}
-
-.gm-metric-label {
-  margin-top: 6px;
-  font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 10px;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
-/* screenshots */
-
-.gm-shots {
-  display: grid;
-  gap: clamp(24px, 4vw, 44px);
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  align-items: start;
-}
-
-.gm-shot {
-  margin: 0;
-}
-
-.gm-shot-frame {
-  border-radius: 26px;
-  padding: 10px;
-  overflow: hidden;
-  background: linear-gradient(160deg, #26262b, #0a0a0c);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.16) inset,
-    0 30px 60px -34px rgba(20, 20, 30, 0.55);
-}
-
-.gm-shot-frame img {
-  display: block;
-  width: 100%;
-  height: auto;
-  border-radius: 18px;
-}
-
-.gm-shot figcaption {
-  margin-top: 14px;
-  font-size: 13px;
-  line-height: 1.6;
-  color: var(--muted);
-  text-wrap: pretty;
-}
-
-/* specs */
-
-.gm-specs {
-  overflow: hidden;
-  border-radius: 22px;
-}
-
-.gm-spec-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 20px;
-  padding: 15px 22px;
-  border-top: 1px solid rgb(from var(--ink) r g b / 0.07);
-}
-
-.gm-spec-row:first-child {
-  border-top: 0;
-}
-
-.gm-spec-label {
-  font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 11px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
-.gm-spec-value {
-  font-size: 15px;
-  font-weight: 500;
-  text-align: right;
-}
-
-/* download */
-
-.gm-download-actions {
-  margin-top: 30px;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 16px;
-}
-
-.gm-download-option {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 9px;
-}
-
-.gm-download-meta {
-  font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 10px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
-.gm-reqs {
-  margin: 34px auto 0;
-  max-width: 620px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  text-align: left;
-}
-
-.gm-req {
-  display: flex;
-  gap: 12px;
-  font-size: 14px;
-  line-height: 1.65;
-  color: rgb(from var(--ink) r g b / 0.72);
-}
-
-.gm-req::before {
-  content: "";
-  flex: none;
-  margin-top: 9px;
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: rgb(from var(--ink) r g b / 0.32);
-}
-
-/* faq */
-
-.gm-faq-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.gm-faq-item {
-  border-radius: 20px;
-  padding: 4px 22px;
-}
-
-.gm-faq-item summary {
-  cursor: none;
-  list-style: none;
-  padding: 18px 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 18px;
-  font-size: clamp(15px, 1.6vw, 17px);
-  font-weight: 600;
-  letter-spacing: -0.01em;
-}
-
-.gm-faq-item summary::-webkit-details-marker {
-  display: none;
-}
-
-.gm-faq-sign {
-  flex: none;
-  position: relative;
-  width: 14px;
-  height: 14px;
-  opacity: 0.45;
-}
-
-.gm-faq-sign::before,
-.gm-faq-sign::after {
-  content: "";
-  position: absolute;
-  inset: 50% 0 auto 0;
-  height: 1.5px;
-  border-radius: 2px;
-  background: var(--ink);
-  transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.gm-faq-sign::after {
-  transform: rotate(90deg);
-}
-
-.gm-faq-item[open] .gm-faq-sign::after {
-  transform: rotate(0deg);
-}
-
-.gm-faq-answer {
-  padding: 0 0 20px;
-  font-size: 15px;
-  line-height: 1.7;
-  color: rgb(from var(--ink) r g b / 0.75);
-  text-wrap: pretty;
-}
-
-/* privacy */
+/* ---------------------------------------------------------------- privacy */
 
 .gm-policy-summary {
   border-radius: 22px;
@@ -440,10 +46,12 @@
   color: var(--muted);
 }
 
-/* footer */
+/* ----------------------------------------------------------------- footer */
 
 .gm-footer {
-  padding: 60px 24px 90px;
+  margin-top: 72px;
+  padding-top: 36px;
+  border-top: 1px solid rgb(from var(--ink) r g b / 0.1);
   text-align: center;
 }
 
@@ -452,7 +60,10 @@
   flex-wrap: wrap;
   justify-content: center;
   gap: 10px 26px;
-  font-size: 14px;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
 }
 
 .gm-footer-links a {
@@ -466,11 +77,10 @@
 }
 
 .gm-footer-note {
-  margin-top: 22px;
+  margin: 22px auto 0;
+  max-width: 560px;
   font-size: 12.5px;
   line-height: 1.7;
   color: var(--muted);
-  max-width: 560px;
-  margin-inline: auto;
   text-wrap: pretty;
 }
