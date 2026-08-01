@@ -36,13 +36,30 @@ const PREFIX = "/glyphmaps";
 /** Metadata routes that must follow the host rewrite despite having a dot. */
 const HOST_SCOPED_FILES = new Set(["/sitemap.xml", "/robots.txt"]);
 
+/**
+ * Paths the GitHub Pages site served before this Worker took the hostname over.
+ * Those URLs are indexed and may be linked from the repo and the Play listing,
+ * so they keep working rather than 404ing on cutover.
+ *
+ * Note the shipped app hardcodes `/privacy` itself
+ * (MainActivity.kt: PRIVACY_POLICY_URL), which GitHub Pages never served — the
+ * in-app privacy link is a 404 today and starts working the moment this ships.
+ */
+const LEGACY_PRIVACY = new Set(["/privacy-policy", "/privacy-policy.html"]);
+
 export function proxy(request: NextRequest) {
   const host = (request.headers.get("host") ?? "").split(":")[0].toLowerCase();
   const { pathname } = request.nextUrl;
 
+  // Before the static-file bail-out below: one of these ends in `.html` and
+  // would otherwise be treated as a public asset and passed straight through.
+  if (GLYPHMAPS_HOSTS.has(host) && LEGACY_PRIVACY.has(pathname)) {
+    return NextResponse.redirect(new URL("/privacy", request.url), 308);
+  }
+
   // Anything with a file extension is a real file in /public (icons, the OG
-  // card, the screenshots) and is shared by both hosts as-is. The two metadata
-  // routes are the deliberate exceptions — each host needs its own.
+  // card) and is shared by both hosts as-is. The two metadata routes are the
+  // deliberate exceptions — each host needs its own.
   const isFile = /\.[a-z0-9]+$/i.test(pathname);
   if (isFile && !HOST_SCOPED_FILES.has(pathname)) return NextResponse.next();
 
