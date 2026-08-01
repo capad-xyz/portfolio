@@ -125,10 +125,17 @@ export const DEMO_PROJECTS: ProjectDetail[] = [
       ),
       h("The pages the ladder could not read"),
       p(
-        "Share links from AI chat apps broke the ladder, and not because of a bot-wall. A ChatGPT or Claude share page is a single-page app whose conversation never lands in the DOM as extractable text, so all three tiers returned either a thin shell or a render cut off mid-chat. The fix runs ahead of the ladder instead of inside it: recognize the share URL, then decode the provider's own data channel rather than scraping the rendered page. Eight providers are handled now: ChatGPT, Claude, Poe, Grok, Gemini, DeepSeek, Perplexity, and Copilot.",
+        "Then something beat the whole ladder with no bot-wall in sight. Paste a ChatGPT or Claude share link and all three tiers come back with a thin shell or a conversation cut off mid-sentence. Nothing was blocking me. A chat share page is a single-page app, and the transcript never lands in the page as text worth extracting, so there was simply nothing there to read.",
       ),
       p(
-        "They split into two shapes. Grok and Gemini expose keyless endpoints, a share-links JSON API and a batchexecute RPC, that the Chrome-impersonated fetch already clears without a browser. DeepSeek, Perplexity, and Copilot are JavaScript shells, so those reuse the stealth tier's lazy patchright render: wait on a per-provider ready selector, auto-scroll until the scroll height stops changing so list virtualization cannot truncate the conversation, then click the collapsed sections open before reading. Each provider is one auto-discovered plugin module, so adding one is adding a file, and an extractor that fails falls through to the normal ladder instead of failing the read. The benchmark covers the five providers that read without a browser and passes all five; the three browser-rendered ones are not in it yet.",
+        "The fix runs ahead of the ladder instead of inside it: recognize the share URL, then read the provider's own data channel rather than the page it paints. Eight are handled now, and they come in two shapes:",
+      ),
+      ...ul([
+        "Five hand the transcript over with no browser at all. ChatGPT and Poe bury it in the page payload (a React Router turbo-stream, a __NEXT_DATA__ blob); Claude, Grok and Gemini answer a keyless endpoint that the Chrome-impersonated fetch already clears.",
+        "Three are JavaScript shells: DeepSeek, Perplexity and Copilot. Those borrow the stealth tier's browser, wait on a ready selector, scroll until the page height stops moving so virtualization cannot truncate the chat, then click the collapsed sections open before reading.",
+      ]),
+      p(
+        "Each provider is one auto-discovered module, so adding the ninth is adding a file, and an extractor that fails drops through to the normal ladder rather than failing the read. The benchmark covers the five that need no browser and passes all five. The three that need one are not in it yet.",
       ),
       h("Beyond the unlocker"),
       p(
