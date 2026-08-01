@@ -9,6 +9,7 @@ import {
   type ProjectStatus,
   type WorkExperience as WE,
 } from "@/lib/sanity";
+import { resumeGraph, jsonLdHtml } from "@/lib/jsonld";
 import { LiquidButton } from "@/components/liquid-button";
 import { OpenContactButton } from "@/components/open-contact-button";
 import { ResumeDownloads } from "@/components/resume-downloads";
@@ -84,6 +85,21 @@ export default async function ResumePage() {
       id="main"
       className="relative z-10 mx-auto max-w-4xl px-6 py-28 md:py-36 print:max-w-none print:px-0 print:py-0"
     >
+      {/* The page a search for the name should resolve to: it is the one that
+          says who he is, what the role is, and where the work happened. */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: jsonLdHtml(
+            resumeGraph(
+              resume.headline,
+              work,
+              stack.flatMap((g) => g.items),
+              resume.education ?? [],
+            ),
+          ),
+        }}
+      />
       <Reveal>
         <Link
           href="/"

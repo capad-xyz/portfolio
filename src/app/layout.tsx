@@ -90,7 +90,8 @@ export const metadata: Metadata = {
 // <CapadJsonLd/>, rendered by the capad.fyi homepage: this layout is shared
 // with glyphmaps.capad.fyi, so emitting it here told crawlers that the
 // GlyphMaps product page belongs to a WebSite whose url is capad.fyi. See
-// src/components/capad-json-ld.tsx.
+// src/components/capad-json-ld.tsx, and lib/jsonld.ts for the node shapes and
+// the stable ids the rest of the site references.
 
 export default async function RootLayout({
   children,

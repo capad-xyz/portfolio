@@ -8,17 +8,6 @@
  * cursor, reveal) rather than growing a per-host tail.
  */
 
-.gm-section {
-  position: relative;
-  padding: clamp(64px, 10vw, 128px) 24px;
-}
-
-.gm-narrow {
-  margin: 0 auto;
-  width: 100%;
-  max-width: 720px;
-}
-
 .gm-feature-title {
   margin-top: 14px;
   font-size: clamp(26px, 3.4vw, 40px);
@@ -75,13 +64,24 @@
 /* Eleven sections of legal prose in one column reads as a wall. A hairline
    above each heading gives the page a spine to scan, which a policy needs more
    than a case study does — people arrive at these looking for one clause, not
-   to read it through. Scoped to this wrapper so the landing page's case body,
-   which numbers its chapters instead, is untouched. */
-.gm-policy-body h2 {
-  margin-top: 60px;
-  padding-top: 26px;
+   to read it through. Scoped to these wrappers so the landing page's case body,
+   which numbers its chapters instead, is untouched.
+
+   40 + 24 is not arbitrary: every h2 elsewhere in the app sits on `mt-16`, so
+   the rule is threaded THROUGH that same 64px rather than added on top of it.
+   Adding a rule should not also change the rhythm of the page it is ruling. */
+.gm-policy-body h2,
+.gm-policy-contact h2 {
+  margin-top: 40px;
+  padding-top: 24px;
   border-top: 1px solid rgb(from var(--ink) r g b / 0.09);
   text-wrap: balance;
+}
+
+/* The contact block is a bare div, so it has no margin of its own to inherit
+   the rhythm from — the heading inside it carries the whole gap. */
+.gm-policy-contact {
+  margin-top: 0;
 }
 
 /* The opening paragraph has no heading before it, so it needs no rule either. */

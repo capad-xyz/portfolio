@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getProjectBySlug } from "@/lib/sanity";
+import { getProjectBySlug, getSocialLinks } from "@/lib/sanity";
 import { CaseStudyBody } from "@/components/portable-text";
 import { OpenContactButton } from "@/components/open-contact-button";
 import { ReadingProgress } from "@/components/reading-progress";
 import { Reveal } from "@/components/reveal";
 import { LICENSE_URL, ProjectHeader, ProjectTags } from "@/components/project-header";
 import { GmFooter } from "@/components/glyphmaps/gm-footer";
+import { authorRef, personNode, jsonLdHtml } from "@/lib/jsonld";
 
 /**
  * glyphmaps.capad.fyi — the product face of the `glyphmaps` project document.
@@ -59,30 +60,46 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function GlyphmapsPage() {
-  const project = await getProjectBySlug(SLUG);
+  const [project, socials] = await Promise.all([getProjectBySlug(SLUG), getSocialLinks()]);
   if (!project) notFound();
 
   // Only claims that hold. No rating and no install count — those would have to
   // be invented, and this markup is exactly where a search engine would repeat
   // them verbatim.
   const codeRepo = project.links?.find((l) => l.kind === "code")?.href;
+
+  // The author, declared here rather than referenced into thin air.
+  //
+  // capad.fyi's identity markup deliberately does NOT ride the shared layout
+  // onto this host — a WebSite node whose url is capad.fyi has no business
+  // claiming this page. But the app still has an author, and this page carries
+  // no visible link to the portfolio, so without the person stated here the
+  // subdomain reads as an unrelated site by an unrelated person who happens to
+  // share a name. So: the Person, yes; the capad.fyi WebSite, no.
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
-    name: "GlyphMaps",
-    description: project.oneLiner,
-    applicationCategory: "TravelApplication",
-    operatingSystem: "Android 14+",
-    url: SITE_URL,
-    isAccessibleForFree: true,
-    offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
-    author: { "@type": "Person", name: "Aadarsh Upadhyay", url: "https://capad.fyi" },
-    ...(codeRepo ? { codeRepository: codeRepo } : {}),
-    ...(project.tags?.length ? { keywords: project.tags.join(", ") } : {}),
-    ...(project.year ? { datePublished: project.year } : {}),
-    ...(project.license && LICENSE_URL[project.license]
-      ? { license: LICENSE_URL[project.license] }
-      : {}),
+    "@graph": [
+      personNode(project.oneLiner, socials.map((s) => s.href)),
+      {
+        "@type": "SoftwareApplication",
+        "@id": `${SITE_URL}/#app`,
+        name: "GlyphMaps",
+        description: project.oneLiner,
+        applicationCategory: "TravelApplication",
+        operatingSystem: "Android 14+",
+        url: SITE_URL,
+        isAccessibleForFree: true,
+        offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+        author: authorRef,
+        creator: authorRef,
+        ...(codeRepo ? { codeRepository: codeRepo } : {}),
+        ...(project.tags?.length ? { keywords: project.tags.join(", ") } : {}),
+        ...(project.year ? { datePublished: project.year } : {}),
+        ...(project.license && LICENSE_URL[project.license]
+          ? { license: LICENSE_URL[project.license] }
+          : {}),
+      },
+    ],
   };
 
   return (
@@ -90,11 +107,9 @@ export default async function GlyphmapsPage() {
       <ReadingProgress />
       <script
         type="application/ld+json"
-        // JSON.stringify does not escape `<`, and this payload carries CMS text,
-        // so a stray `</script>` in a Sanity field would close the tag early.
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
-        }}
+        // jsonLdHtml escapes `<`: this payload carries CMS text, so a stray
+        // `</script>` in a Sanity field would close the tag early.
+        dangerouslySetInnerHTML={{ __html: jsonLdHtml(jsonLd) }}
       />
       <Reveal>
         <span className="section-eyebrow reveal-up">nothing phone (4a) pro · glyph matrix</span>
