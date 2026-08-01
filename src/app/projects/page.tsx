@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { getAllProjects, type Project } from "@/lib/sanity";
+import { getAllProjects, getAlsoShipped, getSocialLinks, type Project } from "@/lib/sanity";
+import { identityGraph, projectsGraph, jsonLdHtml, SITE_DESCRIPTION } from "@/lib/jsonld";
 import { StatusPill } from "@/components/project-card";
 import { Reveal } from "@/components/reveal";
 import { LiquidButton } from "@/components/liquid-button";
@@ -34,12 +35,36 @@ export const metadata: Metadata = {
  * counts and reading times are computed from the data on every revalidation.
  */
 export default async function ProjectsPage() {
-  const projects = await getAllProjects();
+  const [projects, alsoShipped, socials] = await Promise.all([
+    getAllProjects(),
+    getAlsoShipped(),
+    getSocialLinks(),
+  ]);
   const shipped = projects.filter((p) => p.status === "done").length;
   const ongoing = projects.filter((p) => p.status === "ongoing").length;
 
+  // Same source as the homepage footnote: whose project is whose.
+  const contributed = new Set(
+    alsoShipped.filter((a) => a.kind === "contributed").map((a) => a.name.toLowerCase()),
+  );
+
   return (
     <main id="main" className="relative z-10 mx-auto max-w-4xl px-6 py-28 md:py-36">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: jsonLdHtml(
+            identityGraph(
+              SITE_DESCRIPTION,
+              socials.map((s) => s.href),
+            ),
+          ),
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: jsonLdHtml(projectsGraph(projects, contributed)) }}
+      />
       <Reveal>
         <Link
           href="/#work"

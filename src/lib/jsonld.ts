@@ -200,6 +200,48 @@ export function homeGraph(projects: Project[], contributed: Set<string> = new Se
 }
 
 /**
+ * The /projects index: a collection whose items are the work itself.
+ *
+ * The homepage already carries an ItemList, but this is the page a search for
+ * "capad projects" is most likely to land on, and it was the one page on the
+ * site emitting no structured data at all. Same node ids as everywhere else, so
+ * this adds a route into the graph rather than a second description of it.
+ */
+export function projectsGraph(projects: Project[], contributed: Set<string> = new Set()) {
+  const authored = projects.filter((p) => !contributed.has(p.title.toLowerCase()));
+
+  return {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "CollectionPage",
+        "@id": `${SITE_URL}/projects#page`,
+        url: `${SITE_URL}/projects`,
+        name: "The build stories",
+        description:
+          "Every project by Aadarsh Upadhyay (capad): shipped, in progress, and archived.",
+        about: authorRef,
+        isPartOf: { "@id": WEBSITE_ID },
+        mainEntity: { "@id": `${SITE_URL}/#projects` },
+      },
+      ...projects.map((p) =>
+        projectNode(p, p.slug, undefined, contributed.has(p.title.toLowerCase())),
+      ),
+      {
+        "@type": "ItemList",
+        "@id": `${SITE_URL}/#projects`,
+        name: "Projects by Aadarsh Upadhyay (capad)",
+        itemListElement: authored.map((p, i) => ({
+          "@type": "ListItem",
+          position: i + 1,
+          item: { "@id": projectId(p.slug) },
+        })),
+      },
+    ],
+  };
+}
+
+/**
  * The resume page, where the person is the subject rather than the author.
  *
  * This re-opens the SAME person id the layout already declared and adds the
