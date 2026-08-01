@@ -7,6 +7,7 @@ import { OpenContactButton } from "@/components/open-contact-button";
 import { ReadingProgress } from "@/components/reading-progress";
 import { Reveal } from "@/components/reveal";
 import { LICENSE_URL, ProjectHeader, ProjectTags } from "@/components/project-header";
+import { CANONICAL_ELSEWHERE } from "@/lib/canonical";
 
 // ISR: regenerate at most every 5 min so CMS edits appear without a redeploy.
 export const revalidate = 300;
@@ -36,7 +37,7 @@ export async function generateMetadata({
   return {
     title: project.title,
     description: project.oneLiner,
-    alternates: { canonical: `/work/${slug}` },
+    alternates: { canonical: CANONICAL_ELSEWHERE[slug] ?? `/work/${slug}` },
     openGraph: {
       type: "article",
       url: `/work/${slug}`,

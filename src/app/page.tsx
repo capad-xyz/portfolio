@@ -8,6 +8,7 @@ import { Stack } from "@/components/stack";
 import { Testimonials } from "@/components/testimonials";
 import { Contact } from "@/components/contact";
 import { DotNav } from "@/components/dot-nav";
+import { CapadJsonLd } from "@/components/capad-json-ld";
 
 // ISR: regenerate at most every 5 min so CMS edits appear without a redeploy.
 export const revalidate = 300;
@@ -16,6 +17,7 @@ export default function Home() {
   return (
     <>
     <main id="main" className="relative z-10">
+      <CapadJsonLd />
       <LiquidIntro />
       <LiquidLens />
       {/* Persuasion order: proof stays contiguous (work → experience) because

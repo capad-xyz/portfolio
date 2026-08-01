@@ -31,22 +31,29 @@ const SLUG = "glyphmaps";
 export async function generateMetadata(): Promise<Metadata> {
   const project = await getProjectBySlug(SLUG);
   if (!project) return { title: { absolute: "GlyphMaps" } };
+  // "glyphmaps" as a bare word is already owned by an unrelated data-viz
+  // concept (RAMPVIS, IEEE papers), so the title targets what someone looking
+  // for THIS actually types — the phone, Google Maps, the Matrix — rather than
+  // competing for a term whose intent isn't ours.
+  const title = "GlyphMaps — Google Maps turn-by-turn on the Nothing Glyph Matrix";
   return {
-    title: { absolute: "GlyphMaps — navigation on the Nothing Glyph Matrix" },
+    title: { absolute: title },
     description: project.oneLiner,
     alternates: { canonical: "/" },
     openGraph: {
       type: "website",
       url: "/",
-      title: "GlyphMaps",
+      title,
       description: project.oneLiner,
-      images: ["/opengraph-image.png"],
+      // The product's own card, not the capad portfolio one — sharing this URL
+      // used to preview someone else's brand.
+      images: [{ url: "/glyphmaps-og.png", width: 1200, height: 630, alt: title }],
     },
     twitter: {
       card: "summary_large_image",
-      title: "GlyphMaps",
+      title,
       description: project.oneLiner,
-      images: ["/opengraph-image.png"],
+      images: ["/glyphmaps-og.png"],
     },
   };
 }
