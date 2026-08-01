@@ -25,9 +25,80 @@
   font-weight: 700;
   letter-spacing: -0.025em;
   line-height: 1.08;
+  text-wrap: balance;
+}
+
+/* ------------------------------------------------------------ back control */
+
+/* The way off the policy page. Sized as an eyebrow so it reads as a label
+   rather than a button, but it has to answer the pointer or it looks like the
+   static caption it used to be — hence the colour shift AND the arrow, which
+   moves the way the page will. */
+.gm-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: var(--muted);
+  transition: color 0.3s ease;
+}
+
+.gm-back:hover,
+.gm-back:focus-visible {
+  color: var(--ink);
+}
+
+.gm-back-arrow {
+  display: inline-block;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.gm-back:hover .gm-back-arrow,
+.gm-back:focus-visible .gm-back-arrow {
+  transform: translateX(-5px);
+}
+
+/* Touch has no hover to discover the arrow with, and the custom cursor is
+   disabled there too, so the arrow rests slightly out already. */
+@media (hover: none) {
+  .gm-back-arrow { transform: translateX(-2px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gm-back-arrow { transition: none; }
+  .gm-back:hover .gm-back-arrow,
+  .gm-back:focus-visible .gm-back-arrow { transform: none; }
 }
 
 /* ---------------------------------------------------------------- privacy */
+
+/* Eleven sections of legal prose in one column reads as a wall. A hairline
+   above each heading gives the page a spine to scan, which a policy needs more
+   than a case study does — people arrive at these looking for one clause, not
+   to read it through. Scoped to this wrapper so the landing page's case body,
+   which numbers its chapters instead, is untouched. */
+.gm-policy-body h2 {
+  margin-top: 60px;
+  padding-top: 26px;
+  border-top: 1px solid rgb(from var(--ink) r g b / 0.09);
+  text-wrap: balance;
+}
+
+/* The opening paragraph has no heading before it, so it needs no rule either. */
+.gm-policy-body > :first-child {
+  margin-top: 0;
+}
+
+/* A touch more presence than the shared /30: this is the list where the actual
+   commitments live ("we do not send...", "we do not sell..."), and at /30 the
+   markers were nearly invisible against the paper. */
+.gm-policy-body ul {
+  margin-top: 18px;
+}
+
+.gm-policy-body li::marker {
+  color: rgb(from var(--ink) r g b / 0.42);
+}
 
 .gm-policy-summary {
   border-radius: 22px;

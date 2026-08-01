@@ -5,16 +5,23 @@ import Link from "next/link";
  *
  * Deliberately does NOT link back into the portfolio. The whole point of the
  * subdomain is that it does not hand a visitor a route into /projects, so the
- * links here go to the policy and to the source, and nowhere else.
+ * links here stay on this host and go to the source, and nowhere else.
  *
- * `/privacy` is a PUBLIC path, not `/glyphmaps/privacy`. The browser only ever
- * sees glyphmaps.capad.fyi URLs; the proxy maps them onto the internal route.
- * Linking the internal path would leak it into the address bar.
+ * "Overview" is the one exception added later, and it does not break that rule:
+ * it points at this host's own landing page. Before it existed the policy was a
+ * dead end, reachable from the app and from search with no way out of it but
+ * the back button.
+ *
+ * These are PUBLIC paths, not `/glyphmaps/...`. The browser only ever sees
+ * glyphmaps.capad.fyi URLs; the hostname rewrite in next.config maps them onto
+ * the internal route. Linking the internal path would leak it into the address
+ * bar.
  */
 export function GmFooter() {
   return (
     <footer className="gm-footer">
       <nav className="gm-footer-links">
+        <Link href="/">Overview</Link>
         <Link href="/privacy">Privacy</Link>
         <a href="https://github.com/capad-xyz/GlyphMaps" target="_blank" rel="noreferrer">
           Source

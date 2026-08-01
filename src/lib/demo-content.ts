@@ -67,13 +67,17 @@ export const DEMO_PROJECTS: ProjectDetail[] = [
     slug: "searchts",
     status: "done",
     oneLiner:
-      "The missing layer between AI and the web: a keyless, open-source unlocker that reads, searches, and transcribes any page past the bot-walls that block a naive fetch, straight from your terminal or agent.",
+      "The missing layer between AI and the web: a keyless, open-source unlocker that reads, searches, and transcribes what a naive fetch cannot, from bot-walled pages to complete AI-chat share conversations, straight from your terminal or agent.",
     metrics: [
       { value: "0", label: "API keys" },
       { value: "3", label: "unlock tiers" },
-      { value: "4", label: "MCP tools" },
+      // "agent commands" is the MCP tool count (read_url, web_search,
+      // fetch_asset, grab_site, get_status). It was 4 here until get_status
+      // became a first-class tool in searchts 0.5.0.
+      { value: "5", label: "agent commands" },
+      { value: "8", label: "AI-chat providers" },
     ],
-    tags: ["python", "cli", "mcp"],
+    tags: ["python", "cli", "mcp", "web-unlocker"],
     year: "2026",
     license: "MIT",
     links: [
@@ -118,6 +122,13 @@ export const DEMO_PROJECTS: ProjectDetail[] = [
       h("Proof"),
       p(
         "One benchmark row says it all. Zillow: naive fetch, 403. Fingerprint tier, a genuine 200 with 422 KB of real listing data. Same request, same machine, same afternoon. And g2.com, sitting behind DataDome's interactive CAPTCHA, was reported blocked honestly instead of returning junk, because a tool that can't be trusted to say no can't be trusted to say yes either.",
+      ),
+      h("The pages the ladder could not read"),
+      p(
+        "Share links from AI chat apps broke the ladder, and not because of a bot-wall. A ChatGPT or Claude share page is a single-page app whose conversation never lands in the DOM as extractable text, so all three tiers returned either a thin shell or a render cut off mid-chat. The fix runs ahead of the ladder instead of inside it: recognize the share URL, then decode the provider's own data channel rather than scraping the rendered page. Eight providers are handled now: ChatGPT, Claude, Poe, Grok, Gemini, DeepSeek, Perplexity, and Copilot.",
+      ),
+      p(
+        "They split into two shapes. Grok and Gemini expose keyless endpoints, a share-links JSON API and a batchexecute RPC, that the Chrome-impersonated fetch already clears without a browser. DeepSeek, Perplexity, and Copilot are JavaScript shells, so those reuse the stealth tier's lazy patchright render: wait on a per-provider ready selector, auto-scroll until the scroll height stops changing so list virtualization cannot truncate the conversation, then click the collapsed sections open before reading. Each provider is one auto-discovered plugin module, so adding one is adding a file, and an extractor that fails falls through to the normal ladder instead of failing the read. The benchmark covers the five providers that read without a browser and passes all five; the three browser-rendered ones are not in it yet.",
       ),
       h("Beyond the unlocker"),
       p(

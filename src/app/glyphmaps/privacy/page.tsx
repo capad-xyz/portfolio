@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { CaseStudyBody } from "@/components/portable-text";
 import { Reveal } from "@/components/reveal";
+import { ReadingProgress } from "@/components/reading-progress";
 import { GmFooter } from "@/components/glyphmaps/gm-footer";
 import { getGlyphmapsPrivacy } from "@/lib/glyphmaps-content";
 
@@ -40,16 +42,33 @@ export default async function GlyphmapsPrivacy() {
 
   return (
     <main id="main" className="relative z-10">
+      <ReadingProgress />
       <section className="gm-section" style={{ paddingTop: "clamp(120px, 16vw, 190px)" }}>
         <div className="gm-narrow">
           <Reveal>
-            <span className="section-eyebrow reveal-up">glyphmaps</span>
+            {/*
+              The eyebrow doubles as the way back. It already read "glyphmaps",
+              so making it the link adds an exit without adding furniture — and
+              this was the only page on the host with no route off it except the
+              browser's back button.
+
+              `/` is correct and must stay relative: on glyphmaps.capad.fyi it
+              resolves to the landing page. Writing "/glyphmaps" would leak the
+              internal path into the address bar, and hardcoding the absolute
+              host would break the *.localhost dev flow.
+            */}
+            <Link href="/" className="gm-back reveal-up section-eyebrow">
+              <span aria-hidden className="gm-back-arrow">
+                &larr;
+              </span>
+              glyphmaps
+            </Link>
             <h1 className="gm-feature-title reveal-title">{doc.title}</h1>
             <p className="gm-policy-meta reveal-up">Last updated {updated}</p>
 
             <div className="glass gm-policy-summary reveal-up mt-9">{doc.summary}</div>
 
-            <div className="reveal-up mt-4">
+            <div className="gm-policy-body reveal-up mt-4">
               <CaseStudyBody value={doc.body} />
             </div>
 
