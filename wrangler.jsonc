@@ -10,7 +10,13 @@
   },
   "routes": [
     { "pattern": "capad.fyi", "custom_domain": true },
-    { "pattern": "www.capad.fyi", "custom_domain": true }
+    { "pattern": "www.capad.fyi", "custom_domain": true },
+    // The product hostname. `custom_domain: true` makes wrangler create and own
+    // the DNS record itself, which is why the pre-existing CNAME pointing this
+    // name at capad-xyz.github.io MUST be deleted first — Cloudflare will not
+    // let a Worker custom domain and a manual record hold the same hostname,
+    // and the deploy fails rather than silently winning.
+    { "pattern": "glyphmaps.capad.fyi", "custom_domain": true }
   ],
   // OpenNext's incremental cache: where revalidatePath/ISR write regenerated
   // pages. Without it, prerendered pages are frozen at build time and the

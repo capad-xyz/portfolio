@@ -7,12 +7,14 @@ import { WorkExperience } from "@/components/work-experience";
 import { Stack } from "@/components/stack";
 import { Testimonials } from "@/components/testimonials";
 import { Contact } from "@/components/contact";
+import { DotNav } from "@/components/dot-nav";
 
 // ISR: regenerate at most every 5 min so CMS edits appear without a redeploy.
 export const revalidate = 300;
 
 export default function Home() {
   return (
+    <>
     <main id="main" className="relative z-10">
       <LiquidIntro />
       <LiquidLens />
@@ -29,5 +31,10 @@ export default function Home() {
       <Testimonials />
       <Contact />
     </main>
+    {/* The section spine belongs to this page, not the shell: these are the
+        anchors it scroll-spies, and mounting it here keeps that a server-side
+        decision. See the note in site-shell.tsx. */}
+    <DotNav />
+    </>
   );
 }

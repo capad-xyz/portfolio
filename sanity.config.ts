@@ -4,9 +4,12 @@ import { visionTool } from "@sanity/vision";
 import { schemaTypes } from "./src/sanity/schemas";
 import { structure } from "./src/sanity/structure";
 
-// Read once, in the site. `resume` is a singleton there, so the Studio must not
-// offer to make a second one — see ./src/sanity/structure.ts.
-const SINGLETONS = new Set(["resume"]);
+// Documents the sites read exactly one of: the resume behind /resume, and the
+// glyphmaps privacy policy behind glyphmaps.capad.fyi/privacy. Each is reached
+// from a fixed spot on the desk (see ./src/sanity/structure.ts), so a second
+// copy could never be reached — it would just sit there competing with the live
+// one, and which of them won would depend on creation order.
+const SINGLETONS = new Set(["resume", "glyphmapsPrivacy"]);
 
 export default defineConfig({
   name: "default",
@@ -18,8 +21,8 @@ export default defineConfig({
   schema: { types: schemaTypes },
   document: {
     // The structure hides the "create" affordance for singletons; this closes
-    // the other doors — the global "+" and the duplicate action — so there is no
-    // route to a second Resume at all, not merely an unlikely one.
+    // the other doors — the global "+" and the duplicate action — so there is
+    // no route to a second one at all, not merely an unlikely one.
     actions: (prev, { schemaType }) =>
       SINGLETONS.has(schemaType)
         ? prev.filter(({ action }) => action !== "duplicate" && action !== "delete")

@@ -1,0 +1,86 @@
+/**
+ * The little that glyphmaps.capad.fyi needs on top of the shared sheet.
+ *
+ * The landing page is the project case study rendered by the shared project
+ * components, so it brings its styling with it and nothing is restated here.
+ * What is left is the privacy page's two blocks and the footer — kept out of
+ * globals.css so the shared sheet keeps describing shared material (glass,
+ * cursor, reveal) rather than growing a per-host tail.
+ */
+
+.gm-section {
+  position: relative;
+  padding: clamp(64px, 10vw, 128px) 24px;
+}
+
+.gm-narrow {
+  margin: 0 auto;
+  width: 100%;
+  max-width: 720px;
+}
+
+.gm-feature-title {
+  margin-top: 14px;
+  font-size: clamp(26px, 3.4vw, 40px);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.08;
+}
+
+/* ---------------------------------------------------------------- privacy */
+
+.gm-policy-summary {
+  border-radius: 22px;
+  padding: 24px 26px;
+  font-size: clamp(15px, 1.6vw, 17px);
+  line-height: 1.65;
+  text-wrap: pretty;
+}
+
+.gm-policy-meta {
+  margin-top: 14px;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ----------------------------------------------------------------- footer */
+
+.gm-footer {
+  margin-top: 72px;
+  padding-top: 36px;
+  border-top: 1px solid rgb(from var(--ink) r g b / 0.1);
+  text-align: center;
+}
+
+.gm-footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px 26px;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.gm-footer-links a {
+  color: var(--muted);
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.gm-footer-links a:hover {
+  color: var(--ink);
+}
+
+.gm-footer-note {
+  margin: 22px auto 0;
+  max-width: 560px;
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--muted);
+  text-wrap: pretty;
+}
