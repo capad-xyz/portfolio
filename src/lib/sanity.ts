@@ -12,7 +12,7 @@ import {
 // guaranteed to render (preview mode). On in dev / any non-production build,
 // off in production. Force on with NEXT_PUBLIC_DEMO_CONTENT=1 (e.g. a staging
 // preview), or off with =0 to preview real CMS content in dev. See ./demo-content.
-const DEMO_ENABLED =
+export const DEMO_ENABLED =
   process.env.NEXT_PUBLIC_DEMO_CONTENT === "1"
     ? true
     : process.env.NEXT_PUBLIC_DEMO_CONTENT === "0"
@@ -122,7 +122,7 @@ const STATUS_RANK: Record<ProjectStatus, number> = { done: 0, ongoing: 1, archiv
 
 // Resilient fetch: a transient Sanity/CDN failure returns the fallback (and logs)
 // instead of throwing, so one flaky query can't 500 the whole page or fail a build.
-async function safeFetch<T>(
+export async function safeFetch<T>(
   query: string,
   params: Record<string, unknown>,
   fallback: T,
