@@ -4,12 +4,13 @@ import type { Metadata } from "next";
 import {
   getAllProjects,
   getResume,
+  getSocialLinks,
   getStackGroups,
   getWorkExperience,
   type ProjectStatus,
   type WorkExperience as WE,
 } from "@/lib/sanity";
-import { resumeGraph, jsonLdHtml } from "@/lib/jsonld";
+import { resumeGraph, identityGraph, jsonLdHtml, SITE_DESCRIPTION } from "@/lib/jsonld";
 import { LiquidButton } from "@/components/liquid-button";
 import { OpenContactButton } from "@/components/open-contact-button";
 import { ResumeDownloads } from "@/components/resume-downloads";
@@ -73,11 +74,12 @@ const isHttp = (href: string) => /^https?:/i.test(href);
  * (`resume.downloads`), not a constant here — see components/resume-downloads.
  */
 export default async function ResumePage() {
-  const [resume, work, projects, stack] = await Promise.all([
+  const [resume, work, projects, stack, socials] = await Promise.all([
     getResume(),
     getWorkExperience(),
     getAllProjects(),
     getStackGroups(),
+    getSocialLinks(),
   ]);
 
   return (
@@ -86,7 +88,25 @@ export default async function ResumePage() {
       className="relative z-10 mx-auto max-w-4xl px-6 py-28 md:py-36 print:max-w-none print:px-0 print:py-0"
     >
       {/* The page a search for the name should resolve to: it is the one that
-          says who he is, what the role is, and where the work happened. */}
+          says who he is, what the role is, and where the work happened.
+
+          The identity graph is repeated here rather than referenced into thin
+          air. It moved off the shared layout so it would stop following the
+          GlyphMaps host around, which was right — but this IS capad.fyi, and a
+          bare {"@id"} pointing at a Person declared only on the homepage is a
+          dangling reference on this page. Same host, so the WebSite node is
+          also a claim this page is entitled to make. */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: jsonLdHtml(
+            identityGraph(
+              SITE_DESCRIPTION,
+              socials.map((s) => s.href),
+            ),
+          ),
+        }}
+      />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{

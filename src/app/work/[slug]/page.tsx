@@ -6,6 +6,7 @@ import {
   getAlsoShipped,
   getProjectBySlug,
   getProjectSlugs,
+  getSocialLinks,
 } from "@/lib/sanity";
 import { CaseStudyBody } from "@/components/portable-text";
 import { OpenContactButton } from "@/components/open-contact-button";
@@ -13,7 +14,7 @@ import { ReadingProgress } from "@/components/reading-progress";
 import { Reveal } from "@/components/reveal";
 import { LICENSE_URL, ProjectHeader, ProjectTags } from "@/components/project-header";
 import { CANONICAL_ELSEWHERE } from "@/lib/canonical";
-import { projectNode, jsonLdHtml } from "@/lib/jsonld";
+import { projectNode, identityGraph, jsonLdHtml, SITE_DESCRIPTION } from "@/lib/jsonld";
 
 // ISR: regenerate at most every 5 min so CMS edits appear without a redeploy.
 export const revalidate = 300;
@@ -71,7 +72,11 @@ export default async function ProjectPage({
 
   // Keep the reader in the work loop: circular prev/next through every project
   // (same order as /projects), so a case study never dead-ends.
-  const [all, alsoShipped] = await Promise.all([getAllProjects(), getAlsoShipped()]);
+  const [all, alsoShipped, socials] = await Promise.all([
+    getAllProjects(),
+    getAlsoShipped(),
+    getSocialLinks(),
+  ]);
   const at = all.findIndex((p) => p.slug === slug);
   const prev = at > -1 && all.length > 1 ? all[(at - 1 + all.length) % all.length] : null;
   const next = at > -1 && all.length > 1 ? all[(at + 1) % all.length] : null;
@@ -89,9 +94,16 @@ export default async function ProjectPage({
     (a) => a.kind === "contributed" && a.name.toLowerCase() === project.title.toLowerCase(),
   );
 
+  // Person and WebSite ride along because the project node points at them by
+  // id, and they live on the homepage rather than the shared layout (which is
+  // also glyphmaps.capad.fyi's layout). This is capad.fyi, so restating them
+  // here is both allowed and what keeps the author edge from dangling.
   const projectJsonLd = {
     "@context": "https://schema.org",
-    "@graph": [projectNode(project, slug, LICENSE_URL, isContribution)],
+    "@graph": [
+      ...identityGraph(SITE_DESCRIPTION, socials.map((s) => s.href))["@graph"],
+      projectNode(project, slug, LICENSE_URL, isContribution),
+    ],
   };
 
   return (

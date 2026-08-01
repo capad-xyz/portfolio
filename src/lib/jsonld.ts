@@ -21,6 +21,10 @@ import type { Project } from "./sanity";
 
 export const SITE_URL = "https://capad.fyi";
 
+/** One copy. It was already living in two files and about to live in four. */
+export const SITE_DESCRIPTION =
+  "Aadarsh Upadhyay (capad) builds fast, genuinely-free, open-source developer tools and desktop apps: searchts, GlyphMaps, Grove, and beep-beep-oss. Software engineer and architect.";
+
 export const PERSON_ID = `${SITE_URL}/#person`;
 export const WEBSITE_ID = `${SITE_URL}/#website`;
 

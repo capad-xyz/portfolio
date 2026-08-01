@@ -1,8 +1,5 @@
-import { homeGraph, identityGraph, jsonLdHtml } from "@/lib/jsonld";
+import { homeGraph, identityGraph, jsonLdHtml, SITE_DESCRIPTION } from "@/lib/jsonld";
 import type { Project, SocialLink } from "@/lib/sanity";
-
-const DESCRIPTION =
-  "Aadarsh Upadhyay (capad) builds fast, genuinely-free, open-source developer tools and desktop apps: searchts, GlyphMaps, Grove, and beep-beep-oss. Software engineer and architect.";
 
 /**
  * capad.fyi's identity markup: the person behind the site, the site as an
@@ -37,7 +34,7 @@ export function CapadJsonLd({
         dangerouslySetInnerHTML={{
           __html: jsonLdHtml(
             identityGraph(
-              DESCRIPTION,
+              SITE_DESCRIPTION,
               socials.map((s) => s.href),
             ),
           ),
