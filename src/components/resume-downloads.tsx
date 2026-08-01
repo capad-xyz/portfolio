@@ -151,7 +151,10 @@ export function ResumeDownloads({
     // highlight on an edge. Flat keeps the bevel, shadow and geometry and drops
     // only the bloom, which is what a menu wants: a surface you read, not one
     // that performs.
-    <div ref={panel} className="dl-panel glass flat min-w-[252px] rounded-[18px] p-2">
+    // Wide enough that the longest label ("Download the Word file") stays on one
+    // line — see `whitespace-nowrap` below. A wrapped label makes that row
+    // taller than its siblings, and a menu of unequal rows reads as broken.
+    <div ref={panel} className="dl-panel glass flat min-w-[280px] rounded-[18px] p-2">
       <p className="px-3 pb-1.5 pt-1 font-mono text-[10px] uppercase tracking-[0.22em] text-[var(--muted)]">
         {heading}
       </p>
@@ -164,7 +167,7 @@ export function ResumeDownloads({
               onClick={() => close(false)}
               className="group flex items-center justify-between gap-8 rounded-[12px] px-3 py-2.5 transition-colors hover:bg-[var(--ink)]"
             >
-              <span className="text-[14px] leading-none text-[var(--ink)] transition-colors group-hover:text-[var(--paper)]">
+              <span className="whitespace-nowrap text-[14px] leading-none text-[var(--ink)] transition-colors group-hover:text-[var(--paper)]">
                 {o.label}
               </span>
               <span className="font-mono text-[10px] uppercase leading-none tracking-[0.2em] text-[var(--muted)] transition-colors group-hover:text-[var(--paper)]/70">

@@ -4,8 +4,10 @@
   --paper: #f1f0ec;
   --ink: #0b0b0d;
   --muted: #6f6e6a;
-  --mx: 50%;
-  --my: 50%;
+  /* Kept in step with the @property initial-values below: parked off-surface so
+     an unlit pane shows no specular. */
+  --mx: -9999px;
+  --my: -9999px;
 }
 @property --rv { syntax: "<length>"; inherits: false; initial-value: 0px; }
 /* The cursor spotlight rewrites --mx/--my on every .glass pane each time the
@@ -13,8 +15,13 @@
    dirties the pane's whole subtree for style recalc — measured at ~7ms/frame
    across ~172 descendants, for a value only the pane itself reads. Declaring
    them non-inheriting confines the invalidation to the element. Same pixels. */
-@property --mx { syntax: "<length-percentage>"; inherits: false; initial-value: 50%; }
-@property --my { syntax: "<length-percentage>"; inherits: false; initial-value: 50%; }
+/* Parked off-surface, NOT at 50% 50%. The spotlight is only written to panes
+   that are on screen while the pointer moves, so a card scrolled into view
+   without any pointer movement since keeps whatever these start as — and a
+   centred initial put a bright bloom in the middle of every untouched glass
+   card. A cursor-lit highlight with no cursor near it should be no highlight. */
+@property --mx { syntax: "<length-percentage>"; inherits: false; initial-value: -9999px; }
+@property --my { syntax: "<length-percentage>"; inherits: false; initial-value: -9999px; }
 
 @theme inline {
   --color-paper: var(--paper);
