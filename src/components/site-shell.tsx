@@ -6,19 +6,23 @@ import { GlassFilters } from "./glass-filters";
 import { LiquidCursor } from "./liquid-cursor";
 import { SmoothScroll } from "./smooth-scroll";
 import { ContactWidget } from "./contact-widget";
-import { DotNav } from "./dot-nav";
 
 /**
  * The main-site chrome (liquid cursor, smooth scroll, ambient clouds, grain,
  * SVG filters) wraps every page except `/studio`. The studio is its own SPA
  * and must feel native (real cursor, native scroll, no overlays).
+ *
+ * The dot-nav is deliberately NOT mounted here. It is the homepage section
+ * spine, and deciding "am I the homepage?" from `usePathname()` is unsafe once
+ * a hostname rewrite is in play: on glyphmaps.capad.fyi the server resolves the
+ * path to `/glyphmaps` while the client sees the browser's `/`, so the rail
+ * rendered on the client only and pointed at sections (#work, #experience…)
+ * that page does not have. The owning page renders it instead — a server-side
+ * decision that cannot disagree with itself. See `src/app/page.tsx`.
  */
 export function SiteShell({ children }: { children: ReactNode }) {
   const path = usePathname();
   const isStudio = path?.startsWith("/studio") ?? false;
-  // The dot-nav is the homepage section spine; its targets (#work, #experience…)
-  // don't exist on other routes, so only mount it on "/".
-  const isHome = path === "/";
 
   useEffect(() => {
     if (isStudio) document.body.classList.add("studio-mode");
@@ -38,10 +42,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
       </div>
       <div className="grain" />
       <LiquidCursor />
-      <SmoothScroll>
-        {children}
-        {isHome && <DotNav />}
-      </SmoothScroll>
+      <SmoothScroll>{children}</SmoothScroll>
       <ContactWidget />
     </>
   );
