@@ -158,7 +158,7 @@ export function ResumeDownloads({
       <p className="px-3 pb-1.5 pt-1 font-mono text-[10px] uppercase tracking-[0.22em] text-[var(--muted)]">
         {heading}
       </p>
-      <ul className="flex flex-col">
+      <ul className="flex flex-col gap-1">
         {shown.map((o) => (
           <li key={o.href}>
             <a
