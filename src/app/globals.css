@@ -345,6 +345,23 @@ body.lensing .drips.on { opacity: 0; }
   transform-origin: 100% 0;
 }
 
+/* On a phone the Download button sits at the LEFT of its row, so a panel
+   anchored to the button's right edge grows leftward and runs off-screen —
+   at 390px a 280px panel starts around x=-120 and the format labels get
+   clipped to "ORMAT" / "e PDF". Anchor it to the left edge instead and cap it
+   to the viewport, so it opens inward from the control that summoned it.
+   Only reachable when the menu is open, which is why a static sweep of the
+   page never caught it. */
+@media (max-width: 560px) {
+  .dl-menu > .dl-panel {
+    left: 0;
+    right: auto;
+    transform-origin: 0 0;
+    min-width: min(280px, calc(100vw - 48px));
+    max-width: calc(100vw - 48px);
+  }
+}
+
 .dl-chevron { transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1); }
 .dl-menu[open] .dl-chevron { transform: rotate(180deg); }
 @keyframes dl-panel-in {
