@@ -680,6 +680,26 @@ body.lensing .drips.on { opacity: 0; }
 /* section heading eyebrow shared across the spine */
 .section-eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--muted); }
 
+/* ---- phone corrections ----
+   Two things only bite once the content column stops being narrower than the
+   viewport, which is why neither shows up on a laptop.
+
+   1. The hero plate bleeds past the content column by design (negative insets),
+      but that bleed has to fit inside the section's 24px padding. At 375px the
+      column ends at x=351 and a 28px bleed reaches 379 — four pixels past the
+      viewport. `body { overflow-x: hidden }` swallows it so nobody can scroll
+      sideways, but scrollWidth still exceeds clientWidth and a strict audit
+      flags it. Pinned to a bleed that fits. `.plate.dev` outranks Tailwind's
+      single-class arbitrary insets on specificity, so no !important needed.
+
+   2. 11px mono at 0.3em tracking is an editorial choice at desktop reading
+      distance and a legibility problem on a phone. Slightly larger, slightly
+      tighter — wide tracking costs more at small sizes than the size does. */
+@media (max-width: 560px) {
+  .plate.dev { left: -18px; right: -18px; }
+  .section-eyebrow { font-size: 12px; letter-spacing: 0.2em; }
+}
+
 /* personal sign-off: handwritten name over the capad brand mark */
 .sig-name { font-family: var(--font-signature), "Segoe Script", cursive; font-size: clamp(38px, 5.5vw, 60px); line-height: 1; color: var(--ink); }
 .sig-mark { display: flex; align-items: center; justify-content: center; gap: 14px; font-family: var(--font-mono); font-size: 13px; letter-spacing: -0.01em; text-transform: lowercase; color: var(--muted); }

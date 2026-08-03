@@ -159,9 +159,12 @@ export function Hero() {
           className="plate dev absolute -left-[clamp(28px,7vw,84px)] -right-[clamp(28px,7vw,84px)] top-[18px] bottom-[26px]"
         />
 
+      {/* The hero eyebrow sets its own size rather than using .section-eyebrow,
+          so the phone bump has to be stated here too: 12px at tighter tracking
+          below sm, back to the designed 11px/0.24em from sm up. */}
       <span
         ref={eyebrow}
-        className="glass dev mb-7 rounded-full px-[18px] py-2.5 font-mono text-[11px] uppercase tracking-[0.24em] text-[#46453f]"
+        className="glass dev mb-7 rounded-full px-[18px] py-2.5 font-mono text-[12px] tracking-[0.2em] uppercase text-[#46453f] sm:text-[11px] sm:tracking-[0.24em]"
       >
         developer tools · desktop apps
       </span>
