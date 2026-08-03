@@ -50,9 +50,10 @@ export async function getGlyphmapsPrivacy(): Promise<GlyphmapsPrivacy> {
   // The floor has to survive a document that EXISTS but says nothing, not just a
   // missing one. `?? ` alone would not: publishing this document with only a
   // title filled in returns a real object whose `body` is undefined, and this
-  // URL is the privacy policy the shipped Play Store listing points at. A blank
-  // legal page is worse than a stale one, so the body is what decides — if the
-  // CMS has no policy text, none of it is used.
+  // URL is the one the shipped app opens for its privacy policy
+  // (MainActivity.kt: PRIVACY_POLICY_URL). A blank legal page is worse than a
+  // stale one, so the body is what decides — if the CMS has no policy text,
+  // none of it is used.
   if (!doc?.body?.length) return GLYPHMAPS_DEMO_PRIVACY;
 
   // Body is real, so the CMS is authoritative. The scalars around it still fall

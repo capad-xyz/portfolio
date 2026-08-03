@@ -116,10 +116,11 @@ export default async function RootLayout({
           the page renders as a blank sheet.
 
           That is a real exposure rather than a hypothetical one, because
-          glyphmaps.capad.fyi/privacy is the privacy policy the shipped Play
-          Store listing points at, and store reviewers and crawlers do not all
-          execute JavaScript. A legal page that renders empty to them is worse
-          than one that renders unanimated.
+          glyphmaps.capad.fyi/privacy is the URL the shipped app opens for its
+          privacy policy (MainActivity.kt: PRIVACY_POLICY_URL), and crawlers and
+          anything reading it without a browser do not all execute JavaScript. A
+          legal page that renders empty to them is worse than one that renders
+          unanimated.
         */}
         <noscript>
           <style>{`.reveal-up,.reveal-title{opacity:1!important;transform:none!important;filter:none!important;}`}</style>
