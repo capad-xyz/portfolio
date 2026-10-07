@@ -352,6 +352,29 @@ body.lensing .drips.on { opacity: 0; }
   transform-origin: 100% 0;
 }
 
+/* Drop the panel UPWARD when opening downward would push it past the fold.
+   The closing CTA on /resume is the case that needs this: it is the last thing
+   on the page, so `top: calc(100% + 10px)` put a 267px panel 277px below a 844px
+   phone viewport and 133px below a 900px desktop one, with the formats cut off.
+   Only the closing menu ever sits that low, and it only shows when open, which
+   is why a static pass over the page never saw it.
+
+   `bottom` is set rather than `top: auto` so the panel stays anchored to the
+   control while the page scrolls, and `transform-origin` moves with it so the
+   condense still comes from the edge nearest the button. */
+.dl-menu.drop-up > .dl-panel {
+  top: auto;
+  bottom: calc(100% + 10px);
+  transform-origin: 100% 100%;
+}
+.dl-menu.drop-up > .dl-panel,
+.dl-menu.drop-up .dl-panel {
+  animation-name: dl-panel-in-up;
+}
+@keyframes dl-panel-in-up {
+  from { opacity: 0; transform: translateY(8px) scale(0.97); }
+}
+
 /* On a phone the Download button sits at the LEFT of its row, so a panel
    anchored to the button's right edge grows leftward and runs off-screen —
    at 390px a 280px panel starts around x=-120 and the format labels get
@@ -366,6 +389,23 @@ body.lensing .drips.on { opacity: 0; }
     transform-origin: 0 0;
     min-width: min(280px, calc(100vw - 48px));
     max-width: calc(100vw - 48px);
+  }
+  /* Same left anchoring for the upward case, so the flip does not undo it. */
+  .dl-menu.drop-up > .dl-panel {
+    left: 0;
+    right: auto;
+    transform-origin: 0 100%;
+  }
+}
+
+/* The glass treatment is a translucent surface, so whatever sits behind it
+   shows through — on the phone menu that meant the education text rendering
+   straight through the format list. Opaque here only: this panel is a list you
+   read while choosing, not a pane you want to see through. The desktop panel
+   keeps the blur, where there is no text sitting behind it to compete. */
+@media (max-width: 560px) {
+  .dl-menu > .dl-panel {
+    background-color: var(--paper);
   }
 }
 

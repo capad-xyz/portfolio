@@ -58,6 +58,58 @@ export function ResumeDownloads({
     return () => document.removeEventListener("pointerdown", onPointerDown);
   }, []);
 
+  /**
+   * Decide which way the panel opens, before paint, while the menu is closed.
+   *
+   * The closing CTA on /resume is the last thing on the page, so a panel pinned
+   * below its button hangs off the bottom of the screen: 267px of formats with
+   * 277px of it past a 844px phone viewport. Reading layout on close and
+   * writing the class on open is what makes the flip land without a frame of
+   * the panel hanging downwards first.
+   *
+   * A `toggle` listener would fire after the browser had already painted the
+   * open state, so the measurement there happens too late to matter. This
+   * listens on the capturing phase for the `open` attribute change instead,
+   * which is still before layout is committed for the new state.
+   */
+  useEffect(() => {
+    const el = details.current;
+    const p = panel;
+    if (!el) return;
+
+    const GAP = 10;
+    const pick = () => {
+      // Read while open (the toggle handler guarantees it), so offsetHeight is a
+      // real height rather than the 0 a closed <details> reports.
+      const vh = window.innerHeight;
+      const triggerBottom = el.getBoundingClientRect().bottom + GAP;
+      el.classList.toggle("drop-up", triggerBottom + p.current!.offsetHeight > vh);
+    };
+
+    // A scroll or rotate can flip the answer while the menu is open. Coalesced
+    // onto a frame: this site already demotes itself on forced synchronous
+    // layout during scroll, and reading geometry per scroll event is exactly
+    // that cost. Nothing to do when the menu is closed.
+    let queued = 0;
+    const onViewportChange = () => {
+      if (!el.open || queued) return;
+      queued = requestAnimationFrame(() => {
+        queued = 0;
+        if (el.open) pick();
+      });
+    };
+
+    document.addEventListener("toggle", pick, true);
+    window.addEventListener("resize", onViewportChange);
+    window.addEventListener("scroll", onViewportChange, { passive: true });
+    return () => {
+      document.removeEventListener("toggle", pick, true);
+      window.removeEventListener("resize", onViewportChange);
+      window.removeEventListener("scroll", onViewportChange);
+      if (queued) cancelAnimationFrame(queued);
+    };
+  }, []);
+
   const [primary, ...rest] = options;
   if (!primary) return null;
 

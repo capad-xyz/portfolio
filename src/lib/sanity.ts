@@ -195,6 +195,14 @@ const PROJECT_CARD_FIELDS = `
   title,
   "slug": slug.current,
   status,
+  // Must be selected, not just used in the query's ORDER BY. The GROQ sorts the
+  // response, then byOrderThenStatus re-sorts it in JS — and that comparator
+  // reads a.order. Without this field it is undefined on every fetched document,
+  // so the re-sort silently degrades to the status band and production orders
+  // by "done before ongoing" while demo content (which carries the field
+  // literally) honours the intended order. That is how Hare ended up third
+  // behind glyphmaps on / despite order: 20.
+  order,
   oneLiner,
   nowLine,
   metrics[]{value, label},
