@@ -16,6 +16,11 @@ const eslintConfig = defineConfig([
     ".open-next/**",
     ".wrangler/**",
     ".wrangler-dryrun/**",
+    // One-off asset tooling (sticker/riso generation). CommonJS helpers run by
+    // hand, outside the app's module surface and not part of any build step.
+    // Linting them only ever reported `require()` style imports, and it broke
+    // `npm run lint` in CI on a commit that added them.
+    "scripts/**",
   ]),
 ]);
 
