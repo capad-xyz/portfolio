@@ -22,7 +22,7 @@ export const revalidate = 300;
 const NAME = "Aadarsh Upadhyay";
 
 const DESCRIPTION =
-  "The resume of Aadarsh Upadhyay (capad) — software engineer and architect. Experience, open-source work, and stack, or download the one-page PDF.";
+  "The resume of Aadarsh Upadhyay (capad), software engineer and architect. Experience, open-source work, and stack, with the two-page resume and the full CV to download as PDF, Word, or Markdown.";
 
 export const metadata: Metadata = {
   title: "Resume",
@@ -31,13 +31,13 @@ export const metadata: Metadata = {
   openGraph: {
     type: "profile",
     url: "/resume",
-    title: "Resume — capad",
+    title: "Resume | capad",
     description: DESCRIPTION,
     images: ["/opengraph-image.png"],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Resume — capad",
+    title: "Resume | capad",
     description: DESCRIPTION,
     images: ["/opengraph-image.png"],
   },
@@ -47,6 +47,7 @@ const STATUS_LABEL: Record<ProjectStatus, string> = {
   done: "shipped",
   ongoing: "in progress",
   archived: "archived",
+  contributed: "contributed",
 };
 
 /** Resume periods want a span, not the timeline's big-year treatment. */
@@ -275,7 +276,7 @@ export default async function ResumePage() {
                       {g.items?.map((t) => (
                         <span
                           key={t}
-                          className="chip lensable px-3.5 py-1.5 text-[12px] lowercase tracking-[0.04em]"
+                          className="chip lensable px-3.5 py-1.5 text-[12px] tracking-[0.02em]"
                         >
                           {t}
                         </span>

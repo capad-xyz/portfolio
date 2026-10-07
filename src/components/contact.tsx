@@ -26,8 +26,8 @@ export function Contact() {
         </h2>
 
         <p className="reveal-up mt-6 max-w-md text-[clamp(15px,1.5vw,18px)] leading-[1.55] text-[var(--muted)]">
-          I&apos;m open to offers — roles, contracts, collaborations, good problems,
-          and the occasional desktop oddity. The fastest way to reach me is email.
+          I&apos;m open to roles, contracts, collaborations, and the occasional desktop
+          oddity. Email is the fastest way to reach me.
         </p>
 
         <div className="reveal-up mt-10 flex flex-wrap items-center justify-center gap-4">

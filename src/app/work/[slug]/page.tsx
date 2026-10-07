@@ -48,13 +48,13 @@ export async function generateMetadata({
     openGraph: {
       type: "article",
       url: `/work/${slug}`,
-      title: `${project.title} — capad`,
+      title: `${project.title} | capad`,
       description: project.oneLiner,
       images: ["/opengraph-image.png"],
     },
     twitter: {
       card: "summary_large_image",
-      title: `${project.title} — capad`,
+      title: `${project.title} | capad`,
       description: project.oneLiner,
       images: ["/opengraph-image.png"],
     },

@@ -64,18 +64,18 @@ export const GLYPHMAPS_DEMO_PRIVACY: GlyphmapsPrivacy = {
   title: "Privacy Policy",
   lastUpdated: "2026-06-14",
   summary:
-    "GlyphMaps processes everything on your device and transmits nothing. There are no accounts, no analytics, no ads and no servers — the app has no network permission at all.",
+    "GlyphMaps processes everything on your device and transmits nothing. There are no accounts, no analytics, no ads and no servers. The app has no network permission at all.",
   contactEmail: "connect@capad.fyi",
   seoDescription:
     "How GlyphMaps handles data: notification access, on-device processing, and the fact that nothing leaves your phone.",
   body: [
     p(
-      "GlyphMaps (“the app”) displays Google Maps turn-by-turn directions on the rear Glyph Matrix of the Nothing Phone (4a) Pro. This policy explains exactly what the app accesses and what it does — and does not — do with it.",
+      "GlyphMaps (“the app”) displays Google Maps turn-by-turn directions on the rear Glyph Matrix of the Nothing Phone (4a) Pro. This policy explains exactly what the app accesses and what it does and does not do with it.",
     ),
 
     h("What we access"),
     p(
-      "To show your next turn on the Glyph Matrix, the app uses Notification Access to read the active Google Maps navigation notification only. It is filtered by the Google Maps package name and the navigation notification category; all other notifications — including other Google Maps notifications — are ignored. From that one notification the app reads the maneuver type (turn left, roundabout, arrive, and so on) and the distance to the turn.",
+      "To show your next turn on the Glyph Matrix, the app uses Notification Access to read the active Google Maps navigation notification only. It is filtered by the Google Maps package name and the navigation notification category. All other notifications are ignored, including other Google Maps notifications. From that one notification the app reads the maneuver type (turn left, roundabout, arrive, and so on) and the distance to the turn.",
     ),
 
     h("Why we need it"),
@@ -94,11 +94,11 @@ export const GLYPHMAPS_DEMO_PRIVACY: GlyphmapsPrivacy = {
     ),
     bullet("We do not use analytics, advertising, tracking or crash-reporting SDKs."),
     bullet("We do not require or offer an account, sign-in or profile."),
-    bullet("We do not sell or share any data with third parties — there is nothing to share."),
+    bullet("We do not sell or share any data with third parties. There is nothing to share."),
 
     h("What is stored on your device"),
     p(
-      "The app saves only your display preferences — head and tail LED brightness, and the Static Glow / Sweeping Flow display mode — in private app storage, so they persist between sessions. This never leaves the device and is removed when you uninstall.",
+      "The app saves only your display preferences (head and tail LED brightness, and the Static Glow / Sweeping Flow display mode) in private app storage, so they persist between sessions. This never leaves the device and is removed when you uninstall.",
     ),
     p(
       "Developer build only: a separate developer build (application ID com.glyphnavtoy.dev) can write a local capture log of parsed Maps directions to the app's private storage, used solely to tune the parser. This code is gated behind a build flag and is absent from the public release build. It is never transmitted. Clearing the app's data or uninstalling removes it.",
@@ -106,14 +106,14 @@ export const GLYPHMAPS_DEMO_PRIVACY: GlyphmapsPrivacy = {
 
     h("Permissions, and what each is for"),
     bullet(
-      "Notification Access — read the Google Maps navigation notification. This is the core function.",
+      "Notification Access: read the Google Maps navigation notification. This is the core function.",
     ),
     bullet(
-      "Foreground Service, including the special-use type — keep the Matrix updating for the duration of a route.",
+      "Foreground Service, including the special-use type: keep the Matrix updating for the duration of a route.",
     ),
-    bullet("Post Notifications — show the foreground-service notification Android requires."),
+    bullet("Post Notifications: show the foreground-service notification Android requires."),
     bullet(
-      "com.nothing.ketchum.permission.ENABLE — the Nothing SDK permission required to draw on the Glyph Matrix.",
+      "com.nothing.ketchum.permission.ENABLE: the Nothing SDK permission required to draw on the Glyph Matrix.",
     ),
     p(
       "The app deliberately does not request a battery-optimisation exemption: the foreground service keeps the Matrix updating during a route and the notification listener rebinds itself, so the exemption would buy nothing.",
@@ -136,7 +136,7 @@ export const GLYPHMAPS_DEMO_PRIVACY: GlyphmapsPrivacy = {
 
     h("Verify it yourself"),
     p(
-      "GlyphMaps is licensed under AGPL-3.0 and the source is public. Notification access is a powerful permission, so the code that uses it — MapsNotificationListener.kt — is the thing worth reading before you trust this page.",
+      "GlyphMaps is licensed under AGPL-3.0 and the source is public. Notification access is a powerful permission, so the code that uses it, MapsNotificationListener.kt, is the thing worth reading before you trust this page.",
     ),
   ],
 };

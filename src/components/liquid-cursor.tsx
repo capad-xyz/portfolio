@@ -24,17 +24,22 @@ import { useEffect, useRef } from "react";
  * droplet nodes are pooled. Hidden on touch / reduced-motion (CSS restores the
  * native cursor there).
  */
-// Droplet count is nearly free: #goo-drip blurs the whole fixed layer, so its
-// cost tracks the layer's area, not how many <i> nodes are inside it. Density is
-// what makes a trail read as liquid rather than as specks, so we spend it here.
-const POOL = 40; // max simultaneous droplets
-const STEP = 26; // px of pointer travel between shed droplets
+// Droplet count is the trail's main cost lever: #goo-drip blurs the whole fixed
+// layer, so its cost tracks the layer's area, not how many <i> nodes are inside
+// it — but every live droplet still stretches that ink union and asks the
+// compositor for work. 14 keeps the liquid read on desktop trails; the old 40
+// only showed on long fast flicks, exactly when the machine is busiest.
+const POOL = 14; // max simultaneous droplets
+const STEP = 34; // px of pointer travel between shed droplets
 // Heavy, syrupy fall — low gravity plus drag on BOTH axes gives a terminal
 // velocity (~5px/frame), which is what sells "thick liquid" over "falling rock".
 const GRAV = 0.11; // downward acceleration (px / frame²)
 const DRAG = 0.978; // air damping per frame, applied to vx and vy
 const FLING = 0.4; // share of pointer velocity a droplet inherits when it sheds
-const HOT_MS = 190; // over an interactive element, shed a drip this often even at rest
+const HOT_MS = 260; // over an interactive element, shed a drip this often even at rest
+// Ceiling on how often the glass panes get re-pointed. Each write repaints the
+// pane and screen-blends it; see the note at the write itself.
+const GLASS_WRITE_MS = 45;
 // anything that would normally flip the native cursor to grab / text / pointer
 const INTERACTIVE =
   'a,button,[role="button"],input,textarea,select,label,summary,[data-grab],.lqbtn';
@@ -68,6 +73,7 @@ export function LiquidCursor() {
     const p1 = { x: mx, y: my, vx: 0, vy: 0 };
     const p2 = { x: mx, y: my, vx: 0, vy: 0 };
     let glassDirty = false;
+    let lastGlassWrite = -Infinity; // first eligible frame writes immediately
 
     const rand = (a: number, b: number) => a + Math.random() * (b - a);
 
@@ -344,8 +350,18 @@ export function LiquidCursor() {
       // restyled every frame the pointer moved for a highlight nobody could see.
       // The rect read is cheap (~0.06ms for all 11) — it's the WRITE that costs,
       // so the bounds check pays for itself several times over.
-      if (glassDirty) {
+      //
+      // Throttled to GLASS_WRITE_MS. `--mx/--my` drive two radial gradients under
+      // a `mix-blend-mode: screen` pseudo-element, so every write repaints the
+      // whole pane and blends it — not a composited transform. At pointer-event
+      // rate that is a full-card repaint on every move, which is precisely the
+      // cost you cannot afford while the pointer is also dragging the testimonial
+      // deck, where the deck is running its own per-frame work at the same time.
+      // A 90px bloom updated at ~22Hz still reads as following the cursor; nobody
+      // can see the difference, and the paint cost drops by roughly two thirds.
+      if (glassDirty && t - lastGlassWrite >= GLASS_WRITE_MS) {
         glassDirty = false;
+        lastGlassWrite = t;
         const vh = innerHeight;
         const vw = innerWidth;
         document.querySelectorAll<HTMLElement>(".glass").forEach((el) => {

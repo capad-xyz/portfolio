@@ -34,7 +34,13 @@ const builder = createImageUrlBuilder(sanity);
 export const urlFor = (source: Parameters<typeof builder.image>[0]) =>
   builder.image(source);
 
-export type ProjectStatus = "done" | "ongoing" | "archived";
+/**
+ * `contributed` is work shipped INTO somebody else's repo. It is a fourth
+ * status rather than a tag because the badge is a claim about authorship: a
+ * contribution to wmux must never read as "shipped", which is what the card
+ * said before it existed.
+ */
+export type ProjectStatus = "done" | "ongoing" | "archived" | "contributed";
 
 export type ProjectLink = {
   label: string;
@@ -52,6 +58,18 @@ export type Project = {
   title: string;
   slug: string;
   status: ProjectStatus;
+  /**
+   * Homepage-grid membership. The CMS field of the same name is what
+   * FEATURED_PROJECTS_QUERY filters on; this mirrors it so demo content can
+   * pick the same four cards the production grid shows, instead of every
+   * project in the file landing on the homepage.
+   */
+  featured?: boolean;
+  /**
+   * Manual sort key, lower first. The CMS orders on this in GROQ; demo content
+   * replicates that here so both paths put a given card in the same slot.
+   */
+  order?: number;
   oneLiner: string;
   /** One line of live status shown on ongoing cards ("now: …"). */
   nowLine?: string;
@@ -193,10 +211,33 @@ const FEATURED_PROJECTS_QUERY = `
   }
 `;
 
-// Serial-position safety net: shipped work leads the grid (card 01) even if the
-// author forgot to set `order` in the CMS. Array.sort is stable, so the manual
-// `order` from GROQ is preserved within each status band.
-const STATUS_RANK: Record<ProjectStatus, number> = { done: 0, ongoing: 1, archived: 2 };
+// Shipped work leads by default: a card with no manual `order` sorts into its
+// status band first, so forgetting the field still puts finished work at the
+// top rather than at the bottom.
+const STATUS_RANK: Record<ProjectStatus, number> = { done: 0, ongoing: 1, contributed: 2, archived: 3 };
+
+/**
+ * Manual `order` wins; the status band is only the fallback.
+ *
+ * An earlier version banded by status FIRST and used `order` only to break ties
+ * inside a band, which quietly overruled the CMS: a project marked ongoing
+ * could never sit above a shipped one no matter what `order` said, so asking
+ * for Hare to be second on /projects did nothing on the homepage. Reading it
+ * the other way round makes `order` mean what it says, and keeps the band as a
+ * sane default for documents nobody has ordered yet.
+ *
+ * Deliberately not a stable-sort-only comparison. If both sides carry an
+ * `order`, that is the whole answer; only when one is missing does the band
+ * get a say, and then `order` still separates them.
+ */
+function byOrderThenStatus(a: Project, b: Project): number {
+  const ao = a.order;
+  const bo = b.order;
+  if (ao != null && bo != null && ao !== bo) return ao - bo;
+  const band = STATUS_RANK[a.status] - STATUS_RANK[b.status];
+  if (band !== 0) return band;
+  return (ao ?? Number.MAX_SAFE_INTEGER) - (bo ?? Number.MAX_SAFE_INTEGER);
+}
 
 // Resilient fetch: a transient Sanity/CDN failure returns the fallback (and logs)
 // instead of throwing, so one flaky query can't 500 the whole page or fail a build.
@@ -215,10 +256,14 @@ export async function safeFetch<T>(
 }
 
 export async function getFeaturedProjects(): Promise<Project[]> {
+  // The same filter the CMS query applies, so the demo grid and the production
+  // grid show the same four cards. Projects without an explicit `featured` are
+  // treated as not featured rather than as featured, which is what keeps a new
+  // entry off the homepage until someone deliberately promotes it.
   const list: Project[] = DEMO_ENABLED
-    ? DEMO_PROJECTS
+    ? DEMO_PROJECTS.filter((p) => p.featured)
     : await safeFetch<Project[]>(FEATURED_PROJECTS_QUERY, {}, [], "featured projects");
-  return [...list].sort((a, b) => STATUS_RANK[a.status] - STATUS_RANK[b.status]);
+  return [...list].sort(byOrderThenStatus);
 }
 
 // Every project, featured or not — the /projects article index. Same card
@@ -258,7 +303,7 @@ export async function getAllProjects(): Promise<Project[]> {
         ...p,
         readMinutes: readWords ? Math.max(1, Math.ceil(readWords / READ_WPM)) : undefined,
       }));
-  return [...list].sort((a, b) => STATUS_RANK[a.status] - STATUS_RANK[b.status]);
+  return [...list].sort(byOrderThenStatus);
 }
 
 const PROJECT_BY_SLUG_QUERY = `

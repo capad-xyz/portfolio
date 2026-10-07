@@ -38,7 +38,19 @@ export function Reveal({ children }: { children: ReactNode }) {
           io.unobserve(el);
         });
       },
-      { threshold: 0.18, rootMargin: "0px 0px -10% 0px" },
+      // threshold 0, and no negative bottom margin. Both mattered:
+      //
+      // A threshold is a share of the TARGET, and the case-study body is one
+      // `.reveal-up` wrapper around the whole chapter list — 3,000px+ tall. At
+      // 0.18 it needed ~600px of itself on screen, so a reader landing mid-page
+      // saw a blank column until they scrolled.
+      //
+      // The -10% bottom margin was worse than useless here: it pulls the
+      // observer root's bottom edge up to y=810, and the case body starts at
+      // y=814. Four pixels of miss gate the entire article behind a scroll
+      // that has to happen first. Anything already inside the viewport must
+      // render on arrival, so the root is the viewport, unmodified.
+      { threshold: 0, rootMargin: "0px" },
     );
     els.forEach((e) => io.observe(e));
     return () => io.disconnect();

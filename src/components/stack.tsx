@@ -23,8 +23,8 @@ export async function Stack() {
           </h2>
           <p className="max-w-lg text-[15px] leading-[1.6] text-[var(--muted)]">
             The deepest current groove is AI systems: multi-provider LLM platforms,
-            agentic assistants whose write-actions are safety-gated and audited, and
-            the Claude ecosystem end to end — API, MCP servers, Code skills.
+            agentic assistants whose writes are governed and audited, and the Claude
+            ecosystem end to end (API, MCP servers, Code skills).
           </p>
         </header>
 
@@ -39,12 +39,18 @@ export async function Stack() {
               </p>
               {/* lighter cut than before (px-4/py-2 read heavy once the list
                   grew to seven groups): smaller pill, tighter gap, one line
-                  per row at this column width with ≤5 chips per group */}
+                  per row at this column width with ≤5 chips per group.
+
+                  No `lowercase` here. The group items are properly cased in
+                  the content, and the transform was flattening real proper
+                  nouns — "GrokCLI" read as "grokcli", "Oh My Pi (OMP)" as
+                  "oh my pi (omp)". The chips keep the wide tracking so the
+                  row still reads as one typographic texture. */}
               <div className="flex flex-wrap gap-2">
                 {g.items?.map((t) => (
                   <span
                     key={t}
-                    className="chip lensable px-3.5 py-1.5 text-[12px] lowercase tracking-[0.04em]"
+                    className="chip lensable px-3.5 py-1.5 text-[12px] tracking-[0.02em]"
                   >
                     {t}
                   </span>

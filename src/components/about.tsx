@@ -29,26 +29,26 @@ export function About() {
 
         <div className="flex flex-col gap-6 text-center text-[clamp(15px,1.6vw,18px)] leading-[1.65] text-[var(--ink)]/80">
           <p className="reveal-up">
-            I architect and ship AI platforms — agentic assistants with safety-gated
-            actions, multi-provider LLM systems, the hard parts. That was the day job
-            through July 2026, and it&apos;s the work I&apos;m looking for next. As
-            capad, I ship small, genuinely-free tools and desktop apps nobody asked me
-            to make. I can&apos;t leave a good idea alone: most people think
-            &ldquo;that would be cool&rdquo; and move on. I build it.
+            I architect and ship AI platforms: agentic assistants with governed
+            writes, multi-provider LLM systems, the hard parts. That was the day job
+            through July 2026, and it is the work I am looking for next. As capad, I
+            ship small, genuinely free tools and desktop apps nobody asked me to
+            make. I cannot leave a good idea alone. Most people think &ldquo;that
+            would be cool&rdquo; and move on. I build it.
           </p>
           <p className="reveal-up">
-            The pattern across all of it: I like things that respond, glow, and feel a
-            little alive — a turn arrow drawn in LEDs on the back of a phone, a music
-            widget that breathes with the song. The things I build are maximal and
-            full of motion; the words about them stay plain.
+            The pattern across all of it: I like things that respond and feel a little
+            alive. A turn arrow drawn in LEDs on the back of a phone. A music widget
+            that breathes with the song. The things I build are maximal and full of
+            motion; the words about them stay plain.
           </p>
           <p className="reveal-up">
-            All of it comes off one hard-working laptop that&apos;s usually running the
-            whole show at once — agents, builds, emulators, a dozen dev servers. I
+            All of it comes off one hard-working laptop that is usually running the
+            whole show at once: agents, builds, emulators, a dozen dev servers. I
             push it hard, and things ship.
           </p>
           <p className="reveal-up">
-            And I can build for you, too — I&apos;m open to roles, contracts, and
+            And I can build for you, too. I am open to roles, contracts, and
             collaborations. If something here feels like your kind of problem,{" "}
             <a
               href="#contact"
@@ -56,7 +56,7 @@ export function About() {
             >
               say hello
             </a>
-            {" — or take "}
+            {" or take "}
             <a
               href="/resume"
               className="text-[var(--ink)] underline decoration-[var(--muted)] underline-offset-4 transition hover:decoration-[var(--ink)]"

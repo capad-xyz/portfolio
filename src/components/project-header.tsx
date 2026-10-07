@@ -15,6 +15,7 @@ export const STATUS_LABEL: Record<ProjectStatus, string> = {
   done: "shipped",
   ongoing: "in progress",
   archived: "archived",
+  contributed: "contributed",
 };
 
 // SPDX id -> canonical license URL, so structured data points at the real

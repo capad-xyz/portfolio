@@ -20,8 +20,8 @@ const SITE_URL = "https://glyphmaps.capad.fyi";
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "GlyphMaps — navigation on the Nothing Glyph Matrix",
-    template: "%s — GlyphMaps",
+    default: "GlyphMaps, navigation on the Nothing Glyph Matrix",
+    template: "%s | GlyphMaps",
   },
   applicationName: "GlyphMaps",
   alternates: { canonical: "/" },

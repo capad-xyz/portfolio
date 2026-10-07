@@ -87,13 +87,15 @@ export async function FeaturedWork() {
 }
 
 /**
- * One footnote line: `name — what it is`, joined by middots. The name links out
+ * One footnote line: `name · what it is`, joined by middots. The name links out
  * only when the CMS entry actually carries a URL; otherwise it stays plain text
  * rather than becoming a dead affordance.
  *
  * Every gap is either inside a template string or inside its own element: this
- * JSX compiler drops the whitespace between an expression and adjacent text (see
- * the header comment above), so a bare `{x} — {y}` would render glued together.
+ * JSX compiler drops the whitespace between an expression and adjacent text, so
+ * a bare `{x} · {y}` would render glued together. The name-to-note separator is
+ * a middot rather than the em dash this used to be, which would set the name and
+ * its description as one run-on word.
  */
 function Footnote({ items }: { items: AlsoShipped[] }) {
   return (
@@ -117,7 +119,7 @@ function Footnote({ items }: { items: AlsoShipped[] }) {
           ) : (
             <span className="text-[var(--ink)]/75">{a.name}</span>
           )}
-          {` — ${a.note}`}
+          {` · ${a.note}`}
         </Fragment>
       ))}
     </>

@@ -33,6 +33,39 @@ type Mode = "drag" | "tap" | "dot";
 type Vec = { x: number; y: number };
 type Throw = { from: Vec; to: Vec; vx: number; vy: number };
 
+/**
+ * Can this machine afford the deck's expensive effects?
+ *
+ * Two things about the section are per-pixel and non-compositable — the goo
+ * filter on the splash overlay, and the live backdrop-filter on a card in
+ * flight — and both are now gated on the same three conditions in CSS. CSS
+ * cannot tell React to mount fewer droplets or to hand a card `.flat` instead
+ * of live, so the gate is mirrored here.
+ *
+ * A function, not a module constant: `perf-lite` is applied to <body> at
+ * runtime by PerfGuard after its first probe, so a value read at import time
+ * would be stale by the time anyone touches the deck.
+ *
+ * Must stay in step with the `.deck-goo` rules in globals.css. A fourth gate
+ * added there needs adding here too, or the splash gets sized for a filter
+ * that is no longer being applied.
+ *
+ * `perf-soft` is the software-rasteriser tier (see lib/raster.ts): a desktop
+ * browser on a capable GPU that is nonetheless not reaching it. It is the only
+ * one of these four conditions that can be true on the reporter's machine —
+ * a desktop Vivaldi is a fine pointer, and the frame-budget probe can pass on a
+ * machine whose per-pixel work is merely going somewhere very slow.
+ */
+function canAffordEffects() {
+  if (typeof window === "undefined") return false; // SSR: nothing to filter
+  return (
+    !matchMedia("(pointer: coarse)").matches &&
+    !matchMedia("(prefers-reduced-motion: reduce)").matches &&
+    !document.body.classList.contains("perf-lite") &&
+    !document.body.classList.contains("perf-soft")
+  );
+}
+
 const OFFSET_Y = 18; // vertical peek of the card behind
 const SCALE_STEP = 0.05;
 const ELASTIC = 0.42; // <1 makes the card resist the drag — heavier, stickier
@@ -43,6 +76,8 @@ const FLING = 900; // how far past the release point a throw carries
 // size below) — the attribution must never clip off the card's bottom edge.
 const CARD_H = "clamp(320px, 50vh, 420px)";
 const EXIT_MS = 700; // how long a thrown card stays alive in the exit layer
+// How many thrown cards may be airborne at once. See the setLeaving call.
+const MAX_EXITS = 2;
 
 type Leaving = {
   key: string;
@@ -108,8 +143,18 @@ export function TestimonialsDeck({ items }: { items: Testimonial[] }) {
         // off sideways. Every mode gets an exit now, so the deck always shows
         // you which card left and where it went. Exits stack — each entry
         // retires itself, so back-to-back flips never block the deck.
+        //
+        // Capped at MAX_EXITS. Unbounded, a fast clicker could put several
+        // full-size cards in the air at once, and each one is a live pane; on a
+        // weak rasteriser that is the difference between a splash and a stall.
+        // Two in the air still reads as one leaving and one arriving, which is
+        // what the effect ever needed.
         const key = `exit-${(exitSeq.current += 1)}`;
-        setLeaving((ls) => [...ls, { key, t: items[index], mode, dir, throw: thrown }]);
+        setLeaving((ls) =>
+          [...ls, { key, t: items[index], mode, dir, throw: thrown }].slice(
+            -MAX_EXITS,
+          ),
+        );
         window.setTimeout(
           () => setLeaving((ls) => ls.filter((l) => l.key !== key)),
           EXIT_MS,
@@ -186,6 +231,12 @@ export function TestimonialsDeck({ items }: { items: Testimonial[] }) {
           if (pos_isExiting(leaving, t._id) && (i - index + n) % n !== 0) return null;
           const pos = (i - index + n) % n; // 0 = front, 1 = peek
           const front = pos === 0;
+          // Only the front plate and the one peeking behind it are ever drawn.
+          // The rest sat at opacity 0 but were still mounted, still owned a
+          // spring, and still carried a full glass subtree — all of it costing
+          // every frame for something no one could see. `visible` below is now
+          // always true, but stays as the explicit statement of intent.
+          if (pos > 1) return null;
           const visible = pos <= 1;
           const reveal: MotionValue<number> | number = front
             ? frontUp
@@ -217,7 +268,10 @@ export function TestimonialsDeck({ items }: { items: Testimonial[] }) {
               drag={front && !reduce}
               dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
               dragElastic={ELASTIC}
-              whileDrag={{ scale: 1.03 }}
+              /* No scale-on-pickup. Scaling a card that carries a live
+                 backdrop-filter forces the browser to resample that backdrop on
+                 every frame of the drag, which is the one thing this section
+                 cannot afford. The drag resistance already gives the pickup. */
               onDragStart={() => {
                 dragged.current = true;
               }}
@@ -363,8 +417,22 @@ function ExitCard({ leaving }: { leaving: Leaving }) {
             }
       }
     >
-      {/* reveal stays 1: the card is meant to be read on its way out */}
-      <Card t={t} interactive={false} reveal={1} />
+      {/* reveal stays 1: the card is meant to be read on its way out.
+
+          `live` is the one thing that changes on a weak machine. While a card
+          is in the air it sits directly on top of the incoming front card, so
+          for the whole flight the same box is under TWO full-size live
+          backdrop-filters — the 2.6x layer depth the CSS note at `.glass.flat`
+          was written about. On top of that the exiting card's backdrop is
+          itself in motion, so its blur is resampling a moving image every
+          frame for an effect nobody can resolve at 60px/frame and fading.
+
+          Capable desktops keep the real glass: at that speed and size the
+          refraction is visible and it is the best-looking part of the move.
+          Coarse pointers and `perf-lite` go flat, which costs a denser fill and
+          buys back the whole overlapping pane. Same gate as the goo filter,
+          same reason. */}
+      <Card t={t} interactive={false} reveal={1} live={canAffordEffects()} />
     </motion.div>
   );
 }
@@ -489,16 +557,15 @@ function Drip({ mode, dir }: { mode: Mode; dir: number }) {
   const peak = 0.36;
 
   return (
-    <div
-      aria-hidden
-      className="pointer-events-none absolute inset-x-0 flex justify-center overflow-visible"
-      style={{
-        top: `calc(${CARD_H} - 22px)`,
-        height: 300, // keep the goo filter region tall enough for the falling blobs
-        zIndex: 1,
-        filter: "url(#drip-goo)",
-      }}
-    >
+<div
+        aria-hidden
+        className="deck-goo pointer-events-none absolute inset-x-0 flex justify-center overflow-visible"
+        style={{
+          top: `calc(${CARD_H} - 22px)`,
+          height: 300, // keep the goo filter region tall enough for the falling blobs
+          zIndex: 1,
+        }}
+      >
       <div className="relative h-0 w-0">
         {base.map((d, i) => (
           <motion.span
@@ -533,7 +600,12 @@ function Drip({ mode, dir }: { mode: Mode; dir: number }) {
  * are deterministic (no RNG) so they're SSR-stable.
  */
 function Burst({ dir }: { dir: number }) {
-  const N = 26;
+  // 26 was calibrated by eye against the goo filter fusing them into one sheet
+  // of ink. Without the filter — which every touch device and every slow
+  // machine now skips — 26 separate circles read as confetti, not a splash, and
+  // each one is another shape inside a region the rasteriser has to walk. 12
+  // still reads as a spatter with gaps. The goo path keeps the higher count.
+  const N = canAffordEffects() ? 26 : 12;
   // Deterministic hash, not Math.random — the positions must be identical on the
   // server and the client or React screams about the mismatch. Irregular enough
   // to read as spatter, stable enough to hydrate.
@@ -576,11 +648,10 @@ function Burst({ dir }: { dir: number }) {
   return (
     <div
       aria-hidden
-      className="pointer-events-none absolute inset-x-0 top-0 overflow-visible"
+      className="deck-goo pointer-events-none absolute inset-x-0 top-0 overflow-visible"
       style={{
         height: CARD_H, // match the front card so blobs land on its edges
         zIndex: 51, // over the bursting card so the spray reads on top
-        filter: "url(#drip-goo)",
       }}
     >
       {drops.map((d, i) => (

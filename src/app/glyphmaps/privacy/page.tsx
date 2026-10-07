@@ -17,7 +17,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title: doc.title,
     description,
     alternates: { canonical: "/privacy" },
-    openGraph: { title: `${doc.title} — GlyphMaps`, description, url: "/privacy" },
+    openGraph: { title: `${doc.title} | GlyphMaps`, description, url: "/privacy" },
   };
 }
 

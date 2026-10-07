@@ -23,7 +23,7 @@ const caveat = Caveat({
 
 const SITE_URL = "https://capad.fyi";
 const TWITTER = "@aadarsh_io";
-const TITLE = "capad — developer tools & desktop apps";
+const TITLE = "capad, developer tools & desktop apps";
 const DESCRIPTION =
   "Aadarsh Upadhyay (capad) builds fast, genuinely-free, open-source developer tools and desktop apps: searchts, GlyphMaps, Grove, and beep-beep-oss. Software engineer and architect.";
 
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
     default: TITLE,
-    template: "%s — capad",
+    template: "%s | capad",
   },
   description: DESCRIPTION,
   keywords: [
@@ -68,7 +68,7 @@ export const metadata: Metadata = {
         url: "/opengraph-image.png",
         width: 1200,
         height: 630,
-        alt: "capad — developer tools & desktop apps by Aadarsh Upadhyay",
+        alt: "capad, developer tools & desktop apps, by Aadarsh Upadhyay",
       },
     ],
   },

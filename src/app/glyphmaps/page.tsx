@@ -36,7 +36,7 @@ export async function generateMetadata(): Promise<Metadata> {
   // concept (RAMPVIS, IEEE papers), so the title targets what someone looking
   // for THIS actually types — the phone, Google Maps, the Matrix — rather than
   // competing for a term whose intent isn't ours.
-  const title = "GlyphMaps — Google Maps turn-by-turn on the Nothing Glyph Matrix";
+  const title = "GlyphMaps: Google Maps turn-by-turn on the Nothing Glyph Matrix";
   return {
     title: { absolute: title },
     description: project.oneLiner,

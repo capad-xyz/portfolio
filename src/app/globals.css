@@ -110,12 +110,19 @@ body {
     0 2px 6px -2px rgba(20, 20, 30, 0.12),
     0 0 0 0.5px rgba(255, 255, 255, 0.5);
   -webkit-backdrop-filter: blur(12px) saturate(160%);
-  backdrop-filter: blur(8px) saturate(190%) brightness(1.05) url(#refract);
+  backdrop-filter: blur(8px) saturate(190%) brightness(1.05);
   contain: paint;
   transition:
     background-color 0.55s cubic-bezier(0.25, 0.46, 0.45, 0.94),
     border-color 0.55s cubic-bezier(0.25, 0.46, 0.45, 0.94),
     box-shadow 0.75s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+/* Opt-in edge refraction for .glass. The feDisplacementMap gather is the most
+   expensive filter on the page, so only small signature surfaces take it (see
+   the hero CTA). Everything else keeps the blur/saturate/brightness cut, which
+   maps to native compositor ops. perf-lite below strips this back off. */
+.glass--refract {
+  backdrop-filter: blur(8px) saturate(190%) brightness(1.05) url(#refract);
 }
 /* the material answers the cursor: the pane brightens, the bevel deepens */
 @media (hover: hover) {
@@ -844,13 +851,97 @@ body.lensing .drips.on { opacity: 0; }
    Everything else — the bevel, the specular, the shadows, the layout — is
    untouched, so the design holds together at either tier. ---- */
 body.perf-lite .ambient span { animation: none; filter: blur(40px); opacity: 0.62; }
-body.perf-lite .glass {
-  -webkit-backdrop-filter: blur(12px) saturate(160%);
+/* Refraction is opt-in now, so lite mode only has to strip it back off the
+   few surfaces that asked for it. Beats .glass--refract on specificity. */
+body.perf-lite .glass--refract {
   backdrop-filter: blur(8px) saturate(190%) brightness(1.05);
 }
+/* Scroll-calm: the clouds freeze once the reader leaves the hero. While they
+   drift, no backdrop-filter surface can reuse a cached result; parked, the
+   whole glass system becomes cacheable. One-way - set from SiteShell. */
+body.ambient-calm .ambient span { animation-play-state: paused; }
 body.perf-lite .lens::before {
   -webkit-backdrop-filter: blur(1.4px) saturate(170%) brightness(1.04);
   backdrop-filter: blur(1.4px) saturate(170%) brightness(1.04);
+}
+
+/* ---- the software-rasteriser tier (`perf-soft`) --------------------------
+   Same relief as `perf-lite`, for a different reason.
+
+   `perf-lite` is the frame-budget probe saying "this machine is slow".
+   `perf-soft` is a direct read of the WebGL renderer saying there is no GPU in
+   the pipeline at all — SwiftShader, llvmpipe, a blocklisted driver, a disabled
+   context. Nothing about that machine is slow; the per-pixel work simply has
+   nowhere to run.
+
+   The two are kept as separate classes rather than merged so a DevTools
+   inspection says which diagnosis fired. The remedy is identical, so every rule
+   below is just the `perf-lite` rule with a second selector.
+
+   This is the tier that actually covers the reported case: a desktop Chromium
+   browser, fine pointer, capable GPU on paper, that drops below 30fps. Neither
+   the coarse-pointer gate nor the frame probe could see it. */
+body.perf-soft .ambient span {
+  animation: none;
+  filter: blur(40px);
+  opacity: 0.62;
+}
+body.perf-soft .glass--refract {
+  backdrop-filter: blur(8px) saturate(190%) brightness(1.05);
+}
+body.perf-soft .lens::before {
+  -webkit-backdrop-filter: blur(1.4px) saturate(170%) brightness(1.04);
+  backdrop-filter: blur(1.4px) saturate(170%) brightness(1.04);
+}
+/* The cursor spotlight repaints two radial gradients under `mix-blend-mode:
+   screen` on every pointermove. On the CPU that is a full-card repaint per
+   sample, so the pointer stops answering back. */
+body.perf-soft .glass::after {
+  display: none;
+}
+/* ---- the testimonials deck's liquid fusion, on a class rather than an inline
+   style.
+
+   The ink droplets are the effect; the goo is what melts them into rivulets.
+   That melt is an SVG filter (feGaussianBlur + feColorMatrix + feBlend) over a
+   region 1.6x1.5 the card, and unlike the backdrop chains above it is NOT
+   compositable - it re-runs per frame for every droplet inside it. On a
+   software or heavily-loaded rasteriser (Vivaldi on this box, phones) that is
+   the single most expensive thing the deck does, on every single flip.
+
+   It used to live in an inline `style={{ filter: "url(#drip-goo)" }}`, which is
+   exactly why the lite tier could never reach it: an inline style beats any
+   stylesheet rule that doesn't carry !important. On a class, both gates below
+   work, and the droplets still fly - they just stop fusing. */
+.deck-goo {
+  filter: url(#drip-goo);
+  -webkit-filter: url(#drip-goo);
+}
+/* Touch devices get plain droplets. Same motion, same timing, same spread. */
+@media (pointer: coarse) {
+  .deck-goo {
+    filter: none;
+    -webkit-filter: none;
+  }
+}
+body.perf-lite .deck-goo {
+  filter: none !important;
+  -webkit-filter: none !important;
+}
+/* Same for the software tier — see the `perf-soft` block above for why this is a
+   distinct class rather than a fourth `perf-lite` selector. The fused ink is the
+   deck's signature, so this is the most visible thing the tier gives up. */
+body.perf-soft .deck-goo {
+  filter: none !important;
+  -webkit-filter: none !important;
+}
+/* The filter is also the single most expensive thing the deck does, so a
+   machine that has already told us it is slow should never reach for it. */
+@media (prefers-reduced-motion: reduce) {
+  .deck-goo {
+    filter: none;
+    -webkit-filter: none;
+  }
 }
 
 /* ---- shared-element morph: a project card's title flies into the case-study

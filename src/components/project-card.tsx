@@ -78,16 +78,25 @@ export function ProjectCard({ p, index }: { p: Project; index: number }) {
         </div>
       )}
 
-      {/* footer always renders: the colophon lives here even without links */}
+      {/* Footer always renders: the colophon lives here even without links.
+
+          The link buttons, the gaps and the CTA are all sized so a card with
+          two link buttons still fits them on ONE line. At the 2-column
+          breakpoint the card is 538px wide, which leaves 472px of content
+          box, and the widest real footer (Hare: "Pausing itself" +
+          "All app reviews" + the CTA) needs about 460px after this trim.
+          Before it was 507px, so the case-study link dropped to its own line
+          on exactly one card, which read as a layout bug rather than a
+          choice. */}
       {(
-        <div className="mt-auto flex flex-wrap items-center gap-x-5 gap-y-3 pt-5">
+        <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-3 pt-5">
           {p.links?.map((l) => (
             <LiquidButton
               key={l.href}
               href={l.href}
               external
               variant="outline"
-              className="px-5 py-2 text-sm font-medium"
+              className="px-4 py-2 text-[13px] font-medium whitespace-nowrap"
             >
               {l.label}
             </LiquidButton>
@@ -95,7 +104,7 @@ export function ProjectCard({ p, index }: { p: Project; index: number }) {
           {p.hasStory && (
             <Link
               href={`/work/${p.slug}`}
-              className="group inline-flex items-center gap-1.5 font-mono text-[12px] uppercase tracking-[0.18em] text-[var(--ink)]/70 transition hover:text-[var(--ink)]"
+              className="group inline-flex items-center gap-1.5 whitespace-nowrap font-mono text-[12px] uppercase tracking-[0.12em] text-[var(--ink)]/70 transition hover:text-[var(--ink)]"
             >
               read the case study
               <span aria-hidden className="transition-transform group-hover:translate-x-0.5">
@@ -131,6 +140,7 @@ const STATUS_LABEL: Record<ProjectStatus, string> = {
   done: "shipped",
   ongoing: "in progress",
   archived: "archived",
+  contributed: "contributed",
 };
 
 export function StatusPill({ status }: { status: ProjectStatus }) {
@@ -139,7 +149,9 @@ export function StatusPill({ status }: { status: ProjectStatus }) {
       ? "bg-[var(--ink)]"
       : status === "ongoing"
         ? "bg-[var(--ink)] animate-pulse"
-        : "bg-[var(--muted)]";
+        : status === "contributed"
+          ? "bg-transparent ring-1 ring-inset ring-current opacity-60"
+          : "bg-[var(--muted)]";
   return (
     <span className="inline-flex shrink-0 items-center gap-2 rounded-full border border-black/10 bg-white/40 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.22em] text-[var(--ink)]/80">
       <span className={`h-1.5 w-1.5 rounded-full ${dot}`} />

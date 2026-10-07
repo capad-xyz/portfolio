@@ -69,37 +69,54 @@ function ContactPanel({ onSent }: { onSent: () => void }) {
   const turnstileIdRef = useRef<string | null>(null);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
-  // Mount the Turnstile widget when the panel opens. The widget is created in
-  // INVISIBLE mode (set on the widget in the Cloudflare dash), so nothing ever
-  // renders - no checkbox, no badge. The behavioural check runs silently and
-  // hands us a token via the callback. A visitor who fails the silent check
-  // (rare: hardened privacy setups) gets the form's error state, which already
-  // offers the direct-email fallback.
+  // Mount the Turnstile widget lazily: the third-party script + iframe cost
+  // nothing until someone actually reaches for the form. First interaction
+  // (pointer or focus) mints the token path; a 10s fallback covers the slow
+  // composer who never "interacts" before typing is already underway.
+  // The widget is created in INVISIBLE mode (set in the Cloudflare dash), so
+  // nothing ever renders - no checkbox, no badge.
   useEffect(() => {
     if (!TURNSTILE_SITE_KEY) return;
     let cancelled = false;
-    loadTurnstile()
-      .then(() => {
-        const host = turnstileHostRef.current;
-        if (cancelled || !host || !window.turnstile || turnstileIdRef.current) return;
-        turnstileIdRef.current = window.turnstile.render(host, {
-          sitekey: TURNSTILE_SITE_KEY,
-          theme: "light",
-          callback: (token) => setTurnstileToken(token),
-          // tokens live ~5 min; if the visitor composes slowly, silently mint
-          // a fresh one instead of letting the submit fail
-          "expired-callback": () => {
-            setTurnstileToken(null);
-            if (turnstileIdRef.current) window.turnstile?.reset(turnstileIdRef.current);
-          },
-          "error-callback": () => setTurnstileToken(null),
+    let idleTimer = 0;
+    const ensure = () => {
+      if (cancelled || turnstileIdRef.current) return;
+      loadTurnstile()
+        .then(() => {
+          const host = turnstileHostRef.current;
+          if (cancelled || !host || !window.turnstile || turnstileIdRef.current) return;
+          turnstileIdRef.current = window.turnstile.render(host, {
+            sitekey: TURNSTILE_SITE_KEY,
+            theme: "light",
+            callback: (token) => setTurnstileToken(token),
+            // tokens live ~5 min; if the visitor composes slowly, silently mint
+            // a fresh one instead of letting the submit fail
+            "expired-callback": () => {
+              setTurnstileToken(null);
+              if (turnstileIdRef.current) window.turnstile?.reset(turnstileIdRef.current);
+            },
+            "error-callback": () => setTurnstileToken(null),
+          });
+        })
+        .catch(() => {
+          // script blocked/unreachable - the server will explain if it matters
         });
-      })
-      .catch(() => {
-        // script blocked/unreachable - the server will explain if it matters
-      });
+    };
+    const form = formRef.current;
+    const onFirstInteract = () => {
+      window.clearTimeout(idleTimer);
+      ensure();
+      form?.removeEventListener("pointerdown", onFirstInteract);
+      form?.removeEventListener("focusin", onFirstInteract);
+    };
+    form?.addEventListener("pointerdown", onFirstInteract);
+    form?.addEventListener("focusin", onFirstInteract);
+    idleTimer = window.setTimeout(ensure, 10000);
     return () => {
       cancelled = true;
+      window.clearTimeout(idleTimer);
+      form?.removeEventListener("pointerdown", onFirstInteract);
+      form?.removeEventListener("focusin", onFirstInteract);
       if (turnstileIdRef.current && window.turnstile) {
         window.turnstile.remove(turnstileIdRef.current);
         turnstileIdRef.current = null;
@@ -387,6 +404,63 @@ function wireSocialBubble(icon: HTMLElement, s: SocialBubble, manager: BubbleMan
   };
 }
 
+/**
+ * Puts every social bubble back in the tab order, and keeps it there.
+ *
+ * The library re-derives `tabIndex` on every state change with:
+ *
+ *   const hidden = retiring.has(m.id) || (mode === "docked" && m !== top);
+ *   m.el.tabIndex = !hidden && (mode === "docked" || m.id === activeId) ? 0 : -1;
+ *
+ * which is a sound default for a docked stack: one tab stop, arrows to move
+ * within. But it left all three social links at `tabIndex -1` and
+ * `aria-hidden="true"`, so Tab walked the whole page and never once reached
+ * GitHub, LinkedIn or X. A keyboard visitor could not open a single one of
+ * them. Tab is also the gesture people actually use, so "hold Alt and press
+ * an arrow" is not an acceptable trade for that.
+ *
+ * Re-asserted through a MutationObserver rather than once at boot, because the
+ * library rewrites these attributes on every dock, open, collapse and
+ * activation. Writing a value that is already set does not mutate the
+ * attribute, so this cannot oscillate.
+ *
+ * Focus alone would still land on a bubble hidden behind the stack, so a
+ * focusin activates that bubble: `activate()` expands a docked flock on the id
+ * and moves the visible lead to it. By the time the browser paints, the bubble
+ * being tabbed to is the one on top.
+ */
+function keepSocialBubblesTabbable(
+  manager: BubbleManager,
+  entries: { id: string; el: HTMLElement }[],
+) {
+  const reassert = () => {
+    for (const { el } of entries) {
+      if (el.tabIndex !== 0) el.tabIndex = 0;
+      if (el.getAttribute("aria-hidden") === "true") el.removeAttribute("aria-hidden");
+    }
+  };
+
+  const observer = new MutationObserver(reassert);
+  for (const { el } of entries) {
+    observer.observe(el, { attributes: true, attributeFilter: ["tabindex", "aria-hidden"] });
+  }
+
+  const onFocusIn = (e: FocusEvent) => {
+    const hit = entries.find(({ el }) => el === e.target || el.contains(e.target as Node));
+    // Already the active one means the flock is already led by it; calling
+    // activate() again would be a no-op that still steals focus mid-tab.
+    if (hit && manager.active() !== hit.id) manager.activate(hit.id);
+  };
+  for (const { el } of entries) el.addEventListener("focusin", onFocusIn);
+
+  reassert();
+
+  return () => {
+    observer.disconnect();
+    for (const { el } of entries) el.removeEventListener("focusin", onFocusIn);
+  };
+}
+
 type FaceController = {
   setHover: (v: boolean) => void;
   setPress: (v: boolean) => void;
@@ -581,8 +655,18 @@ export function ContactWidget({ socials }: { socials: SocialLink[] }) {
   // tearing down a stack the visitor may be mid-drag on.
   const socialsRef = useRef(socials);
 
+  // The flock (physics loop, smile timers, face wiring) boots on idle, not on
+  // page load - most visits never touch it. An explicit open request before
+  // then boots it synchronously first, so no tap is ever lost.
   useEffect(() => {
+    let idleId = 0;
+    let useIdle = false;
+    let stopFlock: (() => void) | null = null;
+
+    const boot = () => {
     if (managerRef.current) return;
+    if (useIdle) window.cancelIdleCallback(idleId);
+    else window.clearTimeout(idleId);
     const bubbles = socialsRef.current;
 
     const manager = createBubbles({
@@ -626,11 +710,15 @@ export function ContactWidget({ socials }: { socials: SocialLink[] }) {
     // patched dock geometry the front bubble sits at the BOTTOM of the spread,
     // the email face as the bottom overlay and the socials rising behind it.
     const socialStops: (() => void)[] = [];
+    const socialEls: { id: string; el: HTMLElement }[] = [];
     for (const s of [...bubbles].reverse()) {
       const icon = makeSocialIcon(s);
       manager.add({ id: s._id, label: s.label, icon });
       socialStops.push(wireSocialBubble(icon, s, manager));
+      const el = icon.closest<HTMLElement>('[role="button"]');
+      if (el) socialEls.push({ id: s._id, el });
     }
+    socialStops.push(keepSocialBubblesTabbable(manager, socialEls));
 
     manager.add({
       id: FRONT_ID,
@@ -669,22 +757,38 @@ export function ContactWidget({ socials }: { socials: SocialLink[] }) {
     const stopProximity = watchDismissProximity(face, ctrl);
     const stopSmile = scheduleOccasionalSmile(ctrl, reduce);
 
-    // "Start a conversation" buttons anywhere on the site open this panel via a
-    // custom event. Deferred a tick so the manager's own tap-away handling for
-    // the same click has finished before the group expands.
-    const onOpenRequest = () => {
-      window.setTimeout(() => managerRef.current?.activate(FRONT_ID), 0);
-    };
-    addEventListener("capad:open-contact", onOpenRequest);
-
-    return () => {
-      removeEventListener("capad:open-contact", onOpenRequest);
+    stopFlock = () => {
       socialStops.forEach((stop) => stop());
       stopHover();
       stopSmile();
       stopProximity();
       manager.destroy();
       managerRef.current = null;
+      stopFlock = null;
+    };
+    };
+
+    // "Start a conversation" buttons anywhere on the site open this panel via a
+    // custom event. The boot runs first so a pre-idle tap still lands; the tick
+    // then defers past the manager's own tap-away handling for the same click.
+    const onOpenRequest = () => {
+      boot();
+      window.setTimeout(() => managerRef.current?.activate(FRONT_ID), 0);
+    };
+    addEventListener("capad:open-contact", onOpenRequest);
+
+    if (typeof window.requestIdleCallback === "function") {
+      useIdle = true;
+      idleId = window.requestIdleCallback(() => boot(), { timeout: 6000 });
+    } else {
+      idleId = window.setTimeout(() => boot(), 2500);
+    }
+
+    return () => {
+      removeEventListener("capad:open-contact", onOpenRequest);
+      if (useIdle) window.cancelIdleCallback(idleId);
+      else window.clearTimeout(idleId);
+      stopFlock?.();
     };
   }, []);
 

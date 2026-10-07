@@ -14,14 +14,14 @@ export const revalidate = 300;
 export const metadata: Metadata = {
   title: "Projects",
   description:
-    "Every project by Aadarsh Upadhyay (capad): shipped, in progress, and archived — all open source, each with its build story.",
+    "Every project by Aadarsh Upadhyay (capad): shipped, in progress, and archived, all open source, each with its build story.",
   alternates: { canonical: "/projects" },
   openGraph: {
     type: "website",
     url: "/projects",
-    title: "Projects — capad",
+    title: "Projects | capad",
     description:
-      "Every project by Aadarsh Upadhyay (capad): shipped, in progress, and archived — all open source, each with its build story.",
+      "Every project by Aadarsh Upadhyay (capad): shipped, in progress, and archived, all open source, each with its build story.",
     images: ["/opengraph-image.png"],
   },
 };
@@ -78,7 +78,7 @@ export default async function ProjectsPage() {
             The build stories.
           </h1>
           <p className="max-w-xl text-[clamp(15px,1.6vw,18px)] leading-[1.6] text-[var(--muted)]">
-            {`Every project, written up the way it was built — problem, insight, architecture, honest ceiling. ${shipped} shipped, ${ongoing} in progress, all open source. Pick one and read.`}
+            {`Every project, written up the way it was built: problem, insight, architecture, honest ceiling. ${shipped} shipped, ${ongoing} in progress, all open source. Pick one and read.`}
           </p>
         </header>
 
@@ -90,7 +90,7 @@ export default async function ProjectsPage() {
           </div>
         ) : (
           <p className="reveal-up mt-10 text-[var(--muted)]">
-            Nothing published yet — check back soon.
+            Nothing published yet. Check back soon.
           </p>
         )}
 
