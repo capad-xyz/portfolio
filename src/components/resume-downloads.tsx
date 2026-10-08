@@ -78,12 +78,29 @@ export function ResumeDownloads({
     if (!el) return;
 
     const GAP = 10;
+    const EDGE = 8;
     const pick = () => {
       // Read while open (the toggle handler guarantees it), so offsetHeight is a
       // real height rather than the 0 a closed <details> reports.
-      const vh = window.innerHeight;
-      const triggerBottom = el.getBoundingClientRect().bottom + GAP;
-      el.classList.toggle("drop-up", triggerBottom + p.current!.offsetHeight > vh);
+      const height = p.current!.offsetHeight;
+      const rect = el.getBoundingClientRect();
+      const below = window.innerHeight - (rect.bottom + GAP);
+      const above = rect.top - GAP;
+      // Downward is the default and the direction the menu is designed to read.
+      // Flip only when downward genuinely cannot show the panel, preferring the
+      // side with more room. Comparing against innerHeight alone made the panel
+      // flip on a desktop where it fitted comfortably below.
+      const fitsBelow = below >= height;
+      const useUp = fitsBelow ? false : above > below;
+      el.classList.toggle("drop-up", useUp);
+
+      // Whichever way it opens, keep it inside the viewport. A panel anchored to
+      // a button near an edge can still poke past it, and a clipped format label
+      // is worse than a nudged panel.
+      const avail = useUp ? above : below;
+      const cap = Math.max(0, avail - EDGE);
+      p.current!.style.maxHeight = height > cap ? `${cap}px` : "";
+      p.current!.style.overflowY = height > cap ? "auto" : "";
     };
 
     // A scroll or rotate can flip the answer while the menu is open. Coalesced

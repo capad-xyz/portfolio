@@ -156,6 +156,15 @@ body {
 }
 .glass.flat::after { display: none; }
 
+/* The download panel is `glass flat`, and 62% white still let the education
+   text behind it render straight through the format labels — legible enough to
+   collide, which a blur does not fix because the text survives the blur. This is
+   a list of filenames being read, not a decorative pane, so it is fully opaque.
+   `.glass.flat` keeps its other users translucent; only the menu is pinned. */
+.dl-menu > .dl-panel {
+  background: var(--paper);
+}
+
 /* beveled rim: a 1px light gradient ring that reads as a real glass edge —
    bright where the overhead light catches (top-left), falling to shadow */
 .glass::before {
@@ -347,9 +356,21 @@ body.lensing .drips.on { opacity: 0; }
 .dl-menu > .dl-panel {
   position: absolute;
   top: calc(100% + 10px);
-  right: 0;
+  /* Anchored to the button's LEFT edge, not its right. The control is a
+     left-aligned pill, so a right-anchored 280px panel hangs ~130px out to the
+     left of a ~150px button and reads as a box floating over the page beside
+     it rather than as a menu belonging to it. Growing rightward keeps the
+     panel under the control that opened it. */
+  left: 0;
+  right: auto;
   z-index: 30;
-  transform-origin: 100% 0;
+  transform-origin: 0 0;
+  max-width: calc(100vw - 48px);
+  /* Set per-open by the component so a panel taller than the room available
+     scrolls instead of overflowing; these are the defaults for the same rule. */
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 /* Drop the panel UPWARD when opening downward would push it past the fold.
@@ -365,7 +386,7 @@ body.lensing .drips.on { opacity: 0; }
 .dl-menu.drop-up > .dl-panel {
   top: auto;
   bottom: calc(100% + 10px);
-  transform-origin: 100% 100%;
+  transform-origin: 0 100%;
 }
 .dl-menu.drop-up > .dl-panel,
 .dl-menu.drop-up .dl-panel {
@@ -375,37 +396,20 @@ body.lensing .drips.on { opacity: 0; }
   from { opacity: 0; transform: translateY(8px) scale(0.97); }
 }
 
-/* On a phone the Download button sits at the LEFT of its row, so a panel
-   anchored to the button's right edge grows leftward and runs off-screen —
-   at 390px a 280px panel starts around x=-120 and the format labels get
-   clipped to "ORMAT" / "e PDF". Anchor it to the left edge instead and cap it
-   to the viewport, so it opens inward from the control that summoned it.
-   Only reachable when the menu is open, which is why a static sweep of the
-   page never caught it. */
-@media (max-width: 560px) {
-  .dl-menu > .dl-panel {
-    left: 0;
-    right: auto;
-    transform-origin: 0 0;
-    min-width: min(280px, calc(100vw - 48px));
-    max-width: calc(100vw - 48px);
-  }
-  /* Same left anchoring for the upward case, so the flip does not undo it. */
-  .dl-menu.drop-up > .dl-panel {
-    left: 0;
-    right: auto;
-    transform-origin: 0 100%;
-  }
-}
+/* The panel is a list you read while choosing a file, and it is glass: at any
+   width the page text behind it shows through and collides with the format
+   labels — "Bachelor of Computer Applications" rendering straight across
+   "Download the PDF". A backdrop blur cannot fix this on its own because the
+   text is legible through the blur. Opaque everywhere the menu is used.
 
-/* The glass treatment is a translucent surface, so whatever sits behind it
-   shows through — on the phone menu that meant the education text rendering
-   straight through the format list. Opaque here only: this panel is a list you
-   read while choosing, not a pane you want to see through. The desktop panel
-   keeps the blur, where there is no text sitting behind it to compete. */
+   The bevel, border and shadow from .glass stay, so it still reads as part of
+   the same control; only the see-through is dropped. */
+/* Phone: the 280px floor has to give way on a narrow screen or the panel
+   overflows the viewport even anchored left. The base rule already caps the
+   width; this only relaxes the minimum. */
 @media (max-width: 560px) {
   .dl-menu > .dl-panel {
-    background-color: var(--paper);
+    min-width: min(280px, calc(100vw - 48px));
   }
 }
 
