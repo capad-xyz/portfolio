@@ -1,261 +1,146 @@
-"use client";
-
 import Link from "next/link";
-import { useEffect, useRef } from "react";
 
 /**
- * Mono liquid-glass hero. Each piece starts "undeveloped" and is revealed in
- * sequence (bottom -> top) timed to the intro's develop-wave. The CTA reveal
- * lives on a wrapper so the magnetic/flood transform on the button never fights
- * the reveal transition. Reduced-motion shows everything instantly.
+ * The cover. T4 treatment: the picture whole, on the paper, chewed at the edge.
+ *
+ * Composition, not styling: there is no plate, no radius, no shadow and nothing
+ * centred. The page IS the hero. The wordmark is a 23px masthead rather than the
+ * monument it used to be - the statement is the strong thing, and the mark is a
+ * handle.
+ *
+ * The left column is ONE flex stack with `justify-content: space-between`, not a
+ * set of absolute percentages. With the picture whole and flush right it owns the
+ * right ~46%, and percentage positioning kept colliding the availability line with
+ * the last line of the statement. A flex stack makes that overlap structurally
+ * impossible at any statement length, which is the only reason this survives an
+ * 84px headline and a 390px viewport in the same component.
+ *
+ * `data-rise` staggers the pieces top-down in read order. There is no intro
+ * overlay and no timed cascade: one motion system, and this is the top of it.
  */
 export function Hero() {
-  const root = useRef<HTMLElement>(null);
-  const plate = useRef<HTMLDivElement>(null);
-  const eyebrow = useRef<HTMLSpanElement>(null);
-  const wordmark = useRef<HTMLHeadingElement>(null);
-  const sig = useRef<HTMLDivElement>(null);
-  const tag = useRef<HTMLParagraphElement>(null);
-  const ctaWrap = useRef<HTMLDivElement>(null);
-  const proof = useRef<HTMLDivElement>(null);
-  // zero-height marker pinned to the hero's bottom edge; the strip hides when
-  // this crosses the clearance line (see the observer below)
-  const tail = useRef<HTMLDivElement>(null);
-  const cta = useRef<HTMLAnchorElement>(null);
-  const pill = useRef<HTMLAnchorElement>(null);
-  const fill = useRef<HTMLSpanElement>(null);
-
-  useEffect(() => {
-    const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const timers: number[] = [];
-    let magnetic = false;
-    let rect: DOMRect | null = null;
-    // How far the CTA may rise before it would touch the availability pill.
-    // Measured rather than assumed, so changing the stack's gap can't silently
-    // reintroduce the overlap. Invalidated with the rect.
-    let headroom: number | null = null;
-
-    if (reduce) {
-      [plate, eyebrow, sig, tag, ctaWrap, proof].forEach((r) => r.current?.classList.add("in"));
-      wordmark.current?.classList.add("in");
-    } else {
-      timers.push(window.setTimeout(() => wordmark.current?.classList.add("ghost"), 100));
-      // Top-down cascade matching the read order of a name-led hero: role
-      // (eyebrow) -> the name (headline) -> capad signature -> story -> CTA,
-      // with the fixed proof strip last. Timing stays synced to the intro wave.
-      const seq: [React.RefObject<HTMLElement | null>, number, boolean][] = [
-        [plate, 560, false],
-        [eyebrow, 660, false],
-        [wordmark, 800, true],
-        [sig, 940, false],
-        [tag, 1040, false],
-        [ctaWrap, 1160, false],
-        [proof, 1240, false],
-      ];
-      seq.forEach(([r, t, isWord]) =>
-        timers.push(
-          window.setTimeout(() => {
-            if (isWord) r.current?.classList.remove("ghost");
-            r.current?.classList.add("in");
-          }, t),
-        ),
-      );
-      timers.push(window.setTimeout(() => (magnetic = true), 1400));
-    }
-
-    // Magnetic pull on the CTA. The rect is cached lazily and dropped on any
-    // scroll/resize — a stale rect after scrolling away and back left the pull
-    // zone pointing at where the button USED to be, so it never engaged.
-    const onMove = (e: PointerEvent) => {
-      const el = cta.current;
-      if (!el || !magnetic) return;
-      if (!rect) rect = el.getBoundingClientRect();
-      const dx = e.clientX - (rect.left + rect.width / 2);
-      const dy = e.clientY - (rect.top + rect.height / 2);
-      if (Math.hypot(dx, dy) >= 150) {
-        el.style.transform = "";
-        return;
-      }
-      if (headroom === null) {
-        const above = pill.current?.getBoundingClientRect();
-        // 6px so the two never kiss, only approach
-        headroom = above ? Math.max(0, rect.top - above.bottom - 6) : 0;
-      }
-      // Sideways and downward pull stay exactly as they were; only the rise is
-      // capped, and only by however much room actually exists above.
-      const ty = Math.max(dy * 0.4, -headroom);
-      el.style.transform = `translate(${dx * 0.3}px, ${ty}px)`;
-    };
-    const invalidate = () => {
-      rect = null;
-      headroom = null;
-    };
-    if (!reduce) {
-      addEventListener("pointermove", onMove, { passive: true });
-      addEventListener("resize", invalidate, { passive: true });
-      addEventListener("scroll", invalidate, { passive: true });
-    }
-
-    // The proof strip is viewport-fixed so it anchors the first impression, but
-    // past the hero it would sit on top of the deck and the sign-off. It has to
-    // clear out BEFORE the deck reaches it, not when the hero finally leaves —
-    // watching the hero at threshold 0.15 meant waiting until 85% of it was gone,
-    // by which point the first row of cards was already sliding underneath.
-    //
-    // What we actually want is a half-plane test: "has the hero's bottom edge
-    // risen above the strip's clearance line?" IntersectionObserver only does
-    // band tests, so blowing the root's top margin out to 9999px removes the
-    // upper edge from the equation and leaves `isIntersecting` depending solely
-    // on the sentinel vs the raised bottom edge. Without that, the test would
-    // flip back to false once the sentinel scrolled off the top and the strip
-    // would pop back over the lower sections.
-    //
-    // The clearance is deliberately SMALL. The hero is min-h-screen, so the deck
-    // starts exactly at the fold while the strip floats ~24px above it — the two
-    // are already only a couple of dozen px apart at rest, and the deck slides
-    // under the strip within ~15px of scroll. A generous clearance would fire
-    // LATER and make the overlap worse, not better; the strip has to commit to
-    // leaving almost as soon as the page moves.
-    const tailIo = new IntersectionObserver(
-      ([en]) => proof.current?.classList.toggle("gone", en.isIntersecting),
-      { rootMargin: "9999px 0px -48px 0px", threshold: 0 },
-    );
-    if (tail.current) tailIo.observe(tail.current);
-
-    return () => {
-      timers.forEach(clearTimeout);
-      tailIo.disconnect();
-      removeEventListener("pointermove", onMove);
-      removeEventListener("resize", invalidate);
-      removeEventListener("scroll", invalidate);
-    };
-  }, []);
-
-  // flood the liquid fill from where the pointer enters / leaves; the drop is
-  // scaled to reach the farthest corner from that exact point (see --fill-scale)
-  const placeFill = (e: React.PointerEvent) => {
-    const el = cta.current;
-    const f = fill.current;
-    if (!el || !f) return;
-    const r = el.getBoundingClientRect();
-    const x = e.clientX - r.left;
-    const y = e.clientY - r.top;
-    f.style.left = `${x}px`;
-    f.style.top = `${y}px`;
-    el.style.setProperty("--fill-scale", `${Math.ceil((Math.hypot(Math.max(x, r.width - x), Math.max(y, r.height - y)) / 12) * 1.1)}`);
-  };
-
   return (
-    <section ref={root} className="relative flex min-h-screen flex-col items-center justify-center px-6 text-center">
-      {/* the plate hugs the content column itself (negative insets), so the
-          eyebrow → CTA stack is always centered on the glass with an even
-          margin — no viewport-height guessing, no spill on short screens */}
-      <div className="relative flex flex-col items-center">
-        {/* Horizontal edges stay pushed out past the column; the top/bottom edges
-            are pulled inward to the vertical centers of the eyebrow pill and the
-            CTA button, so both straddle the glass edge instead of sitting inside it. */}
-        <div
-          ref={plate}
-          className="plate dev absolute -left-[clamp(28px,7vw,84px)] -right-[clamp(28px,7vw,84px)] top-[18px] bottom-[26px]"
+    <section
+      id="cover"
+      className="relative isolate flex min-h-[100svh] flex-col overflow-hidden pb-[7.75rem] md:pb-0"
+    >
+      {/* The photograph. Absolutely placed and behind the type, so it never takes
+          part in the column's vertical rhythm. `object-fit: contain` inside a
+          right-hand box is what keeps it whole at its real aspect ratio at every
+          width - never cropped, never stretched. The chew and the registration
+          offset are applied in globals.css (`.hero-plate img`).
+
+          `aria-hidden` because it is decoration: the same sentence the statement
+          makes is what a screen reader should hear, not a file name. */}
+      <div className="hero-plate" aria-hidden>
+        {/* eslint-disable-next-line @next/next/no-img-element -- committed asset
+            in /public; next/image would add a loader for one static plate whose
+            size is already fixed by the aspect ratio above */}
+        <img
+          src="/hero-plate.webp"
+          width={900}
+          height={1187}
+          alt=""
+          fetchPriority="high"
+          decoding="async"
         />
-
-      {/* The hero eyebrow sets its own size rather than using .section-eyebrow,
-          so the phone bump has to be stated here too: 12px at tighter tracking
-          below sm, back to the designed 11px/0.24em from sm up. */}
-      <span
-        ref={eyebrow}
-        className="glass dev mb-7 rounded-full px-[18px] py-2.5 font-mono text-[12px] tracking-[0.2em] uppercase text-[#46453f] sm:text-[11px] sm:tracking-[0.24em]"
-      >
-        developer tools · desktop apps
-      </span>
-
-      {/* Brand-led: the capad wordmark is the monument; the name signs it just
-          beneath. Keeps the searchable brand loud while still naming the maker. */}
-      <h1
-        ref={wordmark}
-        className="wordmark lensable text-[clamp(86px,15vw,220px)] font-bold leading-[0.84] tracking-[-0.05em]"
-      >
-        capad
-      </h1>
-
-      <div ref={sig} className="dev mt-6 flex items-center gap-3">
-        <span aria-hidden className="wm-sig-rule" />
-        <span className="font-mono text-[13px] tracking-[0.14em] text-[var(--muted)]">
-          Aadarsh Upadhyay
-        </span>
-        <span aria-hidden className="wm-sig-rule" />
       </div>
 
-      <p
-        ref={tag}
-        className="dev mt-5 max-w-[440px] text-[clamp(15px,1.5vw,19px)] leading-[1.55] text-[var(--muted)]"
+      {/* Masthead. Three facts, no advertising: the handle, the name, and the
+          availability line. */}
+      {/* Constrained to the left column rather than the full width. The picture is
+          flush right and full height, so a full-width masthead puts the
+          availability line on top of the photograph - where 12px muted grey on a
+          bright white background is unreadable, and where it competes with the
+          one thing on this page that is actually about him. The masthead is
+          furniture; it sits in the paper, beside the type it belongs to. */}
+      <header
+        data-rise
+        style={{ "--d": "0ms" } as React.CSSProperties}
+        className="relative z-10 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-3 px-6 pt-8 md:w-[54%] md:px-10 md:pt-10"
       >
-        I build the tools that shouldn&apos;t need to exist. The ones that do frustrated me into
-        building better ones: fast, free, and yours to keep.
-      </p>
-
-      {/* Availability sits between the promise and the action: the reader has
-          just decided they like the work; "he's reachable" is the nudge that
-          converts. Primary CTA stays the work (proof first), contact is the
-          quiet second door. */}
-      <div ref={ctaWrap} className="dev mt-8 flex flex-col items-center gap-5">
-        {/* The availability pill is also the door to the resume. On hover the
-            label rolls over to say so: the live dot stays (it is the signal),
-            the words swap. Both labels are aria-hidden and the link carries an
-            explicit name, so a screen reader hears one thing, not two. */}
-        <Link
-          ref={pill}
-          href="/resume"
-          aria-label="Read the resume"
-          className="group inline-flex items-center gap-2 rounded-full border border-black/10 bg-white/40 px-3.5 py-1.5 font-mono text-[10px] uppercase tracking-[0.22em] text-[var(--ink)]/80 transition-colors duration-300 hover:border-black/25 hover:bg-white/70 hover:text-[var(--ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ink)]/35 focus-visible:ring-offset-2"
-        >
-          <span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-[var(--ink)] transition-transform duration-300 group-hover:scale-[1.6] motion-reduce:transition-none" />
-          <span aria-hidden className="relative block overflow-hidden">
-            <span className="block transition-transform duration-300 ease-out group-hover:-translate-y-full group-focus-visible:-translate-y-full motion-reduce:transition-none">
-              open for the right problem
-            </span>
-            <span className="absolute inset-0 block translate-y-full transition-transform duration-300 ease-out group-hover:translate-y-0 group-focus-visible:translate-y-0 motion-reduce:transition-none">
-              read the resume
-            </span>
+        <div className="flex items-baseline gap-3">
+          <span className="text-[23px] font-bold leading-none tracking-[-0.05em]">
+            capad
           </span>
-          {/* Sits outside the roll so it is visible at rest. Without it the pill
-              only announces itself on hover, which no touch device ever sees. */}
+          <span className="hidden text-[13px] tracking-[0.14em] text-[var(--muted)] sm:inline">
+            Aadarsh Upadhyay
+          </span>
+        </div>
+
+        {/* Availability is a FACT that happens to be a link, and it is styled as
+            one. It does not roll over into "read the resume" and it does not
+            change its label on hover - the arrow slides and the underline
+            darkens. The old pill swapped its own words on hover, which made one
+            object mean three things and made the string itself a CTA wearing a
+            fact's clothes. `focus-visible` carries the same answer for keyboard. */}
+        <Link
+          href="/resume"
+          className="group inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.16em] text-[var(--ink)]/80 transition-colors duration-300 hover:text-[var(--ink)] focus-visible:text-[var(--ink)] md:text-[12px]"
+        >
+          <span className="inline-flex items-center gap-2 underline decoration-[var(--ink)]/30 underline-offset-[6px] transition-[text-decoration-color,text-decoration-thickness] duration-300 group-hover:decoration-[var(--ink)] group-hover:[text-decoration-thickness:2px] group-focus-visible:decoration-[var(--ink)]">
+            <span
+              aria-hidden
+              className="h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--ink-accent)]"
+            />
+            open to relocate &middot; remote-first
+          </span>
           <span
             aria-hidden
-            className="shrink-0 transition-transform duration-300 ease-out group-hover:translate-x-0.5 motion-reduce:transition-none"
+            className="transition-transform duration-300 ease-out group-hover:translate-x-1 group-focus-visible:translate-x-1 motion-reduce:transition-none"
           >
             &rarr;
           </span>
+          {/* The link's accessible name says where it goes, because the visible
+              label is a statement about him rather than about the destination. */}
+          <span className="sr-only">, read the resume</span>
         </Link>
-        <div className="flex flex-wrap items-center justify-center gap-4">
+      </header>
+
+      {/* The floor: type on the left, the one action and the proof line beneath it. */}
+      <div className="relative z-10 mt-auto flex w-full flex-col gap-10 px-6 pb-10 md:px-10 md:pb-14 lg:max-w-[54%] max-[560px]:pb-2">
+        <p
+          data-rise
+          style={{ "--d": "120ms" } as React.CSSProperties}
+          className="max-w-[15ch] text-[clamp(38px,8.4vw,84px)] font-bold leading-[1.02] tracking-[-0.04em]"
+        >
+          I build the tools that{" "}
+          <em className="font-serif font-normal italic tracking-[-0.02em]">
+            shouldn&rsquo;t need
+          </em>{" "}
+          to exist.
+        </p>
+
+        <div
+          data-rise
+          style={{ "--d": "220ms" } as React.CSSProperties}
+          className="flex flex-col items-start gap-5"
+        >
+          <p className="max-w-[52ch] text-[clamp(14px,1.35vw,17px)] leading-[1.55] text-[var(--muted)]">
+            The ones that do frustrated me into building better ones: fast, free,
+            and yours to keep.
+          </p>
+
+          {/* ONE action. The availability line above is a fact, not a competing
+              call to action, so the hero has exactly one thing to press. */}
           <a
             href="#work"
-            ref={cta}
-            className="glass lqbtn lqbtn-magnetic inline-block rounded-full px-8 py-[15px] text-[15px] font-semibold"
-            onPointerEnter={placeFill}
-            onPointerLeave={placeFill}
+            className="inline-flex items-center gap-2 rounded-full bg-[var(--ink)] px-7 py-[15px] text-[15px] font-semibold text-[var(--paper)] transition-[transform,box-shadow] duration-300 hover:-translate-y-0.5 focus-visible:-translate-y-0.5 motion-reduce:transition-none"
           >
-            <span ref={fill} className="fill" />
-            <span className="lbl">See the work</span>
+            See the work
+            <span aria-hidden>&rarr;</span>
           </a>
+
+          {/* Proof line. Names framed as shipped open-source output, which is
+              true. */}
+          <p className="font-mono text-[12px] leading-[1.9] text-[var(--muted)]">
+            <span className="text-[var(--ink)]/60">shipping in the open</span>
+            <br />
+            searchts &nbsp;&middot;&nbsp; glyphmaps &nbsp;&middot;&nbsp; grove
+            &nbsp;&middot;&nbsp; beep-beep-oss
+          </p>
         </div>
       </div>
-      </div>
-
-      {/* Authority strip. Names are framed as shipped, open-source output (true)
-          rather than bare labels. Swap in real numbers (GitHub stars / installs)
-          here when you have them — never placeholder figures. */}
-      <div
-        ref={proof}
-        className="dev proof-strip fixed bottom-6 left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 whitespace-nowrap font-mono text-[11px] tracking-[0.18em] text-[#8c8b86]"
-      >
-        <span className="text-[var(--ink)]/55">shipping in the open:</span>
-        <span>searchts &nbsp;·&nbsp; glyphmaps &nbsp;·&nbsp; grove &nbsp;·&nbsp; beep-beep-oss</span>
-      </div>
-
-      {/* Absolute (not in flow) so it marks the hero's bottom edge without
-          adding height to a justify-center column. Observed above. */}
-      <div ref={tail} aria-hidden className="pointer-events-none absolute bottom-0 left-0 h-0 w-full" />
     </section>
   );
 }

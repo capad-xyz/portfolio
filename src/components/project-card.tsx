@@ -16,7 +16,7 @@ import { LiquidButton } from "./liquid-button";
  */
 export function ProjectCard({ p, index }: { p: Project; index: number }) {
   return (
-    <article className="reveal-up card-lift glass lensable relative flex flex-col rounded-[24px] p-6 md:p-8">
+    <article data-rise className="card-lift glass lensable relative flex flex-col rounded-[24px] p-6 md:p-8">
       <div className="flex items-start justify-between gap-4">
         {/* Shared element: this title morphs into the case study's <h1>.
             The pairing is done by the browser, not React — `view-transition-name`

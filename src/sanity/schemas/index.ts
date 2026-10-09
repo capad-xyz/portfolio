@@ -4,6 +4,7 @@ import { workExperience } from "./work-experience";
 import { testimonial } from "./testimonial";
 import { stackGroup } from "./stack-group";
 import { alsoShipped } from "./also-shipped";
+import { ledgerEntry } from "./ledger-entry";
 import { resume } from "./resume";
 import { resumeDownload } from "./resume-download";
 import { socialLink } from "./social-link";
@@ -15,6 +16,7 @@ export const schemaTypes: SchemaTypeDefinition[] = [
   testimonial,
   stackGroup,
   alsoShipped,
+  ledgerEntry,
   socialLink,
   resume,
   // Object type, not a document: it only exists inside `resume.downloads`, but

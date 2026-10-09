@@ -14,7 +14,6 @@ import { resumeGraph, identityGraph, jsonLdHtml, SITE_DESCRIPTION } from "@/lib/
 import { LiquidButton } from "@/components/liquid-button";
 import { OpenContactButton } from "@/components/open-contact-button";
 import { ResumeDownloads } from "@/components/resume-downloads";
-import { Reveal } from "@/components/reveal";
 
 // ISR: regenerate at most every 5 min so CMS edits appear without a redeploy.
 export const revalidate = 300;
@@ -121,219 +120,217 @@ export default async function ResumePage() {
           ),
         }}
       />
-      <Reveal>
-        <Link
-          href="/"
-          className="reveal-up section-eyebrow inline-flex items-center gap-2 transition hover:text-[var(--ink)] print:hidden"
-        >
-          <span aria-hidden>&larr;</span> home
-        </Link>
+      <Link
+        href="/"
+        data-rise className="section-eyebrow inline-flex items-center gap-2 transition hover:text-[var(--ink)] print:hidden"
+      >
+        <span aria-hidden>&larr;</span> home
+      </Link>
 
-        <header className="reveal-title mt-8 print:mt-0">
-          <p className="section-eyebrow">resume</p>
-          <h1 className="mt-4 text-[clamp(38px,6.5vw,72px)] font-bold leading-[0.92] tracking-[-0.03em]">
-            {NAME}
-          </h1>
-          <p className="mt-3 text-[clamp(17px,2vw,22px)] leading-[1.3] text-[var(--ink)]/80">
-            {resume.headline}
-          </p>
-          {resume.availability && (
-            <p className="mt-3 font-mono text-[12px] leading-[1.7] tracking-[0.04em] text-[var(--muted)]">
-              {resume.availability}
-            </p>
-          )}
-        </header>
-
-        {/* Above everything, including the prose: the whole point of this page is
-            that a recruiter can take the file without reading it first. One
-            button, one format, no decision — the PDF is what they came for.
-            Anyone wanting DOCX or Markdown finds all three at the close. */}
-        <div className="reveal-up mt-8 flex flex-wrap items-center gap-x-5 gap-y-3 print:hidden">
-          <ResumeDownloads options={resume.downloads} variant="single" />
-          {resume.updated && (
-            <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--muted)]">
-              {resume.updated}
-            </span>
-          )}
-        </div>
-
-        {/* On paper a download button is a dead end; the address it came from is
-            the one thing worth carrying onto the page. */}
-        <p className="hidden font-mono text-[11px] tracking-[0.16em] text-[var(--muted)] print:mt-4 print:block">
-          capad.fyi/resume
+      <header data-rise className="mt-8 print:mt-0">
+        <p className="section-eyebrow">resume</p>
+        <h1 className="mt-4 text-[clamp(38px,6.5vw,72px)] font-bold leading-[0.92] tracking-[-0.03em]">
+          {NAME}
+        </h1>
+        <p className="mt-3 text-[clamp(17px,2vw,22px)] leading-[1.3] text-[var(--ink)]/80">
+          {resume.headline}
         </p>
+        {resume.availability && (
+          <p className="mt-3 font-mono text-[12px] leading-[1.7] tracking-[0.04em] text-[var(--muted)]">
+            {resume.availability}
+          </p>
+        )}
+      </header>
 
-        {resume.contacts && resume.contacts.length > 0 && (
-          <ul className="reveal-up glass lensable mt-8 grid gap-x-8 gap-y-5 rounded-[20px] px-7 py-6 sm:grid-cols-2 md:grid-cols-3 print:mt-6 print:rounded-none print:px-0 print:py-4">
-            {resume.contacts.map((c) => (
-              <li key={`${c.label}-${c.value}`} className="min-w-0">
-                <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-[var(--muted)]">
-                  {c.label}
-                </p>
-                {c.href ? (
-                  <a
-                    href={c.href}
-                    {...(isHttp(c.href)
-                      ? { target: "_blank", rel: "noopener noreferrer" }
-                      : {})}
-                    className="mt-1.5 block truncate text-[14px] text-[var(--ink)] underline decoration-[var(--muted)]/40 underline-offset-4 transition hover:decoration-[var(--ink)]"
-                  >
-                    {c.value}
-                  </a>
-                ) : (
-                  <p className="mt-1.5 truncate text-[14px] text-[var(--ink)]">{c.value}</p>
-                )}
-              </li>
-            ))}
-          </ul>
+      {/* Above everything, including the prose: the whole point of this page is
+          that a recruiter can take the file without reading it first. One
+          button, one format, no decision — the PDF is what they came for.
+          Anyone wanting DOCX or Markdown finds all three at the close. */}
+      <div data-rise className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-3 print:hidden">
+        <ResumeDownloads options={resume.downloads} variant="single" />
+        {resume.updated && (
+          <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--muted)]">
+            {resume.updated}
+          </span>
+        )}
+      </div>
+
+      {/* On paper a download button is a dead end; the address it came from is
+          the one thing worth carrying onto the page. */}
+      <p className="hidden font-mono text-[11px] tracking-[0.16em] text-[var(--muted)] print:mt-4 print:block">
+        capad.fyi/resume
+      </p>
+
+      {resume.contacts && resume.contacts.length > 0 && (
+        <ul data-rise className="glass lensable mt-8 grid gap-x-8 gap-y-5 rounded-[20px] px-7 py-6 sm:grid-cols-2 md:grid-cols-3 print:mt-6 print:rounded-none print:px-0 print:py-4">
+          {resume.contacts.map((c) => (
+            <li key={`${c.label}-${c.value}`} className="min-w-0">
+              <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-[var(--muted)]">
+                {c.label}
+              </p>
+              {c.href ? (
+                <a
+                  href={c.href}
+                  {...(isHttp(c.href)
+                    ? { target: "_blank", rel: "noopener noreferrer" }
+                    : {})}
+                  className="mt-1.5 block truncate text-[14px] text-[var(--ink)] underline decoration-[var(--muted)]/40 underline-offset-4 transition hover:decoration-[var(--ink)]"
+                >
+                  {c.value}
+                </a>
+              ) : (
+                <p className="mt-1.5 truncate text-[14px] text-[var(--ink)]">{c.value}</p>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <p data-rise className="mt-10 max-w-2xl text-[clamp(15px,1.6vw,18px)] leading-[1.65] text-[var(--ink)]/85 [text-wrap:pretty]">
+        {resume.summary}
+      </p>
+
+      <div className="mt-14 flex flex-col gap-12 print:mt-8 print:gap-8">
+        {work.length > 0 && (
+          <Section label="experience">
+            <ol className="flex flex-col gap-9">
+              {work.map((w) => (
+                <li key={w._id} data-rise className="break-inside-avoid">
+                  <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-[var(--muted)]">
+                    {period(w)}
+                  </p>
+                  <h3 className="mt-1.5 text-[clamp(19px,2.2vw,25px)] font-bold leading-[1.15] tracking-[-0.015em]">
+                    {w.position}
+                  </h3>
+                  <p className="mt-1 text-[15px] text-[var(--muted)]">{w.company}</p>
+                  {w.summary && (
+                    <p className="mt-3 max-w-2xl text-[15px] leading-[1.6] text-[var(--ink)]/75 [text-wrap:pretty]">
+                      {w.summary}
+                    </p>
+                  )}
+                </li>
+              ))}
+            </ol>
+          </Section>
         )}
 
-        <p className="reveal-up mt-10 max-w-2xl text-[clamp(15px,1.6vw,18px)] leading-[1.65] text-[var(--ink)]/85 [text-wrap:pretty]">
-          {resume.summary}
-        </p>
-
-        <div className="mt-14 flex flex-col gap-12 print:mt-8 print:gap-8">
-          {work.length > 0 && (
-            <Section label="experience">
-              <ol className="flex flex-col gap-9">
-                {work.map((w) => (
-                  <li key={w._id} className="reveal-up break-inside-avoid">
-                    <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-[var(--muted)]">
-                      {period(w)}
-                    </p>
-                    <h3 className="mt-1.5 text-[clamp(19px,2.2vw,25px)] font-bold leading-[1.15] tracking-[-0.015em]">
-                      {w.position}
-                    </h3>
-                    <p className="mt-1 text-[15px] text-[var(--muted)]">{w.company}</p>
-                    {w.summary && (
-                      <p className="mt-3 max-w-2xl text-[15px] leading-[1.6] text-[var(--ink)]/75 [text-wrap:pretty]">
-                        {w.summary}
-                      </p>
-                    )}
-                  </li>
-                ))}
-              </ol>
-            </Section>
-          )}
-
-          {projects.length > 0 && (
-            <Section label="open source">
-              <ol className="flex flex-col gap-8">
-                {projects.map((p) => (
-                  <li key={p._id} className="reveal-up break-inside-avoid">
-                    <div className="flex flex-wrap items-baseline gap-x-3.5 gap-y-1">
-                      <h3 className="text-[clamp(18px,2vw,22px)] font-bold leading-[1.15] tracking-[-0.015em]">
-                        {p.hasStory ? (
-                          <Link
-                            href={`/work/${p.slug}`}
-                            className="transition-opacity hover:opacity-70"
-                          >
-                            {p.title}
-                          </Link>
-                        ) : (
-                          p.title
-                        )}
-                      </h3>
-                      <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--muted)]">
-                        {[STATUS_LABEL[p.status], p.year, p.license]
-                          .filter(Boolean)
-                          .join(" · ")}
-                      </span>
-                    </div>
-                    <p className="mt-2 max-w-2xl text-[15px] leading-[1.55] text-[var(--ink)]/75 [text-wrap:pretty]">
-                      {p.oneLiner}
-                    </p>
-                    {p.links && p.links.length > 0 && (
-                      <p className="mt-2.5 flex flex-wrap items-center gap-x-5 gap-y-1.5 font-mono text-[11px] uppercase tracking-[0.16em]">
-                        {p.links.map((l) => (
-                          <a
-                            key={l.href}
-                            href={l.href}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="print-url text-[var(--ink)]/65 underline decoration-[var(--muted)]/40 underline-offset-4 transition hover:text-[var(--ink)] hover:decoration-[var(--ink)]"
-                          >
-                            {l.label}
-                          </a>
-                        ))}
-                      </p>
-                    )}
-                  </li>
-                ))}
-              </ol>
-            </Section>
-          )}
-
-          {stack.length > 0 && (
-            <Section label="stack">
-              <div className="flex flex-col gap-6">
-                {stack.map((g) => (
-                  <div key={g._id} className="reveal-up break-inside-avoid">
-                    <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--muted)]">
-                      {g.label}
-                    </p>
-                    <div className="mt-2.5 flex flex-wrap gap-2">
-                      {g.items?.map((t) => (
-                        <span
-                          key={t}
-                          className="chip lensable px-3.5 py-1.5 text-[12px] tracking-[0.02em]"
+        {projects.length > 0 && (
+          <Section label="open source">
+            <ol className="flex flex-col gap-8">
+              {projects.map((p) => (
+                <li key={p._id} data-rise className="break-inside-avoid">
+                  <div className="flex flex-wrap items-baseline gap-x-3.5 gap-y-1">
+                    <h3 className="text-[clamp(18px,2vw,22px)] font-bold leading-[1.15] tracking-[-0.015em]">
+                      {p.hasStory ? (
+                        <Link
+                          href={`/work/${p.slug}`}
+                          className="transition-opacity hover:opacity-70"
                         >
-                          {t}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Section>
-          )}
-
-          {resume.education && resume.education.length > 0 && (
-            <Section label="education">
-              <ul className="flex flex-col gap-6">
-                {resume.education.map((e) => (
-                  <li
-                    key={`${e.credential}-${e.institution}`}
-                    className="reveal-up break-inside-avoid"
-                  >
-                    {e.period && (
-                      <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-[var(--muted)]">
-                        {e.period}
-                      </p>
-                    )}
-                    <h3 className="mt-1.5 text-[18px] font-bold leading-[1.2] tracking-[-0.015em]">
-                      {e.credential}
+                          {p.title}
+                        </Link>
+                      ) : (
+                        p.title
+                      )}
                     </h3>
-                    <p className="mt-1 text-[15px] text-[var(--muted)]">{e.institution}</p>
-                    {e.note && (
-                      <p className="mt-2 max-w-2xl text-[14px] leading-[1.6] text-[var(--ink)]/75">
-                        {e.note}
-                      </p>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </Section>
-          )}
-        </div>
+                    <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--muted)]">
+                      {[STATUS_LABEL[p.status], p.year, p.license]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </span>
+                  </div>
+                  <p className="mt-2 max-w-2xl text-[15px] leading-[1.55] text-[var(--ink)]/75 [text-wrap:pretty]">
+                    {p.oneLiner}
+                  </p>
+                  {p.links && p.links.length > 0 && (
+                    <p className="mt-2.5 flex flex-wrap items-center gap-x-5 gap-y-1.5 font-mono text-[11px] uppercase tracking-[0.16em]">
+                      {p.links.map((l) => (
+                        <a
+                          key={l.href}
+                          href={l.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="print-url text-[var(--ink)]/65 underline decoration-[var(--muted)]/40 underline-offset-4 transition hover:text-[var(--ink)] hover:decoration-[var(--ink)]"
+                        >
+                          {l.label}
+                        </a>
+                      ))}
+                    </p>
+                  )}
+                </li>
+              ))}
+            </ol>
+          </Section>
+        )}
 
-        <div className="reveal-up mt-16 flex flex-wrap items-center gap-4 print:hidden">
-          {/* The closing CTA offers every format behind one button: by here the
-              reader has chosen deliberately, and a second "Download the PDF"
-              would just read as the header's button repeated. */}
-          <ResumeDownloads options={resume.downloads} variant="menu" />
-          <OpenContactButton variant="outline" className="px-6 py-[14px] text-[15px] font-medium">
-            Start a conversation
-          </OpenContactButton>
-          <LiquidButton
-            href="/projects"
-            variant="outline"
-            className="px-6 py-[14px] text-[15px] font-medium"
-          >
-            The build stories
-          </LiquidButton>
-        </div>
-      </Reveal>
+        {stack.length > 0 && (
+          <Section label="stack">
+            <div className="flex flex-col gap-6">
+              {stack.map((g) => (
+                <div key={g._id} data-rise className="break-inside-avoid">
+                  <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--muted)]">
+                    {g.label}
+                  </p>
+                  <div className="mt-2.5 flex flex-wrap gap-2">
+                    {g.items?.map((t) => (
+                      <span
+                        key={t}
+                        className="chip lensable px-3.5 py-1.5 text-[12px] tracking-[0.02em]"
+                      >
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Section>
+        )}
+
+        {resume.education && resume.education.length > 0 && (
+          <Section label="education">
+            <ul className="flex flex-col gap-6">
+              {resume.education.map((e) => (
+                <li
+                  key={`${e.credential}-${e.institution}`}
+                  data-rise className="break-inside-avoid"
+                >
+                  {e.period && (
+                    <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-[var(--muted)]">
+                      {e.period}
+                    </p>
+                  )}
+                  <h3 className="mt-1.5 text-[18px] font-bold leading-[1.2] tracking-[-0.015em]">
+                    {e.credential}
+                  </h3>
+                  <p className="mt-1 text-[15px] text-[var(--muted)]">{e.institution}</p>
+                  {e.note && (
+                    <p className="mt-2 max-w-2xl text-[14px] leading-[1.6] text-[var(--ink)]/75">
+                      {e.note}
+                    </p>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </Section>
+        )}
+      </div>
+
+      <div data-rise className="mt-16 flex flex-wrap items-center gap-4 print:hidden">
+        {/* The closing CTA offers every format behind one button: by here the
+            reader has chosen deliberately, and a second "Download the PDF"
+            would just read as the header's button repeated. */}
+        <ResumeDownloads options={resume.downloads} variant="menu" />
+        <OpenContactButton variant="outline" className="px-6 py-[14px] text-[15px] font-medium">
+          Start a conversation
+        </OpenContactButton>
+        <LiquidButton
+          href="/projects"
+          variant="outline"
+          className="px-6 py-[14px] text-[15px] font-medium"
+        >
+          The build stories
+        </LiquidButton>
+      </div>
     </main>
   );
 }
@@ -346,7 +343,7 @@ export default async function ResumePage() {
 function Section({ label, children }: { label: string; children: ReactNode }) {
   return (
     <section className="grid gap-5 border-t border-black/10 pt-10 md:grid-cols-[160px_1fr] md:gap-x-10 print:pt-6">
-      <h2 className="reveal-up font-mono text-[12px] uppercase tracking-[0.18em] text-[var(--muted)] md:pt-1">
+      <h2 data-rise className="font-mono text-[12px] uppercase tracking-[0.18em] text-[var(--muted)] md:pt-1">
         {label}
       </h2>
       <div className="min-w-0">{children}</div>

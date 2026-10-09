@@ -5,6 +5,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { createBubbles, type BubbleManager } from "@hyperplexed/bubbles";
 import { LiquidButton } from "./liquid-button";
 import { useLiquidTyping } from "./use-liquid-typing";
+import { CONTACT_EMAIL } from "@/lib/canonical";
 import type { SocialLink } from "@/lib/sanity";
 
 type Status = "idle" | "sending" | "ok" | "error";
@@ -256,10 +257,10 @@ function ContactPanel({ onSent }: { onSent: () => void }) {
       <p className="text-center text-[11px] text-[var(--muted)]">
         or email{" "}
         <a
-          href="mailto:connect@capad.fyi"
+          href={`mailto:${CONTACT_EMAIL}`}
           className="underline decoration-[var(--muted)] underline-offset-2 hover:text-[var(--ink)]"
         >
-          connect@capad.fyi
+          {CONTACT_EMAIL}
         </a>{" "}
         directly
         {TURNSTILE_SITE_KEY && (

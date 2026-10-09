@@ -122,12 +122,6 @@ export const project = defineType({
       ],
     }),
     defineField({
-      name: "image",
-      title: "Image",
-      type: "image",
-      options: { hotspot: true },
-    }),
-    defineField({
       name: "featured",
       title: "Featured on homepage",
       type: "boolean",
@@ -147,7 +141,11 @@ export const project = defineType({
       by: [{ field: "order", direction: "asc" }],
     },
   ],
+  // No `image` field. It was declared, set on nothing, and queried nowhere, so
+  // it only ever offered a Studio upload target for a picture no code could read.
+  // The one photograph on this site is the hero plate, and that is a committed
+  // asset in /public rather than per-project content.
   preview: {
-    select: { title: "title", subtitle: "status", media: "image" },
+    select: { title: "title", subtitle: "status" },
   },
 });

@@ -123,7 +123,7 @@ export default async function RootLayout({
           unanimated.
         */}
         <noscript>
-          <style>{`.reveal-up,.reveal-title{opacity:1!important;transform:none!important;filter:none!important;}`}</style>
+          <style>{`[data-rise]{opacity:1!important;transform:none!important;filter:none!important;}`}</style>
         </noscript>
         <a href="#main" className="skip-link">
           Skip to content

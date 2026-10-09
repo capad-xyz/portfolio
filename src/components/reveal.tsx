@@ -1,60 +1,65 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect } from "react";
 
 /**
- * Tiny client island: attaches an IntersectionObserver to its children with the
- * `.reveal-up` class, promoting them to `.in` on first intersection. Lets the
- * surrounding section stay a server component while the on-scroll animation
- * still works. Reduced-motion ships static.
+ * The observer behind `data-rise`. One instance per page, mounted by SiteShell,
+ * watching the WHOLE document rather than a wrapper's children.
+ *
+ * It used to wrap a subtree (`<Reveal>`) and watch `.reveal-up, .reveal-title`.
+ * Both of those are gone as concepts: `data-rise` is now the whole motion system
+ * (see the block in globals.css), and it works on any element without anyone
+ * having to remember to wrap it. The wrapper was the reason the old system could
+ * only be applied where a component remembered to mount one.
+ *
+ * Two things it still owns that CSS cannot:
+ *
+ *  - The cascade. Elements crossing in the same batch land in document order, up
+ *    to a 450ms ceiling so a long list does not leave its last row waiting two
+ *    seconds. The delay is written to `--d` (the same custom property the
+ *    transition reads) and cleared once landed, so a hover transition on the same
+ *    element never inherits a 300ms lag.
+ *  - Nothing at all under reduced motion. There the CSS already pins every
+ *    `[data-rise]` to its end state, so this class is a no-op and the observer is
+ *    skipped entirely rather than run and immediately discarded.
  */
-export function Reveal({ children }: { children: ReactNode }) {
-  const root = useRef<HTMLDivElement>(null);
+const CASCADE_STEP_MS = 90;
+const CASCADE_CEILING_MS = 450;
 
+export function RevealObserver() {
   useEffect(() => {
-    const els = root.current?.querySelectorAll<HTMLElement>(".reveal-up, .reveal-title");
-    if (!els || !els.length) return;
-    if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      els.forEach((e) => e.classList.add("in"));
-      return;
-    }
+    const els = Array.from(
+      document.querySelectorAll<HTMLElement>("[data-rise]:not(.in)"),
+    );
+    if (!els.length) return;
+
     const io = new IntersectionObserver(
       (entries) => {
-        // Elements crossing in the same batch cascade in document order; a
-        // solo element (slow scroll) reveals immediately. The inline delay is
-        // cleared once the transition lands so hover effects never inherit it.
         let batch = 0;
-        entries.forEach((en) => {
-          if (!en.isIntersecting) return;
+        for (const en of entries) {
+          if (!en.isIntersecting) continue;
           const el = en.target as HTMLElement;
-          const delay = Math.min(batch++ * 90, 450);
+          const delay = Math.min(batch++ * CASCADE_STEP_MS, CASCADE_CEILING_MS);
           if (delay) {
-            el.style.transitionDelay = `${delay}ms`;
-            window.setTimeout(() => {
-              el.style.transitionDelay = "";
-            }, delay + 950);
+            el.style.setProperty("--d", `${delay}ms`);
+            window.setTimeout(() => el.style.removeProperty("--d"), delay + 950);
           }
           el.classList.add("in");
           io.unobserve(el);
-        });
+        }
       },
-      // threshold 0, and no negative bottom margin. Both mattered:
-      //
-      // A threshold is a share of the TARGET, and the case-study body is one
-      // `.reveal-up` wrapper around the whole chapter list — 3,000px+ tall. At
-      // 0.18 it needed ~600px of itself on screen, so a reader landing mid-page
-      // saw a blank column until they scrolled.
-      //
-      // The -10% bottom margin was worse than useless here: it pulls the
-      // observer root's bottom edge up to y=810, and the case body starts at
-      // y=814. Four pixels of miss gate the entire article behind a scroll
-      // that has to happen first. Anything already inside the viewport must
-      // render on arrival, so the root is the viewport, unmodified.
+      // threshold 0, unmodified root. Both mattered where this used to be used
+      // per-section: the case-study body is ONE [data-rise] wrapper around the
+      // whole 3,000px chapter list, so any threshold would need ~600px of itself
+      // on screen before a reader landing mid-page saw anything, and a negative
+      // bottom margin gated the entire article behind a scroll that had to happen
+      // first. Anything already in the viewport must render on arrival.
       { threshold: 0, rootMargin: "0px" },
     );
-    els.forEach((e) => io.observe(e));
+
+    for (const el of els) io.observe(el);
     return () => io.disconnect();
   }, []);
 
-  return <div ref={root} className="contents">{children}</div>;
+  return null;
 }

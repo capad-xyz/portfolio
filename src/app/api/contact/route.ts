@@ -1,11 +1,21 @@
 import { NextRequest } from "next/server";
+import { CONTACT_EMAIL } from "@/lib/canonical";
 
 // No `runtime = "edge"` export: on Cloudflare (via @opennextjs/cloudflare) the
 // whole app already runs in workerd, and the adapter rejects edge-runtime
 // route declarations. Locally this simply runs in Node.
 
 const FROM = "Portfolio <contact@capad.fyi>";
-const TO = "connect@capad.fyi";
+// The address the form delivers TO. Deliberately the same constant the page, the
+// JSON-LD and the /resume mirror publish, so the address a visitor is told to
+// reply to and the address their message actually reaches cannot drift.
+//
+// This was `connect@capad.fyi` and is now `hi@capad.fyi`. Resend will silently
+// accept a `to:` address that is not a verified, receiving mailbox, so if the
+// canonical address is ever changed again, confirm the new one receives mail
+// BEFORE shipping — otherwise the form keeps returning 200 and the submissions
+// go nowhere.
+const TO = CONTACT_EMAIL;
 
 const buckets = new Map<string, { count: number; resetAt: number }>();
 const LIMIT = 5;

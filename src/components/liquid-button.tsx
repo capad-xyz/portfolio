@@ -24,6 +24,16 @@ export function LiquidButton({
   block = false,
   as,
   ariaLabel,
+  /**
+   * Render for a DARK background (`--ink`), used by the colophon.
+   *
+   * Not decoration: the default surfaces assume a light backdrop — a `--ink`
+   * label on a 15%-alpha ink hairline is dark-on-dark there, and both the
+   * secondary and the outline variant became unreadable on the colophon's own
+   * plate. `onInk` inverts them. The liquid flood is shared and unchanged,
+   * because it was already the right colour for the inverted pill.
+   */
+  onInk = false,
 }: {
   children: ReactNode;
   variant?: "glass" | "outline";
@@ -48,6 +58,8 @@ export function LiquidButton({
   as?: "summary";
   /** Accessible name, for when the label is an icon rather than words. */
   ariaLabel?: string;
+  /** For a dark (`--ink`) background — see the prop note above. */
+  onInk?: boolean;
 }) {
   const root = useRef<HTMLElement>(null);
   const fill = useRef<HTMLSpanElement>(null);
@@ -67,7 +79,16 @@ export function LiquidButton({
     el.style.setProperty("--fill-scale", `${Math.ceil((far / 12) * 1.1)}`);
   };
 
-  const surface = variant === "glass" ? "glass" : "lqbtn-outline";
+  // `onInk` replaces the surface entirely rather than composing with it: the
+  // glass material assumes a light backdrop, and layering an inverted background
+  // under a translucent one just gives back the grey blob it was meant to fix.
+  const surface = onInk
+    ? variant === "glass"
+      ? "lqbtn--on-ink"
+      : "lqbtn-outline--on-ink"
+    : variant === "glass"
+      ? "glass"
+      : "lqbtn-outline";
   const cls = `lqbtn ${surface} ${block ? "lqbtn-block w-full " : ""}inline-flex items-center justify-center rounded-full ${className}`;
   const inner = (
     <>

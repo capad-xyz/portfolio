@@ -42,7 +42,7 @@ export function ProjectHeader({
 }) {
   return (
     <>
-      <div className="reveal-up mt-8 flex flex-wrap items-center gap-3 font-mono text-[11px] uppercase tracking-[0.22em] text-[var(--muted)]">
+      <div data-rise className="mt-8 flex flex-wrap items-center gap-3 font-mono text-[11px] uppercase tracking-[0.22em] text-[var(--muted)]">
         <span className="text-[var(--ink)]">{STATUS_LABEL[project.status]}</span>
         {project.year && (
           <>
@@ -59,8 +59,8 @@ export function ProjectHeader({
       </div>
 
       {/* Receiving end of the card morph — the name matches project-card.tsx.
-          Deliberately WITHOUT `reveal-title`: that class starts at opacity 0 /
-          blur(14px) and is promoted to `.in` by an IntersectionObserver, so a
+          Deliberately WITHOUT `data-rise`: the attribute starts at opacity 0 /
+          blur(12px) and is promoted to `.in` by an IntersectionObserver, so a
           morph arriving here would land on an invisible element and then blur
           itself back in. The morph IS this title's entrance; on a cold load
           (no transition to morph from) it simply renders present, which is the
@@ -73,12 +73,12 @@ export function ProjectHeader({
         {project.title}
       </h1>
 
-      <p className="reveal-up mt-5 max-w-2xl text-[clamp(17px,2vw,21px)] leading-[1.5] text-[var(--ink)]/85 [text-wrap:pretty]">
+      <p data-rise className="mt-5 max-w-2xl text-[clamp(17px,2vw,21px)] leading-[1.5] text-[var(--ink)]/85 [text-wrap:pretty]">
         {project.oneLiner}
       </p>
 
       {project.metrics && project.metrics.length > 0 && (
-        <dl className="reveal-up glass lensable mt-10 flex flex-wrap gap-x-12 gap-y-6 rounded-[20px] px-8 py-6">
+        <dl data-rise className="glass lensable mt-10 flex flex-wrap gap-x-12 gap-y-6 rounded-[20px] px-8 py-6">
           {project.metrics.map((m) => (
             <div key={`${m.value}-${m.label}`}>
               <dt className="text-[clamp(28px,4vw,40px)] font-bold leading-none tracking-[-0.02em]">
@@ -93,7 +93,7 @@ export function ProjectHeader({
       )}
 
       {project.links && project.links.length > 0 && (
-        <div className="reveal-up mt-9 flex flex-wrap gap-3">
+        <div data-rise className="mt-9 flex flex-wrap gap-3">
           {project.links.map((l) => (
             <LiquidButton
               key={l.href}
@@ -114,7 +114,7 @@ export function ProjectHeader({
 export function ProjectTags({ tags }: { tags?: string[] }) {
   if (!tags?.length) return null;
   return (
-    <div className="reveal-up mt-14 flex flex-wrap gap-2 border-t border-black/10 pt-8">
+    <div data-rise className="mt-14 flex flex-wrap gap-2 border-t border-black/10 pt-8">
       {tags.map((t) => (
         <span key={t} className="chip px-3 py-1 text-[11px] lowercase">
           {t}

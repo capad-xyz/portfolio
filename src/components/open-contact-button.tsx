@@ -13,14 +13,18 @@ export function OpenContactButton({
   children = "Start a conversation",
   variant = "glass",
   className = "px-7 py-[14px] text-[15px] font-semibold",
+  /** For a dark (`--ink`) background — see LiquidButton's note on `onInk`. */
+  onInk = false,
 }: {
   children?: ReactNode;
   variant?: "glass" | "outline";
   className?: string;
+  onInk?: boolean;
 }) {
   return (
     <LiquidButton
       variant={variant}
+      onInk={onInk}
       className={className}
       onClick={() => dispatchEvent(new Event("capad:open-contact"))}
     >

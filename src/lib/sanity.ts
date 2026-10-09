@@ -9,6 +9,7 @@ import {
   DEMO_ALSO_SHIPPED,
   DEMO_SOCIAL_LINKS,
   DEMO_RESUME,
+  DEMO_LEDGER_ENTRIES,
 } from "./demo-content";
 
 // While demo mode is on, demo content OVERRIDES the CMS so every section is
@@ -105,6 +106,27 @@ export type Testimonial = {
   role?: string;
   company?: string;
   link?: string;
+  /**
+   * Slug of the project this quote is about, resolved from the CMS reference by
+   * the query rather than stored. Absent means the quote is not about a project
+   * (an employer or a client, say) and belongs with the experience section
+   * instead of on a project row.
+   */
+  projectSlug?: string;
+};
+
+/**
+ * One cell in the proof ledger: a number he already publishes, plus where it came
+ * from. `source` is what makes the strip checkable rather than a boast.
+ */
+export type LedgerEntry = {
+  _id: string;
+  value: string;
+  /** Suffix set smaller than the number, so '0.7' and '92' share a baseline. */
+  unit?: string;
+  label: string;
+  source: string;
+  href?: string;
 };
 
 export type StackGroup = {
@@ -355,9 +377,21 @@ export async function getWorkExperience(): Promise<WorkExperience[]> {
   return safeFetch<WorkExperience[]>(WORK_EXPERIENCE_QUERY, {}, [], "work experience");
 }
 
+/**
+ * `project->slug.current` is resolved here rather than returned as a raw
+ * reference, because the only thing the component does with it is group quotes
+ * under a project row - and that grouping is by slug, which is also what the demo
+ * path keys on. Dereferencing in the query means the two paths cannot disagree
+ * about which quotes belong to which project.
+ */
+const TESTIMONIAL_FIELDS = `
+  _id, quote, name, role, company, link,
+  "projectSlug": project->slug.current
+`;
+
 const TESTIMONIALS_QUERY = `
   *[_type == "testimonial" && featured == true] | order(order asc, _createdAt desc){
-    _id, quote, name, role, company, link
+    ${TESTIMONIAL_FIELDS}
   }
 `;
 
@@ -366,7 +400,7 @@ const TESTIMONIALS_QUERY = `
 // — returns only what actually exists in the CMS.
 const ANY_TESTIMONIALS_QUERY = `
   *[_type == "testimonial"] | order(order asc, _createdAt desc){
-    _id, quote, name, role, company, link
+    ${TESTIMONIAL_FIELDS}
   }
 `;
 
@@ -375,6 +409,83 @@ export async function getTestimonials(): Promise<Testimonial[]> {
   const featured = await safeFetch<Testimonial[]>(TESTIMONIALS_QUERY, {}, [], "testimonials");
   if (featured.length) return featured;
   return safeFetch<Testimonial[]>(ANY_TESTIMONIALS_QUERY, {}, [], "testimonials (fallback)");
+}
+
+/**
+ * Decide which project each quote is about, and stamp `projectSlug` with the
+ * answer.
+ *
+ * Two sources, in order:
+ *
+ *  1. The explicit CMS reference, when it is set. That is the durable answer and
+ *     it is what the Studio field is for.
+ *  2. The quote's own existing free text. Two of the published quotes already say
+ *     `role: "on searchts"`, and the maintainer note says `company: "wmux"` — the
+ *     attribution was written into the documents long before there was anywhere
+ *     to put it structurally.
+ *
+ * The fallback is load-bearing right now, and that is deliberate. The reference
+ * field is new and no published document sets it, so reading only the reference
+ * would render EVERY quote in production as unattached and drop all of them into
+ * the experience section — while dev (demo mode) showed them on their project
+ * rows. That is precisely the two-source divergence this repo keeps getting bitten
+ * by, except inverted: the CMS being newer than the code instead of older.
+ *
+ * Inference is intentionally conservative. It only matches a quote whose own text
+ * names the project, and it never guesses: a quote about an employer matches
+ * nothing and stays unattached, which is a state the layout handles on purpose.
+ * Setting the reference in the Studio later makes the answer explicit and stops
+ * depending on this.
+ *
+ * Mutates and returns the same array: one pass, and every consumer downstream
+ * (the work rows, the experience section) then agrees about the grouping.
+ */
+export function attachTestimonialsToProjects(
+  quotes: Testimonial[],
+  projects: Pick<Project, "slug" | "title">[],
+): Testimonial[] {
+  for (const q of quotes) {
+    if (q.projectSlug) continue;
+    const haystack = `${q.role ?? ""} ${q.company ?? ""}`.toLowerCase();
+    if (!haystack.trim()) continue;
+    const hit = projects.find((p) => {
+      const slug = p.slug.toLowerCase();
+      const title = p.title.toLowerCase();
+      // Word-boundary match, so `hare` does not fire on "shared" and `grove` does
+      // not fire on "groves". The slug/title are single tokens by convention.
+      const re = new RegExp(`\\b${slug.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`);
+      return re.test(haystack) || haystack.includes(title);
+    });
+    if (hit) q.projectSlug = hit.slug;
+  }
+  return quotes;
+}
+
+/**
+ * The proof ledger. Aggregates numbers he ALREADY publishes elsewhere on the site
+ * into one strip, each naming its source.
+ *
+ * Never derived from project metrics: aggregating those would silently couple the
+ * headline to whatever a card happens to say this month, and a claim that changes
+ * because a card was reworded is not checkable. These are their own documents, so
+ * each number is deliberately chosen and individually auditable.
+ *
+ * Empty is a real outcome and renders nothing rather than a placeholder - a
+ * ledger of invented filler would be worse than no ledger.
+ */
+const LEDGER_QUERY = `
+  *[_type == "ledgerEntry"] | order(order asc, _createdAt asc){
+    _id, value, unit, label, source, href
+  }
+`;
+
+export async function getLedger(): Promise<LedgerEntry[]> {
+  const list: LedgerEntry[] = DEMO_ENABLED
+    ? DEMO_LEDGER_ENTRIES
+    : await safeFetch<LedgerEntry[]>(LEDGER_QUERY, {}, [], "ledger");
+  // `value` is required by the schema, but a half-saved draft can still be in the
+  // dataset, and one blank cell would otherwise print as a gap in the row.
+  return list.filter((e) => e.value && e.label);
 }
 
 const STACK_GROUPS_QUERY = `

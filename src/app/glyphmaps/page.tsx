@@ -4,7 +4,6 @@ import { getProjectBySlug, getSocialLinks } from "@/lib/sanity";
 import { CaseStudyBody } from "@/components/portable-text";
 import { OpenContactButton } from "@/components/open-contact-button";
 import { ReadingProgress } from "@/components/reading-progress";
-import { Reveal } from "@/components/reveal";
 import { LICENSE_URL, ProjectHeader, ProjectTags } from "@/components/project-header";
 import { GmFooter } from "@/components/glyphmaps/gm-footer";
 import { authorRef, personNode, jsonLdHtml } from "@/lib/jsonld";
@@ -111,23 +110,21 @@ export default async function GlyphmapsPage() {
         // `</script>` in a Sanity field would close the tag early.
         dangerouslySetInnerHTML={{ __html: jsonLdHtml(jsonLd) }}
       />
-      <Reveal>
-        <span className="section-eyebrow reveal-up">nothing phone (4a) pro · glyph matrix</span>
+      <span data-rise className="section-eyebrow">nothing phone (4a) pro · glyph matrix</span>
 
-        <ProjectHeader project={project} slug={SLUG} morph={false} />
+      <ProjectHeader project={project} slug={SLUG} morph={false} />
 
-        {project.body && project.body.length > 0 && (
-          <div className="case-body reveal-up mt-14 border-t border-black/10 pt-12">
-            <CaseStudyBody value={project.body} />
-          </div>
-        )}
-
-        <ProjectTags tags={project.tags} />
-
-        <div className="reveal-up mt-16">
-          <OpenContactButton />
+      {project.body && project.body.length > 0 && (
+        <div data-rise className="case-body mt-14 border-t border-black/10 pt-12">
+          <CaseStudyBody value={project.body} />
         </div>
-      </Reveal>
+      )}
+
+      <ProjectTags tags={project.tags} />
+
+      <div data-rise className="mt-16">
+        <OpenContactButton />
+      </div>
 
       <GmFooter />
     </main>

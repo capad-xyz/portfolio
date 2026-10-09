@@ -3,16 +3,24 @@
 import { useEffect, useRef, useState } from "react";
 import { useLenis } from "lenis/react";
 
-type Item = { id: "home" | "work" | "about" | "experience" | "stack" | "testimonials" | "contact"; label: string };
+type Item = { id: "home" | "work" | "ledger" | "experience" | "colophon"; label: string };
 
+/**
+ * Four places worth jumping to, down only, in reading order. This used to carry
+ * seven stops, three of which pointed at sections that no longer exist as their
+ * own thing — `about` is now the manifesto inside experience, `stack` left the
+ * main flow, and `testimonials` rode onto the projects they were about.
+ *
+ * `home` is a real stop rather than a special case in the code below: the scroll
+ * spy walks a uniform list, so keeping the cover as index 0 is what lets every
+ * branch be one `ITEMS[i]` lookup instead of an id comparison.
+ */
 const ITEMS: Item[] = [
-  { id: "home", label: "home" },
+  { id: "home", label: "cover" },
+  { id: "ledger", label: "ledger" },
   { id: "work", label: "work" },
   { id: "experience", label: "experience" },
-  { id: "about", label: "about" },
-  { id: "stack", label: "stack" },
-  { id: "testimonials", label: "words" },
-  { id: "contact", label: "contact" },
+  { id: "colophon", label: "colophon" },
 ];
 
 /**
