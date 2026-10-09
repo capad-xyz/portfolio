@@ -6,8 +6,15 @@ import { CONTACT_EMAIL } from "@/lib/canonical";
 // route declarations. Locally this simply runs in Node.
 
 const FROM = "Portfolio <contact@capad.fyi>";
-// The same constant the page and the JSON-LD publish, so the address a visitor
-// is told to reply to and the address the form actually delivers to cannot drift.
+// The address the form delivers TO. Deliberately the same constant the page, the
+// JSON-LD and the /resume mirror publish, so the address a visitor is told to
+// reply to and the address their message actually reaches cannot drift.
+//
+// This was `connect@capad.fyi` and is now `hi@capad.fyi`. Resend will silently
+// accept a `to:` address that is not a verified, receiving mailbox, so if the
+// canonical address is ever changed again, confirm the new one receives mail
+// BEFORE shipping — otherwise the form keeps returning 200 and the submissions
+// go nowhere.
 const TO = CONTACT_EMAIL;
 
 const buckets = new Map<string, { count: number; resetAt: number }>();

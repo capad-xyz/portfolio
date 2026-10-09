@@ -899,10 +899,9 @@ export const DEMO_RESUME: Resume = {
     "React-first full-stack engineer. Home stack: CSS, React, TypeScript, Next.js, Electron, Node, deploy. Product depth from Appson on ComplyV (formerly Compliance Sarathi) and Wordibly. Public proof: searchts on PyPI through 0.13.1 (I push, review, and release). I also own Grove, Dooper, GlyphMaps, and capad.fyi; Hare is not a SaaS yet; shipped Hare Bot. I use AI assistants to ship and review hard. I am finishing BCA (Honours) at MSU Baroda (expected 2028). Looking for remote or India roles that hire for ownership of shipped systems. Open to relocate; outside-India roles with visa sponsorship welcome.",
   availability: "India · remote-first · open to relocate · outside-India visa sponsorship welcome",
   contacts: [
-    // The canonical address, by import rather than by literal. This block was the
-    // last place in the app still carrying `hi@capad.fyi` - the same string the
-    // published resume document held - which meant the page a recruiter read said
-    // one address and the inbox the contact form delivered to was another.
+    // The canonical address, by import rather than by literal. This is the block
+    // a recruiter reads first, and it disagreed with the inbox the contact form
+    // delivered to until both were pointed at one constant.
     { label: "email", value: CONTACT_EMAIL, href: `mailto:${CONTACT_EMAIL}` },
     { label: "site", value: "capad.fyi", href: "https://capad.fyi" },
     { label: "github", value: "github.com/capad-xyz", href: "https://github.com/capad-xyz" },
