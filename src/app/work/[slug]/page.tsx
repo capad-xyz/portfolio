@@ -11,7 +11,6 @@ import {
 import { CaseStudyBody } from "@/components/portable-text";
 import { OpenContactButton } from "@/components/open-contact-button";
 import { ReadingProgress } from "@/components/reading-progress";
-import { Reveal } from "@/components/reveal";
 import { LICENSE_URL, ProjectHeader, ProjectTags } from "@/components/project-header";
 import { CANONICAL_ELSEWHERE } from "@/lib/canonical";
 import { projectNode, identityGraph, jsonLdHtml, SITE_DESCRIPTION } from "@/lib/jsonld";
@@ -113,54 +112,52 @@ export default async function ProjectPage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLdHtml(projectJsonLd) }}
       />
-      <Reveal>
-        <Link
-          href="/projects"
-          className="reveal-up section-eyebrow inline-flex items-center gap-2 transition hover:text-[var(--ink)]"
-        >
-          <span aria-hidden>&larr;</span> the build stories
-        </Link>
+      <Link
+        href="/projects"
+        data-rise className="section-eyebrow inline-flex items-center gap-2 transition hover:text-[var(--ink)]"
+      >
+        <span aria-hidden>&larr;</span> the build stories
+      </Link>
 
-        <ProjectHeader project={project} slug={slug} />
+      <ProjectHeader project={project} slug={slug} />
 
-        {project.body && project.body.length > 0 && (
-          <div className="case-body reveal-up mt-14 border-t border-black/10 pt-12">
-            <CaseStudyBody value={project.body} />
-          </div>
-        )}
-
-        <ProjectTags tags={project.tags} />
-
-        <div className="reveal-up mt-16">
-          <OpenContactButton />
+      {project.body && project.body.length > 0 && (
+        <div data-rise className="case-body mt-14 border-t border-black/10 pt-12">
+          <CaseStudyBody value={project.body} />
         </div>
+      )}
 
-        {prev && next && (
-          <nav
-            aria-label="More work"
-            className="reveal-up mt-16 flex items-center justify-between gap-6 border-t border-black/10 pt-8"
+      <ProjectTags tags={project.tags} />
+
+      <div data-rise className="mt-16">
+        <OpenContactButton />
+      </div>
+
+      {prev && next && (
+        <nav
+          aria-label="More work"
+          data-rise className="mt-16 flex items-center justify-between gap-6 border-t border-black/10 pt-8"
+        >
+          <Link
+            href={`/work/${prev.slug}`}
+            className="group inline-flex items-center gap-2 font-mono text-[12px] uppercase tracking-[0.18em] text-[var(--ink)]/70 transition hover:text-[var(--ink)]"
           >
-            <Link
-              href={`/work/${prev.slug}`}
-              className="group inline-flex items-center gap-2 font-mono text-[12px] uppercase tracking-[0.18em] text-[var(--ink)]/70 transition hover:text-[var(--ink)]"
-            >
-              <span aria-hidden className="transition-transform group-hover:-translate-x-0.5">
-                &larr;
-              </span>
-              {prev.title}
-            </Link>
-            <Link
-              href={`/work/${next.slug}`}
-              className="group inline-flex items-center gap-2 text-right font-mono text-[12px] uppercase tracking-[0.18em] text-[var(--ink)]/70 transition hover:text-[var(--ink)]"
-            >
-              {next.title}
-              <span aria-hidden className="transition-transform group-hover:translate-x-0.5">
-                &rarr;
-              </span>
-            </Link>
-          </nav>
-        )}
-      </Reveal>
+            <span aria-hidden className="transition-transform group-hover:-translate-x-0.5">
+              &larr;
+            </span>
+            {prev.title}
+          </Link>
+          <Link
+            href={`/work/${next.slug}`}
+            className="group inline-flex items-center gap-2 text-right font-mono text-[12px] uppercase tracking-[0.18em] text-[var(--ink)]/70 transition hover:text-[var(--ink)]"
+          >
+            {next.title}
+            <span aria-hidden className="transition-transform group-hover:translate-x-0.5">
+              &rarr;
+            </span>
+          </Link>
+        </nav>
+      )}
     </main>
   );
 }

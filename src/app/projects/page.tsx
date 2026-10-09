@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 import { getAllProjects, getAlsoShipped, getSocialLinks, type Project } from "@/lib/sanity";
 import { identityGraph, projectsGraph, jsonLdHtml, SITE_DESCRIPTION } from "@/lib/jsonld";
 import { StatusPill } from "@/components/project-card";
-import { Reveal } from "@/components/reveal";
 import { LiquidButton } from "@/components/liquid-button";
 import { OpenContactButton } from "@/components/open-contact-button";
 import { StoryArrow } from "@/components/story-arrow";
@@ -65,47 +64,45 @@ export default async function ProjectsPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLdHtml(projectsGraph(projects, contributed)) }}
       />
-      <Reveal>
-        <Link
-          href="/#work"
-          className="reveal-up section-eyebrow inline-flex items-center gap-2 transition hover:text-[var(--ink)]"
-        >
-          <span aria-hidden>&larr;</span> home
-        </Link>
+      <Link
+        href="/#work"
+        data-rise className="section-eyebrow inline-flex items-center gap-2 transition hover:text-[var(--ink)]"
+      >
+        <span aria-hidden>&larr;</span> home
+      </Link>
 
-        <header className="reveal-title mt-8 mb-4 flex flex-col gap-4">
-          <h1 className="text-[clamp(40px,7vw,76px)] font-bold leading-[0.92] tracking-[-0.03em]">
-            The build stories.
-          </h1>
-          <p className="max-w-xl text-[clamp(15px,1.6vw,18px)] leading-[1.6] text-[var(--muted)]">
-            {`Every project, written up the way it was built: problem, insight, architecture, honest ceiling. ${shipped} shipped, ${ongoing} in progress, all open source. Pick one and read.`}
-          </p>
-        </header>
+      <header data-rise className="mt-8 mb-4 flex flex-col gap-4">
+        <h1 className="text-[clamp(40px,7vw,76px)] font-bold leading-[0.92] tracking-[-0.03em]">
+          The build stories.
+        </h1>
+        <p className="max-w-xl text-[clamp(15px,1.6vw,18px)] leading-[1.6] text-[var(--muted)]">
+          {`Every project, written up the way it was built: problem, insight, architecture, honest ceiling. ${shipped} shipped, ${ongoing} in progress, all open source. Pick one and read.`}
+        </p>
+      </header>
 
-        {projects.length > 0 ? (
-          <div className="mt-10 flex flex-col gap-5">
-            {projects.map((p, i) => (
-              <ArticleRow key={p._id} p={p} index={i + 1} />
-            ))}
-          </div>
-        ) : (
-          <p className="reveal-up mt-10 text-[var(--muted)]">
-            Nothing published yet. Check back soon.
-          </p>
-        )}
-
-        <div className="reveal-up mt-16 flex flex-wrap items-center gap-4">
-          <OpenContactButton />
-          <LiquidButton
-            href="https://github.com/capad-xyz"
-            external
-            variant="outline"
-            className="px-6 py-[14px] text-[15px] font-medium"
-          >
-            GitHub
-          </LiquidButton>
+      {projects.length > 0 ? (
+        <div className="mt-10 flex flex-col gap-5">
+          {projects.map((p, i) => (
+            <ArticleRow key={p._id} p={p} index={i + 1} />
+          ))}
         </div>
-      </Reveal>
+      ) : (
+        <p data-rise className="mt-10 text-[var(--muted)]">
+          Nothing published yet. Check back soon.
+        </p>
+      )}
+
+      <div data-rise className="mt-16 flex flex-wrap items-center gap-4">
+        <OpenContactButton />
+        <LiquidButton
+          href="https://github.com/capad-xyz"
+          external
+          variant="outline"
+          className="px-6 py-[14px] text-[15px] font-medium"
+        >
+          GitHub
+        </LiquidButton>
+      </div>
     </main>
   );
 }
@@ -190,10 +187,10 @@ function ArticleRow({ p, index }: { p: Project; index: number }) {
   );
 
   return p.hasStory ? (
-    <Link href={`/work/${p.slug}`} className="reveal-up block">
+    <Link href={`/work/${p.slug}`} data-rise className="block">
       {inner}
     </Link>
   ) : (
-    <div className="reveal-up">{inner}</div>
+    <div data-rise>{inner}</div>
   );
 }

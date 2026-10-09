@@ -1,11 +1,20 @@
 /**
  * Hidden SVG filters used across the site:
- *  - #refract : liquid-glass edge refraction for `.glass` / `.plate` (Chromium;
- *               elsewhere the backdrop-filter blur alone applies).
- *  - #drop    : stronger lens for the falling liquid drop.
+ *  - #refract : liquid-glass edge refraction for `.glass` (Chromium; elsewhere
+ *               the backdrop-filter blur alone applies).
+ *  - #chew    : the T4 hero treatment. Erodes the alpha edge of the hero
+ *               photograph so the silhouette reads as torn rather than cut.
+ *  - #deckle  : the same idea at a gentler, directional frequency, for a
+ *               bleeding sheet edge rather than a chewed picture edge.
  *  - #goo     : metaball merge for the gooey liquid cursor.
  *  - #goo-drip: lighter metaball so falling droplets fuse into running liquid.
  * Rendered once in the root layout.
+ *
+ * `colorInterpolationFilters="sRGB"` on the two print filters is load-bearing,
+ * not decoration: the default linearRGB interpolation shifts the photograph's
+ * midtones on its way through the displacement map, so the plate came out a
+ * visibly different colour from the same asset rendered unfiltered. The point of
+ * the chew is the silhouette.
  */
 export function GlassFilters() {
   return (
@@ -40,26 +49,58 @@ export function GlassFilters() {
         />
       </filter>
 
+      {/* T4: one displacement pass eroding the alpha edge, colour untouched.
+          High frequency and a small scale - this is a chewed edge, a few px of
+          erosion, not a wobble. The 116% region is deliberate: the filter has to
+          paint past the element box or the torn edge is clipped straight back to
+          a rectangle, which is the one thing the chew exists to undo. */}
       <filter
-        id="drop"
-        x="-60%"
-        y="-60%"
-        width="220%"
-        height="220%"
+        id="chew"
+        x="-8%"
+        y="-8%"
+        width="116%"
+        height="116%"
         colorInterpolationFilters="sRGB"
       >
         <feTurbulence
           type="fractalNoise"
-          baseFrequency="0.01 0.01"
+          baseFrequency="1.15"
           numOctaves={2}
-          seed={2}
+          seed={9}
           result="n"
         />
-        <feGaussianBlur in="n" stdDeviation="1.8" result="nb" />
         <feDisplacementMap
           in="SourceGraphic"
-          in2="nb"
-          scale={36}
+          in2="n"
+          scale={4.5}
+          xChannelSelector="R"
+          yChannelSelector="G"
+        />
+      </filter>
+
+      {/* The deckle: a much lower horizontal frequency and a larger scale than
+          #chew. A torn paper edge is stretched along the grain, not chewed all
+          the way round at once, and this is the version used where the sheet
+          itself bleeds off an edge rather than the picture sitting on it. */}
+      <filter
+        id="deckle"
+        x="-4%"
+        y="-2%"
+        width="108%"
+        height="104%"
+        colorInterpolationFilters="sRGB"
+      >
+        <feTurbulence
+          type="fractalNoise"
+          baseFrequency="0.045 0.9"
+          numOctaves={3}
+          seed={4}
+          result="n"
+        />
+        <feDisplacementMap
+          in="SourceGraphic"
+          in2="n"
+          scale={7}
           xChannelSelector="R"
           yChannelSelector="G"
         />

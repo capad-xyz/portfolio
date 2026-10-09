@@ -1,11 +1,14 @@
 import { NextRequest } from "next/server";
+import { CONTACT_EMAIL } from "@/lib/canonical";
 
 // No `runtime = "edge"` export: on Cloudflare (via @opennextjs/cloudflare) the
 // whole app already runs in workerd, and the adapter rejects edge-runtime
 // route declarations. Locally this simply runs in Node.
 
 const FROM = "Portfolio <contact@capad.fyi>";
-const TO = "connect@capad.fyi";
+// The same constant the page and the JSON-LD publish, so the address a visitor
+// is told to reply to and the address the form actually delivers to cannot drift.
+const TO = CONTACT_EMAIL;
 
 const buckets = new Map<string, { count: number; resetAt: number }>();
 const LIMIT = 5;

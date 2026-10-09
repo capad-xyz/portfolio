@@ -1,4 +1,5 @@
 import type { Project } from "./sanity";
+import { CONTACT_EMAIL } from "./canonical";
 
 /**
  * One identity, referenced everywhere.
@@ -56,7 +57,9 @@ export function personNode(description: string, sameAs: string[] = []) {
     url: SITE_URL,
     mainEntityOfPage: SITE_URL,
     image: `${SITE_URL}/opengraph-image.png`,
-    email: "mailto:connect@capad.fyi",
+    // From the shared constant, so the structured data and the visible colophon
+    // cannot end up naming different inboxes.
+    email: `mailto:${CONTACT_EMAIL}`,
     jobTitle: "Software Engineer & Architect",
     description,
     // No `worksFor`: the Appson contract ended 31 Jul 2026, and a structured-data

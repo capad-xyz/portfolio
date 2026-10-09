@@ -6,6 +6,7 @@ import { GlassFilters } from "./glass-filters";
 import { LiquidCursor } from "./liquid-cursor";
 import { SmoothScroll } from "./smooth-scroll";
 import { ContactWidget } from "./contact-widget";
+import { RevealObserver } from "./reveal";
 import type { SocialLink } from "@/lib/sanity";
 
 /**
@@ -51,6 +52,10 @@ export function SiteShell({
       <LiquidCursor />
       <SmoothScroll>{children}</SmoothScroll>
       <ContactWidget socials={socials} />
+      {/* Mounted here rather than per-section: `data-rise` is one document-wide
+          observer now, so a section gets the motion by putting the attribute on
+          an element and nothing else. */}
+      <RevealObserver />
     </>
   );
 }

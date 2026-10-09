@@ -1,5 +1,6 @@
 import type { PortableTextBlock } from "@portabletext/types";
 import type { GlyphmapsPrivacy } from "./glyphmaps-content";
+import { CONTACT_EMAIL } from "./canonical";
 
 /**
  * Demo mirror for the GlyphMaps privacy policy — the same deliberate mirror
@@ -65,7 +66,9 @@ export const GLYPHMAPS_DEMO_PRIVACY: GlyphmapsPrivacy = {
   lastUpdated: "2026-06-14",
   summary:
     "GlyphMaps processes everything on your device and transmits nothing. There are no accounts, no analytics, no ads and no servers. The app has no network permission at all.",
-  contactEmail: "connect@capad.fyi",
+  // From the shared constant rather than spelled out here — this copy is read by
+  // a human on a phone, so it is the least forgiving place for a second address.
+  contactEmail: CONTACT_EMAIL,
   seoDescription:
     "How GlyphMaps handles data: notification access, on-device processing, and the fact that nothing leaves your phone.",
   body: [

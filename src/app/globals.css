@@ -4,6 +4,28 @@
   --paper: #f1f0ec;
   --ink: #0b0b0d;
   --muted: #6f6e6a;
+  /* The one seam in the document. The sheet changes value exactly once, at
+     experience, and that carries the boundary instead of an animation - so this
+     is a warmer stock, not a transition. */
+  --paper-deep: #efe9da;
+  /* Terracotta: the single accent plate. Used for the ledger rule, the receipts
+     chips and the quote borders, so proof-adjacent things read as one family. */
+  --ink-accent: #7a4634;
+  /* Text on the dark plates (the manifesto block, the colophon). `--ink` reads
+     as `--paper` there, so the type is named for the surface it sits on. */
+  --on-ink: #f1f0ec;
+  --on-ink-muted: #b8b4ab;
+  /* The easing every motion on this site uses, extracted from the one place it
+     was written out as a literal on every call site. `data-rise` below refers to
+     it rather than re-declaring the curve. */
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  /* The hairline that separates rows, ledger cells and roles. One value, so a
+     rule read across two sections is visibly the same line. */
+  --rule: rgba(11, 11, 11, 0.16);
+  /* Registration offset. Declared as a typed length below because the hero
+     animates it: the print starts visibly off-register and eases to zero as you
+     leave the first screen. */
+  --rv: 0px;
   /* Kept in step with the @property initial-values below: parked off-surface so
      an unlit pane shows no specular. */
   --mx: -9999px;
@@ -27,6 +49,10 @@
   --color-paper: var(--paper);
   --color-ink: var(--ink);
   --color-muted: var(--muted);
+  --color-paper-deep: var(--paper-deep);
+  --color-ink-accent: var(--ink-accent);
+  --color-on-ink: var(--on-ink);
+  --color-on-ink-muted: var(--on-ink-muted);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -196,24 +222,6 @@ body {
   .glass:hover::after { opacity: 1; }
 }
 
-/* ---- liquid glass plate behind hero content ---- */
-.plate {
-  position: absolute; border-radius: 40px; z-index: -1;
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.32), rgba(255, 255, 255, 0.12));
-  border: 1px solid rgba(255, 255, 255, 0.65);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.9) inset,
-    0 -18px 40px -34px rgba(20, 20, 30, 0.4) inset,
-    0 44px 100px -54px rgba(20, 20, 30, 0.6),
-    0 0 0 0.5px rgba(255, 255, 255, 0.5);
-  -webkit-backdrop-filter: blur(7px);
-  /* No url(#refract) here: this pane is ~27% of the viewport and the FIRST thing
-     painted, but it only blurs 3px — far too little for the displacement to be
-     visible. It was paying the most expensive filter in the sheet for an effect
-     you cannot see. The .glass panes, which blur 8px, still get it. */
-  backdrop-filter: blur(3px) saturate(135%);
-}
-
 /* ---- liquid-glass lens: rides the cursor over .lensable content; its edge is
    feathered to nothing so the disc never reads as a hard circle ---- */
 /* the wrapper only rides the cursor (JS transform); the glass itself lives on
@@ -327,6 +335,38 @@ body.lensing .drips.on { opacity: 0; }
 
 /* quieter secondary CTA: transparent with a hairline border, same ink flood */
 .lqbtn-outline { background: transparent; border: 1px solid rgba(11, 11, 13, 0.15); }
+
+/* ---- liquid buttons on a dark plate.
+
+   `.lqbtn` and `.lqbtn-outline` both assume a LIGHT backdrop: the label is
+   `--ink` and the outline is a 15%-alpha ink hairline. On the colophon, whose
+   background IS `--ink`, that is dark-on-dark — the email button rendered as a
+   grey blob and the two secondaries were invisible entirely.
+
+   These are the same control and the same liquid flood, with the surfaces
+   inverted for the dark ground. The flood needs no variant: `.lqbtn .fill` is
+   already `var(--ink)`, which is exactly right once the pill itself is paper and
+   the label flips to `--paper` on hover. */
+.lqbtn--on-ink {
+  background: var(--paper);
+  color: var(--ink);
+  border: 1px solid var(--paper);
+}
+.lqbtn-outline--on-ink {
+  background: transparent;
+  color: var(--paper);
+  border: 1px solid rgba(241, 240, 236, 0.34);
+}
+.lqbtn-outline--on-ink .fill { background: var(--paper); }
+.lqbtn-outline--on-ink:hover .lbl,
+.lqbtn-outline--on-ink.is-on .lbl { color: var(--ink); }
+@media (hover: hover) {
+  .lqbtn-outline--on-ink:hover { border-color: rgba(241, 240, 236, 0.6); }
+}
+/* On paper, the flood is ink and the label flips to paper. Same rules as the
+   default, restated so a future `.lqbtn` change cannot silently invert the
+   hover of the on-ink primary. */
+.lqbtn--on-ink:hover .lbl { color: var(--paper); }
 
 /* ---- /resume download menu: a native <details> disclosure wearing the liquid
    button, so the browser keeps the open state, Enter/Space and the exposed ARIA
@@ -614,73 +654,137 @@ body.lensing .drips.on { opacity: 0; }
   100% { transform: translateY(calc(2px + var(--fear, 0) * 3px)); }
 }
 
-/* ---- intro: the falling liquid drop (dark, light-refracting edge) ---- */
-.drop {
-  position: fixed; left: 50%; top: 0; z-index: 90; width: 34px; height: 50px;
-  transform: translate(-50%, -90px); will-change: transform;
-  border-radius: 50% 50% 50% 50% / 62% 62% 42% 42%;
-  background: radial-gradient(circle at 36% 26%, rgba(255, 255, 255, 0.85), rgba(60, 60, 68, 0.55) 34%, rgba(11, 11, 13, 0.82) 78%);
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.4), 0 0 22px rgba(255, 255, 255, 0.3),
-    inset 0 -7px 12px rgba(0, 0, 0, 0.55), inset 0 7px 9px rgba(255, 255, 255, 0.55);
-  backdrop-filter: blur(1px) saturate(150%) url(#drop);
-}
-.pool {
-  position: fixed; left: 50%; bottom: -44px; z-index: 88; width: 130px; height: 88px;
-  transform: translateX(-50%) scale(0); will-change: transform; border-radius: 50%;
-  background: radial-gradient(circle at 50% 32%, rgba(255, 255, 255, 0.85), rgba(120, 120, 130, 0.25) 55%, transparent 72%);
-  filter: blur(2px);
-}
-.ring {
-  position: fixed; left: 50%; bottom: 6px; z-index: 87; width: 30px; height: 30px; border-radius: 50%;
-  border: 1.5px solid rgba(90, 90, 100, 0.45); box-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
-  transform: translate(-50%, 50%) scale(0); will-change: transform; opacity: 0;
-}
-/* splash-crown droplets: small dark beads flung up from the impact point */
-.splashlet {
-  position: fixed; left: 50%; bottom: 10px; z-index: 89;
-  width: 10px; height: 13px; margin-left: -5px;
-  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
-  background: radial-gradient(circle at 36% 26%, rgba(255, 255, 255, 0.8), rgba(60, 60, 68, 0.5) 36%, rgba(11, 11, 13, 0.85) 78%);
-  box-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.35), inset 0 -2px 3px rgba(0, 0, 0, 0.5);
-  opacity: 0; will-change: transform; pointer-events: none;
-}
 
-.wave {
-  position: fixed; left: 0; right: 0; height: 160px; z-index: 70; bottom: -160px; pointer-events: none; opacity: 0;
-  background: linear-gradient(180deg, transparent, rgba(20, 20, 30, 0.04) 50%, rgba(255, 255, 255, 0.5) 76%, transparent);
-  filter: blur(7px); will-change: transform;
-}
+/* ===========================================================================
+   THE HERO PLATE. The maker's picture, whole, on the paper.
 
-/* ---- develop-in (the wave "loads" each piece, bottom -> top) ----
-   Each piece carries a pure-CSS safety-net animation that reveals it even if
-   the JS reveal never runs (slow/throttled/failed hydration, backgrounded tab).
-   The JS `.in` class is the fast, choreographed path; it cancels the fallback. */
-@keyframes heroSafety { to { opacity: 1; filter: blur(0); transform: none; } }
-.dev { opacity: 0; filter: blur(16px); transform: translateY(26px); transition: opacity 0.6s ease, filter 0.6s ease, transform 0.7s cubic-bezier(0.16, 1, 0.3, 1); animation: heroSafety 0.7s ease 1.9s forwards; }
-.dev.in { opacity: 1; filter: blur(0); transform: none; animation: none; }
-.wordmark { opacity: 0; filter: blur(22px); transform: translateY(18px) scale(1.04); transition: opacity 0.7s ease, filter 0.7s ease, transform 0.8s cubic-bezier(0.16, 1, 0.3, 1); animation: heroSafety 0.8s ease 1.9s forwards; }
-.wordmark.ghost { opacity: 0.1; filter: blur(8px); transform: none; }
-.wordmark.in { opacity: 1; filter: blur(0); transform: none; animation: none; }
+   T4 is the settled treatment: chewed edge, full colour. Two things are going on
+   and it is worth stating why each is separate:
+
+   `.chew` erodes the alpha edge with an SVG displacement filter. That is what
+   makes the silhouette read as torn rather than cut. It is the only per-pixel
+   filter on the hero, and it is applied to the IMAGE alone, never to a
+   backdrop-filter pane - see the stacked-glass note on `.glass.flat`, which is
+   the one genuinely super-linear case on this site.
+
+   `.reg` is the registration offset, `--rv`. A real print sheet is off-register
+   on the press; this eases from a visibly wrong value toward zero as you leave
+   the first screen, so the print comes into register while you read. It is the
+   SAME custom property, extended once: nothing new to understand, and no
+   scroll-jacking, no pinned sections.
+
+   Geometry: `object-fit: contain` in a right-hand column, anchored right. That
+   is what "whole, at its real aspect ratio, never cropped" means in CSS - the
+   plate is a box and the photograph is fitted into it, so it cannot be cropped
+   at 390, 820 or 1440, and cannot be distorted at any of them either. The box is
+   sized per breakpoint below rather than in one clamp, because the picture has
+   to share the row with an 84px statement and the two need different shares of
+   the width at different sizes.
+   -------------------------------------------------------------------------- */
+.hero-plate {
+  position: absolute;
+  inset-block: 0;
+  right: 0;
+  width: 46%;
+  pointer-events: none;
+}
+.hero-plate img {
+  /* `contain` in a box whose WIDTH is a share of the viewport. Height is
+     `auto`, not `100%`: with both axes stretched, `contain` fits the photo to the
+     shorter axis and leaves letterbox slack the plate cannot see. At 1440x900 a
+     46%-wide box is 662px, and the photo's real 0.758 aspect needs 873px of
+     height for that width - so it is sized by width and simply stands at its own
+     proportion. Nothing is cropped and nothing is stretched, and the plate's
+     height is allowed to exceed the box's because the hero centers it. */
+  width: 100%;
+  height: auto;
+  max-height: 100%;
+  object-fit: contain;
+  object-position: right center;
+  /* Anchored to the vertical centre of the plate so the 13px of slack the aspect
+     ratio leaves lands above and below, not all at the bottom. */
+  position: absolute;
+  top: 50%;
+  right: 0;
+  translate: 0 -50%;
+  filter: url(#chew) translate3d(var(--rv), calc(var(--rv) * -0.6), 0);
+}
+/* The chewed edge is a displacement of the ALPHA channel, and its filter region
+   is 116% of the box. `overflow: hidden` on the hero would clip that torn edge
+   back into a straight line, which is the one thing the chew exists to undo. The
+   bleed is ~4px of displacement on a 662px plate, so allowing it is cheaper than
+   letting the effect disappear. The phone arrangement lives in the 560px block
+   below. */
+
+/* The registration offset decays with scroll rather than on a timer: it is a
+   property of how far into the document you are, not of how long you have been
+   there. `--rv` is written on the hero by SiteShell and transitions on the
+   element, so the decay is one compositor-only transition on a length. */
+.hero-plate img { transition: filter 0.9s var(--ease); }
 
 /* ---- brand signature under the name: a small logotype flanked by hairlines ---- */
 .wm-sig-rule { height: 1px; width: 34px; background: rgba(11, 11, 13, 0.2); }
 
-/* ---- scroll-reveal for sections below the fold (transform/opacity only) ----
-   Deliberately no blur here: animating a large filter on whole sections/cards
-   janks the first scroll. The rise+fade reads as "builds from the ground up"
-   on its own and stays smooth. Elements arriving in the same
-   IntersectionObserver batch are staggered by the Reveal island via an inline
-   transition-delay (cleared once landed, so hover transitions never inherit
-   it). */
-.reveal-up { opacity: 0; transform: translateY(28px) scale(0.985); transform-origin: 50% 100%; transition: opacity 0.8s ease, transform 0.9s cubic-bezier(0.16, 1, 0.3, 1); }
-.reveal-up.in { opacity: 1; transform: none; }
-/* section headers get the hero's develop-in (blur is safe on a small paint
-   area — it was only whole-section/card blur that janked): each section opens
-   with the same "condensing out of the glass" note the hero set */
-.reveal-title { opacity: 0; filter: blur(14px); transform: translateY(22px); transition: opacity 0.7s ease, filter 0.7s ease, transform 0.85s cubic-bezier(0.16, 1, 0.3, 1); }
-.reveal-title.in { opacity: 1; filter: blur(0); transform: none; }
+/* ===========================================================================
+   THE MOTION SYSTEM. One attribute, any element, any section.
+
+   This replaces all three of what the site used to carry: the `liquid-intro`
+   overlay (hero only, unmounted after 1.35s, skipped under 640px and on repeat
+   visits, and an overlay rather than a behaviour so it could not be reused), the
+   hero's own timed `.dev` / `.wordmark` develop-in cascade, and the section
+   reveals below. One definition now covers every case.
+
+   `data-rise` is a state transition on an element, not a page-level animation,
+   which is exactly why it works in the hero, in a work row and in the colophon
+   without a second mechanism. `--d` staggers siblings that cross in together;
+   nothing else about it is configurable.
+
+   The blur is doing real work: a pure translate reads as a slide, and 12px of
+   blur resolving to zero reads as something coming into focus *through* a
+   surface, which is the same trick `.glass` and `.lens` already use. `filter`
+   and `transform` are both composited, so nothing here triggers layout.
+
+   The end state is the default and `.in` is only ever added, so a failed or
+   slow observer can never leave content permanently invisible - see the safety
+   net below, which lands it anyway.
+   -------------------------------------------------------------------------- */
+[data-rise] {
+  --d: 0ms;
+  opacity: 0;
+  filter: blur(12px);
+  transform: translate3d(0, 22px, 0);
+  transition:
+    opacity 0.75s var(--ease) var(--d),
+    filter 0.75s var(--ease) var(--d),
+    transform 1s var(--ease) var(--d);
+}
+[data-rise].in { opacity: 1; filter: blur(0); transform: none; }
+
+/* Every call site on every page now says `data-rise`. The old `.reveal-up` /
+   `.reveal-title` names are gone rather than aliased: an alias is a second name
+   for the same motion, and the next person to write `.reveal-up` would have no
+   way to know which one the site actually uses. One name, one definition. */
+
+/* Safety net. Every `[data-rise]` element lands on its own after a beat, with no
+   JS at all, so a backgrounded tab, a throttled main thread or a hydration
+   failure can never leave a section invisible. The observer adds `.in` first on a
+   healthy load and cancels this; when it is late or absent, this is what arrives.
+   The delay is longer than the observer's own (0.75-1s) so the fast path always
+   wins the race. */
+@keyframes riseSafety {
+  to { opacity: 1; filter: blur(0); transform: none; }
+}
+[data-rise] { animation: riseSafety 0.7s var(--ease) calc(var(--d) + 1400ms) forwards; }
+[data-rise].in { animation: none; }
+
 @media (prefers-reduced-motion: reduce) {
-  .reveal-up, .reveal-title { opacity: 1; transform: none; filter: none; transition: none; }
+  [data-rise] {
+    opacity: 1;
+    filter: none;
+    transform: none;
+    transition: none;
+    animation: none;
+  }
 }
 
 /* ---- card hover: no movement — the plate stays put and answers with a
@@ -696,19 +800,11 @@ body.lensing .drips.on { opacity: 0; }
   }
 }
 
-/* ---- the fixed hero proof strip steps aside once you've left the hero, so it
-   never sits on top of the testimonial deck or the sign-off. Centering lives on
-   the `translate` property (Tailwind), so `transform` here only nudges down;
-   filter stays in the transition list for the .dev develop-in. ---- */
-.proof-strip { transition: opacity 0.45s ease, filter 0.6s ease, transform 0.45s ease; }
-/* Leaving is urgent, arriving is not: the deck starts at the fold and slides
-   under the strip within a few px of scroll, so the exit has to be quick and
-   move DOWN out of the collision zone rather than just fading in place. Putting
-   the short duration on .gone keeps the return trip at the leisurely 0.45s. */
-.proof-strip.gone {
-  opacity: 0 !important; transform: translateY(34px); pointer-events: none;
-  transition: opacity 0.2s ease, transform 0.2s ease;
-}
+/* The proof line used to be viewport-fixed and had to be told to get out of the
+   way once you scrolled past the hero, because a fixed strip sitting on top of
+   the next section needed an IntersectionObserver and a clearance margin to
+   manage. It is in normal flow inside the cover now, so it scrolls away with the
+   hero by construction and the whole sentinel is gone. */
 
 /* ---- case-study chapters: each h2 gets an auto-incrementing mono index, so
    the Sanity body needs zero markup to read as numbered sections ---- */
@@ -748,23 +844,87 @@ body.lensing .drips.on { opacity: 0; }
 /* section heading eyebrow shared across the spine */
 .section-eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--muted); }
 
-/* ---- phone corrections ----
-   Two things only bite once the content column stops being narrower than the
-   viewport, which is why neither shows up on a laptop.
+/* ---- responsive: the one piece of the composition that cannot simply scale.
 
-   1. The hero plate bleeds past the content column by design (negative insets),
-      but that bleed has to fit inside the section's 24px padding. At 375px the
-      column ends at x=351 and a 28px bleed reaches 379 — four pixels past the
-      viewport. `body { overflow-x: hidden }` swallows it so nobody can scroll
-      sideways, but scrollWidth still exceeds clientWidth and a strict audit
-      flags it. Pinned to a bleed that fits. `.plate.dev` outranks Tailwind's
-      single-class arbitrary insets on specificity, so no !important needed.
+   The picture shares a row with an 84px statement. That ratio is the whole
+   composition, and it is the thing that has to be re-decided per width rather
+   than interpolated:
 
-   2. 11px mono at 0.3em tracking is an editorial choice at desktop reading
-      distance and a legibility problem on a phone. Slightly larger, slightly
-      tighter — wide tracking costs more at small sizes than the size does. */
+   820+  The desktop arrangement: type hard-left, picture flush right, occupying
+         the full height of the cover. 46% leaves the statement a 15ch measure
+         at 84px, which is the widest it can be before "shouldn't need" wraps.
+   561-819  Same arrangement, but the picture takes a little more of the row and
+         the statement steps down. An 84px statement and a 43%-width picture
+         compete for the same 820px.
+<=560  The phone composition, and it is the one that had to be DRAWN rather
+         than interpolated: the desktop arrangement is a picture BESIDE type, and
+         at 390px there is no width for both. So the picture leaves the row
+         entirely and the cover ENDS on it, below the type.
+
+         Two arrangements were tried and measured before this one:
+
+         - Keep the side-by-side, narrow the picture. At 390px a 58% column is
+           226px, and fitting a 0.758-aspect portrait into 226px needs 298px of
+           height. A postage stamp, and the masthead landed on top of it.
+         - Put the photograph behind the lower half as a full-bleed band, with
+           the statement and proof line sitting on it. Rendered 390x490, and every
+           piece of type on it became unreadable: an 84px ink statement over the
+           portrait's midtones, with its descenders vanishing into his hair. A
+           paper text-shadow was not enough to carry 84px type.
+
+         So the phone version does not put type over the photograph at all. The
+         type stays on clean paper, and the band is a place the cover ends rather
+         than a background. That is a different composition, not a smaller one. ---- */
+@media (max-width: 1023px) {
+  .hero-plate { width: 43%; }
+  /* The floor is capped at `lg:max-w-[54%]`, which is above this breakpoint, so
+     between 561 and 1023 the type column and the picture column are BOTH
+     unconstrained and meet in the middle. Measured at 820: the statement measured
+     746px wide against a picture starting at x=467, so 279px of 84px statement sat
+     directly on the photograph. The cap is what the desktop row is built on;
+     it just needs to start earlier than `lg` does. */
+  #cover > div:last-of-type { max-width: 54%; }
+}
 @media (max-width: 560px) {
-  .plate.dev { left: -18px; right: -18px; }
+  .hero-plate {
+    /* In normal flow, LAST. `order-last` against the two in-flow children (the
+       masthead and the floor) puts it after both without reordering the markup,
+       so the DOM order stays reading order for a screen reader. */
+    position: relative;
+    inset: auto;
+    order: 10;
+    width: 100%;
+    /* `auto` on a flex column pushes the band to the bottom of the section. The
+       section carries `pb-[7.75rem]` at this width to reserve exactly the band's
+       own height (46svh cap + its padding), so "bottom" means bottom-of-the-
+       CONTENT rather than behind-the-footer: without it the photograph ran past
+       the bottom edge of the cover and the paper of the next section cut across
+       it. Measured — the unreserved version painted 390x388 starting at y=512 in
+       an 900px-tall section, i.e. 122px of it below the fold. */
+    margin-top: auto;
+    padding-top: 1.75rem;
+  }
+  .hero-plate img {
+    position: static;
+    translate: none;
+    width: 100%;
+    height: auto;
+    /* Bounded by height rather than width, because at 390px the photo's own
+       aspect would otherwise want 514px of height and push the action and the
+       proof line off the first screen. */
+    max-height: 46svh;
+    object-fit: contain;
+    /* Right-aligned, so the band keeps the same flush-right relationship the
+       desktop composition has, and the leftover width is the paper on the left
+       rather than an equal margin on both sides. */
+    object-position: right bottom;
+    margin-inline-start: auto;
+  }
+}
+/* 11px mono at 0.3em tracking is an editorial choice at desktop reading distance
+   and a legibility problem on a phone. Slightly larger, slightly tighter — wide
+   tracking costs more at small sizes than the size does. */
+@media (max-width: 560px) {
   .section-eyebrow { font-size: 12px; letter-spacing: 0.2em; }
 }
 
@@ -1032,10 +1192,10 @@ body.studio-mode .grain, body.studio-mode .ambient, body.studio-mode .cursor, bo
    piece lands without janking. The glass material itself is untouched. ---- */
 @media (max-width: 767px) {
   .ambient span { animation: none; filter: blur(40px); opacity: 0.6; }
-  .dev { filter: blur(10px); }
-  .wordmark { filter: blur(12px); }
-  .wordmark.ghost { filter: blur(5px); }
-  .reveal-title { filter: blur(8px); }
+  /* The rise blur comes down on phones: a 12px blur on a whole section is the
+     most expensive thing in the reveal, and a phone GPU shows it as a stutter
+     rather than a reveal. The offset and the fade carry it alone. */
+  [data-rise] { filter: blur(0); }
 }
 
 /* ---- print / save-as-PDF ----
@@ -1049,7 +1209,7 @@ body.studio-mode .grain, body.studio-mode .ambient, body.studio-mode .cursor, bo
       liquid cursor and its drip layer, the SVG filter defs, and the contact
       flock (which the bubbles library appends straight to <body> with no class
       of its own to target, so there is nothing more surgical to aim at).
-   2. Un-hide the scroll reveals. `.reveal-up` starts at opacity 0 and is
+   2. Un-hide the scroll reveals. `[data-rise]` starts at opacity 0 and is
       promoted to `.in` by an IntersectionObserver, so any section the reader
       never scrolled past would otherwise print as a blank gap.
    3. Glass becomes paper. backdrop-filter and the layered shadows cost a
@@ -1063,7 +1223,7 @@ body.studio-mode .grain, body.studio-mode .ambient, body.studio-mode .cursor, bo
   }
   body { color: #000; cursor: auto; }
 
-  .reveal-up, .reveal-title, .dev, .wordmark {
+  [data-rise] {
     opacity: 1 !important;
     filter: none !important;
     transform: none !important;
@@ -1081,6 +1241,22 @@ body.studio-mode .grain, body.studio-mode .ambient, body.studio-mode .cursor, bo
   }
   .glass::before, .glass::after { display: none !important; }
 
+  /* The photograph prints as the photograph. The chew is a torn edge, which is a
+     screen conceit: on paper a torn edge is just a damaged page, and the
+     displacement also rasterises the whole image through a filter on a device
+     that is already slow to print one. */
+  .hero-plate img {
+    filter: none !important;
+    transform: none !important;
+  }
+  /* …and the dark plates carry their own background onto the sheet rather than
+     relying on a fill that `@page` has just flattened to white. */
+  .print-ink {
+    background: #fff !important;
+    color: #000 !important;
+  }
+  .print-ink * { color: #000 !important; border-color: rgba(0, 0, 0, 0.22) !important; }
+
   /* links print as plain text — a blue underline on paper points nowhere */
   a { text-decoration: none; color: inherit; }
   /* …except where the label alone is useless on paper ("Code", "PyPI"): those
@@ -1094,7 +1270,9 @@ body.studio-mode .grain, body.studio-mode .ambient, body.studio-mode .cursor, bo
 
 @media (prefers-reduced-motion: reduce) {
   body { cursor: auto; }
-  .drop, .pool, .ring, .wave, .splashlet, .cursor, .drips { display: none !important; }
-  .dev, .wordmark, .reveal-up { opacity: 1 !important; filter: none !important; transform: none !important; }
+  .cursor, .drips, .type-drips { display: none !important; }
+  [data-rise] {
+    opacity: 1 !important; filter: none !important; transform: none !important;
+  }
   *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
 }

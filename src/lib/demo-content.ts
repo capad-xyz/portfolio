@@ -4,10 +4,12 @@ import type {
   WorkExperience,
   StackGroup,
   AlsoShipped,
+  LedgerEntry,
   Resume,
   SocialLink,
 } from "./sanity";
 import type { PortableTextBlock } from "@portabletext/types";
+import { CONTACT_EMAIL } from "./canonical";
 
 /**
  * DEMO CONTENT — placeholder data so every section (projects + metrics, case
@@ -473,7 +475,52 @@ export const DEMO_PROJECTS: ProjectDetail[] = [
 // `link` to the PR comment or post they were said in; the deck renders that as a
 // "source" affordance and simply omits it on the fourth. Keep this in sync with
 // Sanity so dev preview matches production.
+/**
+ * `projectSlug` mirrors the CMS reference (see the Testimonial type). It is what
+ * the homepage groups on, so a quote reaches the reader while they are still
+ * looking at the project it is about rather than in a section of its own.
+ *
+ * The four WITHOUT a projectSlug are not oversights, and dropping them is the
+ * thing to be careful about here:
+ *
+ *  - amirlehmam (wmux maintainer) is about wmux, which is a real project
+ *    document but is deliberately NOT one of the four homepage cards - it is
+ *    `contributed`, somebody else's repo he fixed. So the attachment is real but
+ *    has no homepage row to land on, and the quote is shown with the experience
+ *    section instead. It is the strongest proof on the site (92% of self-time,
+ *    root-caused and merged) and it must not quietly disappear.
+ *  - The two Appson quotes are about an employer, not a product. Same handling.
+ *  - demo-t5 (Wordibly) and demo-t6 (open-source user) are `featured: false` in
+ *    the CMS, so they are not returned by the production query at all. They are
+ *    here so dev and prod carry the same six quotes - the brief for this branch
+ *    is that no quote is dropped for lack of a home, and a mirror that quietly
+ *    held four would make that true in dev and false in prod.
+ *
+ * The homepage therefore renders every quote: project quotes inline on their
+ * row, and the unattached ones under the experience section. Nothing is dropped
+ * for lack of a home.
+ */
 export const DEMO_TESTIMONIALS: Testimonial[] = [
+  {
+    _id: "demo-t2",
+    quote:
+      "\"from your own IP\" is the whole insight. a proxy pool fights the bot-wall; your own IP is already through it, same reason a human's browser doesn't trip cloudflare. an agent acting from where you already are doesn't need to sneak in. nice build.",
+    name: "Phi Browser",
+    role: "on searchts",
+    company: "@phibrowser",
+    link: "https://x.com/phibrowser/status/2075049980268822770",
+    projectSlug: "searchts",
+  },
+  {
+    _id: "demo-t3",
+    quote:
+      "fetch-time + final_url turns read output into something a reviewer can cite later. Tier/status is useful; redirect + timestamp makes it durable.",
+    name: "Dang_nh",
+    role: "on searchts",
+    company: "@hikariraina",
+    link: "https://x.com/aadarsh_io/status/2075055433493160062",
+    projectSlug: "searchts",
+  },
   {
     _id: "demo-t1",
     quote:
@@ -484,30 +531,30 @@ export const DEMO_TESTIMONIALS: Testimonial[] = [
     link: "https://github.com/amirlehmam/wmux/pull/135#issuecomment-5144877705",
   },
   {
-    _id: "demo-t2",
-    quote:
-      "\"from your own IP\" is the whole insight. a proxy pool fights the bot-wall; your own IP is already through it, same reason a human's browser doesn't trip cloudflare. an agent acting from where you already are doesn't need to sneak in. nice build.",
-    name: "Phi Browser",
-    role: "on searchts",
-    company: "@phibrowser",
-    link: "https://x.com/phibrowser/status/2075049980268822770",
-  },
-  {
-    _id: "demo-t3",
-    quote:
-      "fetch-time + final_url turns read output into something a reviewer can cite later. Tier/status is useful; redirect + timestamp makes it durable.",
-    name: "Dang_nh",
-    role: "on searchts",
-    company: "@hikariraina",
-    link: "https://x.com/aadarsh_io/status/2075055433493160062",
-  },
-  {
     _id: "demo-t4",
     quote:
       "Aadarsh owned the architecture of Compliance Sarathi end to end and shipped a reliable agentic assistant under real deadline pressure. He is who you want on the hard parts of a system.",
     name: "Engineering, Compliance Sarathi",
     role: "Engineering",
     company: "Appson Technologies",
+  },
+  {
+    // Present in the CMS and NOT featured there. Kept here because it is real,
+    // first-person praise from his own team about work he actually owned, and it
+    // is the only quote that speaks to the Wordibly role. Removing the
+    // standalone testimonials section must not take it with it.
+    _id: "demo-t5",
+    quote:
+      "On Wordibly he moved fast across the whole stack, from customer upload flows to the manager dashboards, and left the codebase better than he found it.",
+    name: "Engineering team, Wordibly",
+    company: "Appson Technologies",
+  },
+  {
+    _id: "demo-t6",
+    quote:
+      "searchts gets the one thing paid unlockers actually charge for: your own IP is already past the bot-wall. Fast, keyless, and clearly built by someone who sweats the details.",
+    name: "Open-source user",
+    role: "Developer",
   },
 ];
 
@@ -692,23 +739,19 @@ export const DEMO_SOCIAL_LINKS: SocialLink[] = [
 // homepage renders those under a lead-in that says the project is not his.
 // Links are only set where a real one exists; the two older Windows toys have no
 // public URL and render as plain text rather than pointing at nothing.
+/**
+ * ORDER IS THE CMS'S. Every published `alsoShipped` document has `order: null`,
+ * so Sanity falls back to `_createdAt asc`, which puts the three 2026-08-01
+ * entries first (CoffeeBreath, Discord Voice Overlay, wmux) and the two added on
+ * 2026-10-03 last (Dooper, MSU Halls Register).
+ *
+ * This list used to lead with Dooper and MSU Halls instead, which meant dev
+ * rendered one order and production another - a two-source divergence that
+ * rewrote visible copy. The order below is transcribed from the live query, and
+ * the comment is the warning: if you reorder this, reorder the CMS documents
+ * (set an explicit `order`) rather than editing one side.
+ */
 export const DEMO_ALSO_SHIPPED: AlsoShipped[] = [
-  {
-    _id: "demo-a0c",
-    name: "MSU Halls Register",
-    note: "an alumni-register design prototype for MSU Baroda's 16 halls; live, engagement paused",
-    kind: "built",
-    href: "https://msu.capad.fyi",
-  },
-  {
-    // A full project document too, just not a homepage card. The footnote is
-    // how it stays visible now that it is off the four-card grid.
-    _id: "demo-a0d",
-    name: "Dooper",
-    note: "a self-hostable Matrix inbox; Tauri 2 and React, AGPL, no paywalls on your own messages",
-    kind: "built",
-    href: "https://github.com/capad-xyz/beep-beep-oss",
-  },
   {
     _id: "demo-a1",
     name: "CoffeeBreath",
@@ -727,6 +770,115 @@ export const DEMO_ALSO_SHIPPED: AlsoShipped[] = [
     note: "a main-process freeze in a terminal multiplexer; diagnosed, patched, merged. 9 filed issues and 4 merged PRs (#135, #138, #153, #258) on diff-pane freezes, CLI timeouts, and agent-browser install discovery",
     kind: "contributed",
     href: "https://github.com/amirlehmam/wmux/pulls?q=is%3Apr+author%3Acapad-xyz",
+  },
+  {
+    // A full project document too, just not a homepage card. The footnote is
+    // how it stays visible now that it is off the four-card grid.
+    _id: "demo-a0d",
+    name: "Dooper",
+    note: "a self-hostable Matrix inbox; Tauri 2 and React, AGPL, no paywalls on your own messages",
+    kind: "built",
+    href: "https://github.com/capad-xyz/beep-beep-oss",
+  },
+  {
+    _id: "demo-a0c",
+    name: "MSU Halls Register",
+    note: "an alumni-register design prototype for MSU Baroda's 16 halls; live, engagement paused",
+    kind: "built",
+    href: "https://msu.capad.fyi",
+  },
+];
+
+/**
+ * The proof ledger, in demo mode. Every value here is already published somewhere
+ * on this site or in the committed resume; `source` names where, and that is what
+ * makes the strip checkable.
+ *
+ * Two of these were corrected against the live CMS rather than transcribed from
+ * the design sheet, and the corrections are the point:
+ *
+ *  - Hare's app reviews are 127, not the 53 the sheet carried. The CMS metric and
+ *    the oneLiner ("122 of my own PRs") both moved past that, and a ledger that
+ *    understates is still a ledger that is out of date.
+ *  - searchts ships on PyPI through 0.13.1. The committed resume still says
+ *    0.13.0, so the "8 AI-chat providers" figure is sourced to the project page
+ *    (which is current) rather than to the resume, which is not.
+ *
+ * Mirrors the published Sanity `ledgerEntry` documents.
+ */
+export const DEMO_LEDGER_ENTRIES: LedgerEntry[] = [
+  {
+    _id: "demo-l0",
+    value: "0",
+    label: "API keys to read a bot-walled page",
+    source: "searchts",
+    href: "/work/searchts",
+  },
+  {
+    _id: "demo-l1",
+    value: "0",
+    label: "reviews that can block a merge",
+    source: "hare",
+    href: "/work/hare",
+  },
+  {
+    _id: "demo-l2",
+    value: "0.7",
+    unit: "ms",
+    label: "from a synchronous call that timed out",
+    source: "wmux",
+    href: "/work/wmux",
+  },
+  {
+    _id: "demo-l3",
+    value: "92",
+    unit: "%",
+    label: "of main-process self-time, found by profiling",
+    source: "wmux",
+    href: "/work/wmux",
+  },
+  {
+    _id: "demo-l4",
+    value: "137",
+    label: "LEDs, driven as a turn arrow",
+    source: "glyphmaps",
+    href: "/work/glyphmaps",
+  },
+  {
+    _id: "demo-l5",
+    value: "2.3",
+    unit: "MB",
+    label: "whole APK, no Maps API key",
+    source: "glyphmaps",
+    href: "/work/glyphmaps",
+  },
+  {
+    _id: "demo-l6",
+    value: "8",
+    label: "AI-chat providers transcribed",
+    source: "searchts",
+    href: "/work/searchts",
+  },
+  {
+    _id: "demo-l7",
+    value: "127",
+    label: "app reviews posted, none blocking",
+    source: "hare",
+    href: "/work/hare",
+  },
+  {
+    _id: "demo-l8",
+    value: "553/647",
+    label: "commits on the flagship product, not sole dev",
+    source: "resume",
+    href: "/resume",
+  },
+  {
+    _id: "demo-l9",
+    value: "1",
+    label: "audit log, append-only, SHA-256",
+    source: "resume",
+    href: "/resume",
   },
 ];
 
@@ -747,7 +899,11 @@ export const DEMO_RESUME: Resume = {
     "React-first full-stack engineer. Home stack: CSS, React, TypeScript, Next.js, Electron, Node, deploy. Product depth from Appson on ComplyV (formerly Compliance Sarathi) and Wordibly. Public proof: searchts on PyPI through 0.13.1 (I push, review, and release). I also own Grove, Dooper, GlyphMaps, and capad.fyi; Hare is not a SaaS yet; shipped Hare Bot. I use AI assistants to ship and review hard. I am finishing BCA (Honours) at MSU Baroda (expected 2028). Looking for remote or India roles that hire for ownership of shipped systems. Open to relocate; outside-India roles with visa sponsorship welcome.",
   availability: "India · remote-first · open to relocate · outside-India visa sponsorship welcome",
   contacts: [
-    { label: "email", value: "hi@capad.fyi", href: "mailto:hi@capad.fyi" },
+    // The canonical address, by import rather than by literal. This block was the
+    // last place in the app still carrying `hi@capad.fyi` - the same string the
+    // published resume document held - which meant the page a recruiter read said
+    // one address and the inbox the contact form delivered to was another.
+    { label: "email", value: CONTACT_EMAIL, href: `mailto:${CONTACT_EMAIL}` },
     { label: "site", value: "capad.fyi", href: "https://capad.fyi" },
     { label: "github", value: "github.com/capad-xyz", href: "https://github.com/capad-xyz" },
     {
